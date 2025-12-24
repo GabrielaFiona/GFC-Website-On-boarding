@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Step 4: Finalize & Invoice</title>
+    <link rel="stylesheet" href="style.css"> 
+
+    <style>
+        /* Specific Styles for the Invoice Page */
+        :root {
+            --primary-color: #333; /* Update to match your brand */
+            --accent-color: #000;
+        }
+
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Layout Container */
+        .container {
+            display: flex;
+            width: 100%;
+        }
+
+        /* Sidebar Styles (Matching your previous steps) */
+        .sidebar {
+            width: 250px;
+            background-color: #f4f4f4;
+            padding: 2rem;
+            border-right: 1px solid #ddd;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .tracker h3 { margin-top: 0; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; color: #666; }
+        .tracker .amount { font-size: 2rem; font-weight: bold; margin-bottom: 2rem; }
+        .tracker .deposit-info { font-size: 0.9rem; color: #555; }
+        
+        .steps-nav ul { list-style: none; padding: 0; }
+        .steps-nav li { padding: 10px 0; color: #aaa; }
+        .steps-nav li.active { color: #000; font-weight: bold; }
+
+        /* Main Content Area */
+        .main-content {
+            flex: 1;
+            padding: 3rem 5rem;
+            max-width: 800px;
+        }
+
+        h1 { font-size: 2.5rem; margin-bottom: 0.5rem; }
+        p.subtitle { color: #666; margin-bottom: 2rem; }
+
+        /* INVOICE TABLE STYLES */
+        .invoice-box {
+            border: 1px solid #ddd;
+            padding: 2rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            background: #fff;
+        }
+
+        .line-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .line-item:last-child { border-bottom: none; }
+        .line-item.total-row { border-top: 2px solid #000; border-bottom: none; font-weight: bold; margin-top: 10px; padding-top: 15px; font-size: 1.2rem; }
+        .deposit-highlight { color: #2d8a2d; font-weight: bold; }
+
+        /* FORM STYLES */
+        .form-section { margin-bottom: 2rem; }
+        .form-section h3 { margin-bottom: 1rem; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; margin-bottom: 5px; font-weight: 500; font-size: 0.9rem; }
+        .input-group input, .input-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        /* CHECKBOX & BUTTONS */
+        .terms-box {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .buttons {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 2rem;
+        }
+
+        .btn-back { text-decoration: none; color: #666; }
+        .btn-pay {
+            background-color: #000;
+            color: #fff;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.3s;
+        }
+        .btn-pay:hover { background-color: #333; }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .container { flex-direction: column; }
+            .sidebar { width: 100%; padding: 1rem; order: 2; }
+            .main-content { padding: 1.5rem; order: 1; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <aside class="sidebar">
+        <div class="tracker">
+            <h3>Total Project Value</h3>
+            <div class="amount" id="sidebar-total">$0</div>
+            
+            <div class="deposit-info">
+                <strong>50% Deposit Due:</strong><br>
+                <span id="sidebar-deposit">$0</span>
+            </div>
+        </div>
+
+        <nav class="steps-nav">
+            <ul>
+                <li>1 Goals</li>
+                <li>2 Structure</li>
+                <li>3 Plan</li>
+                <li class="active">4 Finalize</li>
+            </ul>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <h1>Finalize & Kickoff</h1>
+        <p class="subtitle">Review your package and secure your spot.</p>
+
+        <div class="invoice-box">
+            <div id="invoice-items">
+                <div class="line-item"><span>Loading services...</span><span>...</span></div>
+            </div>
+            
+            <div class="line-item total-row">
+                <span>Total Project Estimate</span>
+                <span id="invoice-total">$0.00</span>
+            </div>
+            <div class="line-item">
+                <span class="deposit-highlight">50% Deposit Due Now</span>
+                <span class="deposit-highlight" id="invoice-deposit">$0.00</span>
+            </div>
+        </div>
+
+        <form id="finalizeForm">
+            <div class="form-section">
+                <h3>Billing Information</h3>
+                <div class="input-group">
+                    <label for="fullName">Full Name</label>
+                    <input type="text" id="fullName" name="fullName" required placeholder="Jane Doe">
+                </div>
+                <div class="input-group">
+                    <label for="businessName">Business Name (Optional)</label>
+                    <input type="text" id="businessName" name="businessName" placeholder="JD Bakery">
+                </div>
+                <div class="input-group">
+                    <label for="email">Email Address for Invoice</label>
+                    <input type="email" id="email" name="email" required placeholder="jane@example.com">
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Payment Method</h3>
+                <div style="border: 1px solid #ccc; padding: 15px; border-radius: 4px; background: #fafafa;">
+                    <p style="margin: 0; color: #555;">🔒 Secure Credit Card payment via Stripe/Square (Placeholder)</p>
+                    </div>
+            </div>
+
+            <div class="terms-box">
+                <input type="checkbox" id="terms" name="terms" required>
+                <label for="terms">I agree to the project scope and understand the 50% deposit is non-refundable to secure the timeline.</label>
+            </div>
+
+            <div class="buttons">
+                <a href="step3.html" class="btn-back">← Back to Planning</a>
+                <button type="submit" class="btn-pay">Pay Deposit & Start Project</button>
+            </div>
+        </form>
+    </main>
+
+</div>
+
+<script>
+    // 1. MOCK DATA - REPLACE THIS LOGIC with your localStorage retrieval
+    // Example: const selectedServices = JSON.parse(localStorage.getItem('userSelection'));
+    
+    // This is just dummy data so you can see how it looks
+    const projectData = [
+        { name: "Base Website Package", price: 1500 },
+        { name: "SEO Optimization", price: 300 },
+        { name: "E-Commerce Setup", price: 500 }
+    ];
+
+    const invoiceContainer = document.getElementById('invoice-items');
+    let total = 0;
+
+    // 2. BUILD THE INVOICE LIST
+    invoiceContainer.innerHTML = ''; // Clear loading text
+    
+    projectData.forEach(item => {
+        total += item.price;
+        const div = document.createElement('div');
+        div.classList.add('line-item');
+        div.innerHTML = `<span>${item.name}</span><span>$${item.price.toLocaleString()}</span>`;
+        invoiceContainer.appendChild(div);
+    });
+
+    // 3. CALCULATE TOTALS
+    const deposit = total * 0.5;
+
+    // 4. UPDATE DOM ELEMENTS (Sidebar & Invoice)
+    document.getElementById('invoice-total').innerText = `$${total.toLocaleString()}`;
+    document.getElementById('invoice-deposit').innerText = `$${deposit.toLocaleString()}`;
+    
+    document.getElementById('sidebar-total').innerText = `$${total.toLocaleString()}`;
+    document.getElementById('sidebar-deposit').innerText = `$${deposit.toLocaleString()}`;
+
+    // 5. HANDLE SUBMISSION
+    document.getElementById('finalizeForm').addEventListener('submit', function(e) {
+        e.preventDefault(); // Stop actual refresh for now
+        
+        const clientName = document.getElementById('fullName').value;
+        if(confirm(`Ready to process payment for ${clientName}?`)) {
+            // Here you would redirect to Stripe or your Thank You page
+            alert("Redirecting to payment processor...");
+            // window.location.href = 'thank-you.html';
+        }
+    });
+</script>
+
+</body>
+</html>
