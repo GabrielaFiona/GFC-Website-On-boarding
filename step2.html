@@ -130,12 +130,16 @@
             <div id="brandingUnlocked" class="hidden">
               
               <div class="branding-toggle-row" style="margin-bottom: 30px;">
-                <span style="font-weight:600; color:var(--text-main);">Do you have branding provided?</span>
-                <div class="segmented-control">
-                  <input class="seg-input" type="radio" name="brandingProvided" id="brandingProvidedYes" value="yes" onchange="toggleBrandingPanels(this.value)">
-                  <label class="seg-label" for="brandingProvidedYes">Yes</label>
-                  <input class="seg-input" type="radio" name="brandingProvided" id="brandingProvidedNo" value="no" onchange="toggleBrandingPanels(this.value)">
-                  <label class="seg-label" for="brandingProvidedNo">No</label>
+                <span style="font-weight:600; color:var(--text-main); display:block; margin-bottom:10px;">Do you have branding provided?</span>
+                <div class="radio-card-group">
+                  <div class="radio-card-option">
+                    <input type="radio" name="brandingProvided" id="brandingProvidedYes" value="yes" onchange="toggleBrandingPanels(this.value)">
+                    <label class="radio-card-label" for="brandingProvidedYes">Yes, I have assets</label>
+                  </div>
+                  <div class="radio-card-option">
+                    <input type="radio" name="brandingProvided" id="brandingProvidedNo" value="no" onchange="toggleBrandingPanels(this.value)">
+                    <label class="radio-card-label" for="brandingProvidedNo">No, I need help</label>
+                  </div>
                 </div>
               </div>
 
@@ -143,15 +147,18 @@
                 <div class="form-grid">
                   <div class="full-width">
                     <label>Upload Brand Assets</label>
-                    <p style="font-size:0.8rem; margin-bottom:12px; opacity:0.7;">Upload logos, fonts, or style guides here.</p>
-                    <div style="display: flex; gap: 10px; align-items: center;">
-                       <input type="file" id="brandingUploads" multiple style="width: auto; flex-grow: 1;" />
-                    </div>
+                    <p style="font-size:0.8rem; margin-bottom:12px; opacity:0.7;">Logos, fonts, or style guides.</p>
                     
-                    <div id="file-staging-box" class="file-staging-area hidden">
+                    <label for="brandingUploads" class="upload-drop-zone">
+                       <span class="upload-icon">📂</span>
+                       <span class="upload-text">Click to Select Files</span>
+                       <input type="file" id="brandingUploads" multiple />
+                    </label>
+                    
+                    <div id="file-staging-box" class="file-staging-area hidden" style="margin-top:15px;">
                       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                         <span style="font-size:0.75rem; color:var(--accent-blue); text-transform:uppercase; letter-spacing:1px;">Attached Files</span>
-                        <button class="btn-download-mini" onclick="downloadAllFiles()">Download All</button>
+                        <button class="btn-download-mini" onclick="downloadAllFiles()">Download All + Notes</button>
                       </div>
                       <div id="file-list-content"></div>
                     </div>
@@ -179,8 +186,8 @@
                 </div>
 
                 <div class="custom-branding-wrapper">
-                  <button class="addon-pill" onclick="toggleCustomBrandingUI('customBrandingPanelYes')">
-                    <span>+ Add Custom Branding</span>
+                  <button class="btn-dashed" onclick="toggleCustomBrandingUI('customBrandingPanelYes')">
+                    + Add Custom Branding Service
                   </button>
                   <div id="customBrandingPanelYes" class="custom-panel hidden" style="margin-top:15px; padding:20px; border:1px dashed var(--border-light); border-radius:10px; background:var(--surface-base);">
                     <div class="form-grid">
@@ -212,8 +219,8 @@
                  </div>
 
                  <div class="custom-branding-wrapper">
-                    <button class="addon-pill" onclick="toggleCustomBrandingUI('customBrandingPanelNo')">
-                      <span>+ Add Custom Branding</span>
+                    <button class="btn-dashed" onclick="toggleCustomBrandingUI('customBrandingPanelNo')">
+                      + Add Custom Branding Service
                     </button>
                     <div id="customBrandingPanelNo" class="custom-panel hidden" style="margin-top:15px; padding:20px; border:1px dashed var(--border-light); border-radius:10px; background:var(--surface-base);">
                       <div class="form-grid">
