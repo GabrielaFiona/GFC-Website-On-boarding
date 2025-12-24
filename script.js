@@ -37,7 +37,6 @@ function loadState() {
 
 function nextStep(stepNumber) {
   saveState();
-  // This looks for step1.html, step2.html, etc. which matches your file list
   window.location.href = `step${stepNumber}.html`;
 }
 
@@ -48,7 +47,6 @@ function selectPackage(id, name, price, limit, brandKitBundlePrice, extraPageCos
 
   state.package = { id, name, price, limit, brandKitBundlePrice, extraPageCost };
   
-  // Default pages if none selected
   if (state.pages.length === 0) state.pages = ['Home', 'Contact'];
   
   handlePackageSelected();
@@ -109,7 +107,6 @@ function handleFileUpload(e) {
     row.className = 'file-list-item';
     const nameSpan = document.createElement('span');
     nameSpan.textContent = file.name;
-    // Create download link
     const url = URL.createObjectURL(file);
     const link = document.createElement('a');
     link.href = url;
@@ -122,8 +119,14 @@ function handleFileUpload(e) {
   });
 }
 
+// UPDATED: Now downloads notes text file too
 function downloadAllFiles() {
-  if (uploadedFiles.length === 0) { alert("No files to download."); return; }
+  if (uploadedFiles.length === 0) { 
+    // allow download of notes even if no files
+    // but typically we check files. 
+  }
+
+  // 1. Download Attached Files
   uploadedFiles.forEach(file => {
     const url = URL.createObjectURL(file);
     const link = document.createElement('a');
@@ -133,6 +136,21 @@ function downloadAllFiles() {
     link.click();
     document.body.removeChild(link);
   });
+
+  // 2. Download Notes as Text File
+  const notesArea = document.getElementById('brandingProvidedNotes');
+  if (notesArea && notesArea.value.trim() !== "") {
+    const blob = new Blob([notesArea.value], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = "branding-notes.txt";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } else if (uploadedFiles.length === 0) {
+    alert("No files or notes to download.");
+  }
 }
 
 function toggleCustomBrandingUI(panelId) {
@@ -292,13 +310,9 @@ function calculateTotal() {
 
 // --- STEP 3: PLAN & CANVAS LOGIC ---
 function initStep3() {
-  // SAFETY CHECK: Only run this if we are actually on Step 3
   if (!document.body.classList.contains('step3')) return;
-  
   const container = document.getElementById('planContainer');
-  // Default to advanced if checking that package, otherwise fallback to stored package
   const pkgId = state.package ? state.package.id : 'basic';
-  
   container.innerHTML = ''; 
   if (pkgId === 'basic') renderBasicPlan(container);
   else if (pkgId === 'standard') renderStandardPlan(container);
@@ -321,7 +335,6 @@ function renderBasicPlan(container) {
   });
 }
 
-// --- STANDARD PLAN (Layouts Only) ---
 function renderStandardPlan(container) {
   const intro = `<div style="text-align:center; margin-bottom:30px;"><p>Sketch your layout for Mobile and Desktop views.</p></div>`;
   container.insertAdjacentHTML('beforeend', intro);
@@ -330,7 +343,6 @@ function renderStandardPlan(container) {
   container.insertAdjacentHTML('beforeend', downloadAllBtn);
 }
 
-// --- ADVANCED PLAN (Flowchart + Strategy + Layouts) ---
 function renderAdvancedPlan(container) {
   // 1. Business Flowchart Section
   const flowchartHtml = `
@@ -343,21 +355,18 @@ function renderAdvancedPlan(container) {
       </div>
       <div class="plan-card-body">
         <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:20px;">
-          Map how your website pages connect to your business tools (Payments, Email, Booking). 
-          Use the toolbar to select a tool, then click the whiteboard to stamp it.
+          Map how your website pages connect to your business tools.
         </p>
-        
         <div class="mockup-toolbar">
-           <button class="tool-btn active" onclick="setTool('flowGroup', 'pencil', this)" title="Draw Connections">✏️</button>
-           <button class="tool-btn" onclick="setTool('flowGroup', 'box', this)" title="Process Node">⬜</button>
-           <button class="tool-btn" onclick="setTool('flowGroup', 'diamond', this)" title="Decision / Action">◇</button>
-           <button class="tool-btn" onclick="setTool('flowGroup', 'circle', this)" title="Start / End">⭕</button>
-           <button class="tool-btn" onclick="setTool('flowGroup', 'text', this)" title="Label">T</button>
-           <button class="tool-btn" onclick="setTool('flowGroup', 'eraser', this)" title="Eraser">🧹</button>
+           <button class="tool-btn active" onclick="setTool('flowGroup', 'pencil', this)">✏️</button>
+           <button class="tool-btn" onclick="setTool('flowGroup', 'box', this)">⬜</button>
+           <button class="tool-btn" onclick="setTool('flowGroup', 'diamond', this)">◇</button>
+           <button class="tool-btn" onclick="setTool('flowGroup', 'circle', this)">⭕</button>
+           <button class="tool-btn" onclick="setTool('flowGroup', 'text', this)">T</button>
+           <button class="tool-btn" onclick="setTool('flowGroup', 'eraser', this)">🧹</button>
            <div style="width:1px; height:20px; background:var(--border-light); margin:0 10px;"></div>
-           <button class="tool-btn tool-btn-danger" onclick="resetCanvasGroup('flowchartCanvas')">Reset Map</button>
+           <button class="tool-btn tool-btn-danger" onclick="resetCanvasGroup('flowchartCanvas')">Reset</button>
         </div>
-
         <div class="flowchart-container-wrap">
           <div class="flowchart-sidebar">
             <span style="font-size:0.75rem; text-transform:uppercase; letter-spacing:1px; color:var(--accent-blue);">Quick Stamps</span>
@@ -372,15 +381,12 @@ function renderAdvancedPlan(container) {
     </div>
   `;
   container.insertAdjacentHTML('beforeend', flowchartHtml);
-
   setTimeout(() => { initCanvas('flowchartCanvas', 'flowGroup'); }, 100);
 
   // 2. Page Planner
   const intro = `<div style="text-align:center; margin:40px 0 30px 0;"><h2>Deep Dive: Page Planning</h2><p>Define strategy, SEO, and Layout for every page.</p></div>`;
   container.insertAdjacentHTML('beforeend', intro);
-
-  renderSharedCanvasCards(container, true); // True = include strategy fields
-
+  renderSharedCanvasCards(container, true); 
   const downloadAllBtn = `<button class="btn-download-all" onclick="downloadAllProjectAssets()">Download Full Project Assets</button>`;
   container.insertAdjacentHTML('beforeend', downloadAllBtn);
 }
@@ -394,7 +400,6 @@ function renderSharedCanvasCards(container, isAdvanced = false) {
     const fileListId = `file-list-${index}`;
     const orderOptions = state.pages.map((_, i) => `<option value="${i}" ${i === index ? 'selected' : ''}>Order: ${i + 1}</option>`).join('');
 
-    // Strategy Fields (Advanced Only)
     let strategyHtml = '';
     if (isAdvanced) {
       const plan = state.pagePlans[page] || {};
@@ -425,6 +430,7 @@ function renderSharedCanvasCards(container, isAdvanced = false) {
       `;
     }
 
+    // UPDATED LAYOUT: Strategy HTML moved below canvas
     const html = `
       <div class="plan-card" id="card-${index}">
         <div class="plan-card-header" onclick="togglePlanCard(this)">
@@ -439,7 +445,7 @@ function renderSharedCanvasCards(container, isAdvanced = false) {
           </div>
         </div>
         <div class="plan-card-body">
-          ${strategyHtml}
+          
           <div class="mockup-toolbar" id="toolbar-${index}">
             <button class="tool-btn active" title="Pencil" onclick="setTool('${groupName}', 'pencil', this)">✏️</button>
             <button class="tool-btn" title="Box" onclick="setTool('${groupName}', 'box', this)">⬜</button>
@@ -463,6 +469,8 @@ function renderSharedCanvasCards(container, isAdvanced = false) {
             </div>
           </div>
 
+          ${strategyHtml}
+
           <div class="plan-footer">
             <div class="plan-notes-area">
               <label>Layout & Content Notes</label>
@@ -478,7 +486,7 @@ function renderSharedCanvasCards(container, isAdvanced = false) {
               </div>
               <div id="${fileListId}" class="mini-file-list"></div>
               <button class="btn btn-secondary btn-download-mini" style="width:100%; margin-top:15px; padding:12px;" 
-                onclick="downloadPageAssets('${page}', '${mobileId}', '${desktopId}')">Download Sketch & Files ⇩</button>
+                onclick="downloadPageAssets('${page}', '${mobileId}', '${desktopId}')">Download Sketch & Files & Notes ⇩</button>
             </div>
           </div>
         </div>
@@ -494,7 +502,6 @@ function renderSharedCanvasCards(container, isAdvanced = false) {
   });
 }
 
-// --- FILE UPLOAD LOGIC ---
 function handlePageFileUpload(pageName, input, listId) {
   if (input.files && input.files.length > 0) {
     if (!pageAttachments[pageName]) pageAttachments[pageName] = [];
@@ -533,28 +540,21 @@ function renderPageFileList(pageName, listId) {
   });
 }
 
-// --- DOWNLOAD LOGIC ---
+// UPDATED: Now downloads notes for each page
 async function downloadAllProjectAssets() {
-  if (!confirm("This will download all sketches and attached files. Allow multiple downloads?")) return;
+  if (!confirm("This will download all sketches, files, and notes. Allow multiple downloads?")) return;
   for (const page of state.pages) {
     const index = state.pages.indexOf(page);
-    downloadPageSketchOnly(page, `cvs-m-${index}`, `cvs-d-${index}`);
-    await new Promise(r => setTimeout(r, 800)); 
-    const files = pageAttachments[page] || [];
-    for (const file of files) {
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(file);
-      link.download = `[${page}] ${file.name}`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      await new Promise(r => setTimeout(r, 500));
-    }
+    downloadPageAssets(page, `cvs-m-${index}`, `cvs-d-${index}`);
+    await new Promise(r => setTimeout(r, 1000)); // Increased delay for safety
   }
 }
 
 function downloadPageAssets(pageName, mobileId, desktopId) {
+  // 1. Download Sketch
   downloadPageSketchOnly(pageName, mobileId, desktopId);
+  
+  // 2. Download Files
   const files = pageAttachments[pageName] || [];
   let delay = 500;
   files.forEach(file => {
@@ -569,6 +569,29 @@ function downloadPageAssets(pageName, mobileId, desktopId) {
     }, delay);
     delay += 500;
   });
+
+  // 3. Download Notes / Strategy
+  setTimeout(() => {
+    const plan = state.pagePlans[pageName] || {};
+    const notesContent = `
+PAGE: ${pageName}
+-------------------------
+SEO Focus: ${plan.seo || 'N/A'}
+Conversion: ${plan.conversion || 'N/A'}
+Integrations: ${plan.integrations || 'N/A'}
+
+NOTES:
+${plan.notes || 'No notes provided.'}
+    `;
+    const blob = new Blob([notesContent], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${pageName}-details.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }, delay + 500);
 }
 
 function downloadPageSketchOnly(pageName, mobileId, desktopId) {
@@ -798,7 +821,6 @@ function initCollapsibles() {
 document.addEventListener('DOMContentLoaded', () => {
   loadState();
   initCollapsibles();
-  // Safe checks for page-specific inits
   if (window.location.pathname.includes('step2')) {
     initPageBuilder();
     if(state.package) handlePackageSelected(true);
