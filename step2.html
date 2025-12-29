@@ -130,7 +130,7 @@
             <div id="brandingUnlocked" class="hidden">
               
               <div class="branding-toggle-row" style="margin-bottom: 25px;">
-                <span style="font-weight:600; color:var(--text-main); display:block; margin-bottom:10px; font-size: 0.9rem;">Do you have branding provided?</span>
+                <span style="font-weight:600; color:var(--text-main); display:block; margin-bottom:10px;">Do you have branding provided?</span>
                 <div class="radio-card-group">
                   <div class="radio-card-option">
                     <input type="radio" name="brandingProvided" id="brandingProvidedYes" value="yes" onchange="toggleBrandingPanels(this.value)">
@@ -155,10 +155,10 @@
                        <input type="file" id="brandingUploads" multiple />
                     </label>
                     
-                    <div id="file-staging-box" class="file-staging-area hidden" style="margin-top:15px; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px;">
+                    <div id="file-staging-box" class="file-staging-area hidden" style="margin-top:15px; background:rgba(255,255,255,0.05); padding:15px; border-radius:8px;">
                       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                         <span style="font-size:0.75rem; color:var(--accent-blue); text-transform:uppercase; letter-spacing:1px;">Attached Files</span>
-                        <button class="btn-download-mini" style="border: 1px solid var(--accent-blue); color: var(--accent-blue); font-weight: 600;" onclick="downloadAllFiles()">⇩ Download Assets</button>
+                        <button class="btn-download-mini" onclick="downloadAllFiles()">⇩ Download All + Notes</button>
                       </div>
                       <div id="file-list-content"></div>
                     </div>
