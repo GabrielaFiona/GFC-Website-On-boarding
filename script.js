@@ -723,4 +723,109 @@ function initCanvas(canvasId, groupName) {
     if (tool === 'text') {
        const text = prompt("Enter text:", "Header");
        if (text) {
-         ctx.fillStyle = '#fff'; ctx.font = '
+         ctx.fillStyle = '#fff'; ctx.font = '16px Montserrat'; ctx.fillText(text, startX, startY);
+         ctx.fillStyle = 'rgba(44, 166, 224, 0.1)'; 
+       }
+       isDrawing = false;
+    }
+  });
+
+  canvas.addEventListener('mousemove', e => {
+    if (!isDrawing) return;
+    const tool = canvasState[groupName].tool;
+    const x = e.offsetX; const y = e.offsetY;
+    if (tool === 'pencil') {
+      ctx.lineWidth = 3; ctx.globalCompositeOperation = 'source-over'; ctx.lineTo(x, y); ctx.stroke();
+    } else if (tool === 'eraser') {
+      ctx.lineWidth = 20; ctx.globalCompositeOperation = 'destination-out'; ctx.lineTo(x, y); ctx.stroke(); ctx.globalCompositeOperation = 'source-over'; 
+    }
+  });
+
+  canvas.addEventListener('mouseup', e => {
+    if (!isDrawing) return;
+    isDrawing = false;
+    const endX = e.offsetX; const endY = e.offsetY;
+    const tool = canvasState[groupName].tool;
+    ctx.lineWidth = 3; ctx.strokeStyle = '#2CA6E0'; ctx.globalCompositeOperation = 'source-over';
+    
+    const w = endX - startX; const h = endY - startY;
+    if (tool === 'box' || tool === 'rect') {
+      const hFinal = (tool === 'box') ? w : h; 
+      ctx.rect(startX, startY, w, hFinal); ctx.fill(); ctx.stroke();
+    } else if (tool === 'circle') {
+      const radius = Math.sqrt(Math.pow(w, 2) + Math.pow(h, 2));
+      ctx.beginPath(); ctx.arc(startX, startY, radius, 0, 2 * Math.PI); ctx.fill(); ctx.stroke();
+    } else if (tool === 'triangle') {
+      ctx.beginPath(); ctx.moveTo(startX, startY); ctx.lineTo(endX, endY); ctx.lineTo(startX - w, endY); ctx.closePath(); ctx.fill(); ctx.stroke();
+    } else if (tool === 'diamond') {
+       ctx.beginPath();
+       ctx.moveTo(startX + w/2, startY); ctx.lineTo(endX, startY + h/2);
+       ctx.lineTo(startX + w/2, endY); ctx.lineTo(startX, startY + h/2);
+       ctx.closePath(); ctx.fill(); ctx.stroke();
+    }
+  });
+}
+
+function resetCanvasGroup(id1, id2) {
+  if(confirm("Clear sketches?")) {
+    [id1, id2].forEach(id => {
+      const c = document.getElementById(id);
+      if(c) { c.getContext('2d').clearRect(0, 0, c.width, c.height); }
+    });
+  }
+}
+
+function toggleBrandKit(element) {
+  state.brandKit = !state.brandKit;
+  document.querySelectorAll('.brand-kit-ref').forEach(el => { el.classList.toggle('selected', state.brandKit); });
+  calculateTotal(); updateBrandKitDisplay(); saveState();
+}
+
+function updateBrandKitDisplay() {
+  document.querySelectorAll('.brand-kit-ref').forEach(bar => {
+    const finalPriceEl = bar.querySelector('.bk-final-price');
+    if (!finalPriceEl) return;
+    const hasBundle = !!(state.package && state.package.brandKitBundlePrice);
+    const displayPrice = hasBundle ? Number(state.package.brandKitBundlePrice) : BASE_BRAND_KIT_PRICE;
+    finalPriceEl.textContent = `$${displayPrice.toLocaleString()}`;
+    bar.classList.toggle('selected', !!state.brandKit);
+  });
+}
+
+function toggleWidget() {
+  const widget = document.getElementById('floating-widget');
+  if (widget) widget.classList.toggle('collapsed');
+}
+
+function togglePackageDetails(buttonEl) {
+  const card = buttonEl.closest('.package-card');
+  if (card) {
+    const expanded = card.classList.toggle('expanded');
+    buttonEl.textContent = expanded ? 'Close Details' : 'View Details';
+  }
+}
+
+function initCollapsibles() {
+  const sections = document.querySelectorAll('[data-collapsible]');
+  sections.forEach(section => {
+    const header = section.querySelector('[data-collapsible-header]');
+    if (!header || header.hasAttribute('data-has-listener')) return;
+    header.setAttribute('data-has-listener', 'true');
+    header.addEventListener('click', (e) => {
+      e.preventDefault();
+      section.classList.toggle('collapsed');
+    });
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadState();
+  initCollapsibles();
+  if (window.location.pathname.includes('step2')) {
+    initPageBuilder();
+    if(state.package) handlePackageSelected(true);
+  }
+  if (window.location.pathname.includes('step3')) initStep3();
+  calculateTotal();
+  updateBrandKitDisplay();
+});
