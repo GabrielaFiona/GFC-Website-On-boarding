@@ -925,9 +925,25 @@ function updateBrandKitDisplay() {
   });
 }
 
+/* --- UPDATED WIDGET TOGGLE LOGIC --- */
+
 function toggleWidget() {
   const widget = document.getElementById('floating-widget');
+  // Only toggle vertical collapse if NOT docked. 
+  // If docked, we don't really want to expand vertically, but we'll allow it if needed.
   if (widget) widget.classList.toggle('collapsed');
+}
+
+function toggleWidgetDock(e) {
+  if (e) e.stopPropagation(); // Prevent triggering the vertical toggle
+  const widget = document.getElementById('floating-widget');
+  if (widget) {
+    widget.classList.toggle('docked-right');
+    // If we are docking it (hiding it), ensure it is also collapsed vertically to look neat
+    if (widget.classList.contains('docked-right')) {
+      widget.classList.add('collapsed');
+    }
+  }
 }
 
 function togglePackageDetails(buttonEl) {
