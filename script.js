@@ -123,7 +123,6 @@ function handleFileUpload(e) {
 function downloadAllFiles() {
   if (uploadedFiles.length === 0) { 
     // allow download of notes even if no files
-    // but typically we check files. 
   }
 
   // 1. Download Attached Files
@@ -158,17 +157,24 @@ function toggleCustomBrandingUI(panelId) {
   if (panel) panel.classList.toggle('hidden');
 }
 
+// UPDATED: Fixes the 1-character bug by skipping the active input
 function updateCustomBrandingState() {
   const names = document.querySelectorAll('.custom-brand-name');
   const prices = document.querySelectorAll('.custom-brand-price');
   let nameVal = "";
   let priceVal = 0;
 
+  // Find the values from whichever input has data
   names.forEach(input => { if(input.value) nameVal = input.value; });
   prices.forEach(input => { if(input.value) priceVal = Number(input.value); });
   
-  names.forEach(input => input.value = nameVal);
-  prices.forEach(input => input.value = priceVal || "");
+  // Sync the OTHER inputs, but do NOT overwrite the one the user is typing in
+  names.forEach(input => { 
+    if (input !== document.activeElement) input.value = nameVal; 
+  });
+  prices.forEach(input => { 
+    if (input !== document.activeElement) input.value = priceVal || ""; 
+  });
 
   state.customBranding = { active: (priceVal > 0), name: nameVal || "Custom Branding", price: priceVal };
   calculateTotal();
