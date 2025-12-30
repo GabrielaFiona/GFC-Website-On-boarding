@@ -925,25 +925,15 @@ function updateBrandKitDisplay() {
   });
 }
 
-/* --- UPDATED WIDGET TOGGLE LOGIC --- */
+// --- UPDATED WIDGET BEHAVIOR ---
+
+let isWidgetDragging = false;
 
 function toggleWidget() {
+  // Only toggle if we are NOT in the middle of a drag
+  if (isWidgetDragging) return;
   const widget = document.getElementById('floating-widget');
-  // Only toggle vertical collapse if NOT docked. 
-  // If docked, we don't really want to expand vertically, but we'll allow it if needed.
   if (widget) widget.classList.toggle('collapsed');
-}
-
-function toggleWidgetDock(e) {
-  if (e) e.stopPropagation(); // Prevent triggering the vertical toggle
-  const widget = document.getElementById('floating-widget');
-  if (widget) {
-    widget.classList.toggle('docked-right');
-    // If we are docking it (hiding it), ensure it is also collapsed vertically to look neat
-    if (widget.classList.contains('docked-right')) {
-      widget.classList.add('collapsed');
-    }
-  }
 }
 
 function togglePackageDetails(buttonEl) {
@@ -967,9 +957,47 @@ function initCollapsibles() {
   });
 }
 
+function initDraggableWidget() {
+  const widget = document.getElementById('floating-widget');
+  const header = widget.querySelector('.fw-header');
+  if(!widget || !header) return;
+
+  let startX = 0;
+  let initialRight = 30; // Matches css 'right' property
+  let isDown = false;
+
+  header.addEventListener('mousedown', (e) => {
+    isDown = true;
+    isWidgetDragging = false; // Reset drag status
+    startX = e.clientX;
+    // Calculate current 'right' value from computed style
+    const style = window.getComputedStyle(widget);
+    initialRight = parseInt(style.right, 10);
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!isDown) return;
+    const dx = startX - e.clientX; // Dragging left increases 'right' value
+    
+    // Threshold to consider it a drag vs a click
+    if (Math.abs(dx) > 5) isWidgetDragging = true;
+    
+    widget.style.right = `${initialRight + dx}px`;
+    widget.style.left = 'auto'; // ensure we are positioning via right
+  });
+
+  document.addEventListener('mouseup', () => {
+    isDown = false;
+    // Note: isWidgetDragging stays true if we moved, 
+    // blocking the 'click' event in toggleWidget
+    setTimeout(() => { isWidgetDragging = false; }, 100);
+  });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   loadState();
   initCollapsibles();
+  initDraggableWidget(); // NEW DRAG LOGIC
   if (window.location.pathname.includes('step2')) {
     initPageBuilder();
     if(state.package) handlePackageSelected(true);
