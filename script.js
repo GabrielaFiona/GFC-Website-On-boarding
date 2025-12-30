@@ -25,6 +25,29 @@ const SUGGESTION_DB = {
   "default": ["Home", "Contact", "About", "Services", "Gallery"]
 };
 
+// --- UNDO HISTORY ---
+const canvasHistory = {};
+
+function saveCanvasState(canvasId) {
+  const c = document.getElementById(canvasId);
+  if (!canvasHistory[canvasId]) canvasHistory[canvasId] = [];
+  if (canvasHistory[canvasId].length > 10) canvasHistory[canvasId].shift(); // Limit history to 10
+  canvasHistory[canvasId].push(c.toDataURL());
+}
+
+function undoLastAction(canvasId) {
+  if (!canvasHistory[canvasId] || canvasHistory[canvasId].length === 0) return;
+  const lastState = canvasHistory[canvasId].pop();
+  const c = document.getElementById(canvasId);
+  const ctx = c.getContext('2d');
+  const img = new Image();
+  img.onload = () => {
+    ctx.clearRect(0, 0, c.width, c.height);
+    ctx.drawImage(img, 0, 0);
+  };
+  img.src = lastState;
+}
+
 // --- PERSISTENCE ---
 function saveState() {
   localStorage.setItem('onboardingState', JSON.stringify(state));
@@ -65,14 +88,12 @@ function handlePackageSelected(isRestore) {
   if (unlocked) unlocked.classList.remove('hidden');
   if (pageBuilder) {
     pageBuilder.classList.remove('hidden');
-    if (!isRestore && state.brandingProvided) {
-      const pbCol = document.querySelector('[data-key="step2-pages"]');
-      if (pbCol) pbCol.classList.remove('collapsed');
-    }
+    // We do NOT automatically open sections anymore based on user request.
+    // They will remain collapsed until clicked.
   }
 
   const branding = document.getElementById('brandingSection');
-  if (branding && !isRestore) branding.classList.remove('collapsed');
+  if (branding && !isRestore) branding.classList.remove('collapsed'); // Only open if just selected, else respect state
   
   if (window.initCollapsibles) window.initCollapsibles(); 
 }
@@ -119,9 +140,7 @@ function handleFileUpload(e) {
   });
 }
 
-// UPDATED: Now downloads notes text file too
 function downloadAllFiles() {
-  // 1. Download Attached Files
   uploadedFiles.forEach(file => {
     const url = URL.createObjectURL(file);
     const link = document.createElement('a');
@@ -132,7 +151,6 @@ function downloadAllFiles() {
     document.body.removeChild(link);
   });
 
-  // 2. Download Notes as Text File
   const notesArea = document.getElementById('brandingProvidedNotes');
   if (notesArea && notesArea.value.trim() !== "") {
     const blob = new Blob([notesArea.value], { type: "text/plain" });
@@ -153,7 +171,6 @@ function toggleCustomBrandingUI(panelId) {
   if (panel) panel.classList.toggle('hidden');
 }
 
-// UPDATED: Logic to fix 1-character bug AND ensure Total adds up correctly
 function updateCustomBrandingState() {
   const names = document.querySelectorAll('.custom-brand-name');
   const prices = document.querySelectorAll('.custom-brand-price');
@@ -161,25 +178,18 @@ function updateCustomBrandingState() {
   let activeName = "";
   let activePrice = 0;
 
-  // 1. Capture the "Source of Truth"
-  // If the user is actively typing in a name field, use that value.
   if (document.activeElement && document.activeElement.classList.contains('custom-brand-name')) {
     activeName = document.activeElement.value;
   } else {
-    // Fallback: iterate to find existing value if not typing
     names.forEach(input => { if (input.value) activeName = input.value; });
   }
 
-  // If the user is actively typing in a price field, use that value.
   if (document.activeElement && document.activeElement.classList.contains('custom-brand-price')) {
     activePrice = Number(document.activeElement.value);
   } else {
-    // Fallback: iterate to find existing value if not typing
     prices.forEach(input => { if (input.value) activePrice = Number(input.value); });
   }
 
-  // 2. Sync values to the hidden/inactive inputs
-  // We skip the active element so the cursor doesn't reset (fixing the 1-char bug)
   names.forEach(input => {
     if (input !== document.activeElement) input.value = activeName;
   });
@@ -187,8 +197,6 @@ function updateCustomBrandingState() {
     if (input !== document.activeElement) input.value = activePrice || "";
   });
 
-  // 3. Update State & Total
-  // We ensure price is a valid number for calculation
   state.customBranding = { 
     active: (activePrice > 0), 
     name: activeName || "Custom Branding", 
@@ -347,8 +355,8 @@ function renderBasicPlan(container) {
   state.pages.forEach((page, index) => {
     const noteVal = state.pagePlans[page]?.notes || '';
     const html = `
-      <div class="plan-card">
-        <div class="plan-card-header"><span>${index + 1}. ${page}</span></div>
+      <div class="plan-card collapsed">
+        <div class="plan-card-header" onclick="togglePlanCard(this)"><span>${index + 1}. ${page}</span></div>
         <div class="plan-card-body">
           <label>Page Goals & Content Notes</label>
           <textarea rows="5" oninput="savePageNote('${page}', this.value)" placeholder="What should be on this page?">${noteVal}</textarea>
@@ -368,10 +376,9 @@ function renderStandardPlan(container) {
 }
 
 function renderAdvancedPlan(container) {
-  // 1. Business Flowchart Section
   const flowchartHtml = `
-    <div class="plan-card expanded">
-      <div class="plan-card-header">
+    <div class="plan-card collapsed">
+      <div class="plan-card-header" onclick="togglePlanCard(this)">
         <div class="plan-card-title-group">
           <span style="font-size:1.5rem">⚡</span>
           <span>Business Logic & Integrations Flow</span>
@@ -389,15 +396,13 @@ function renderAdvancedPlan(container) {
            <button class="tool-btn" onclick="setTool('flowGroup', 'text', this)">T</button>
            <button class="tool-btn" onclick="setTool('flowGroup', 'eraser', this)">🧹</button>
            <div style="width:1px; height:20px; background:var(--border-light); margin:0 10px;"></div>
+           <button class="tool-btn tool-btn-danger" onclick="undoLastAction('flowchartCanvas')">↩ Undo</button>
            <button class="tool-btn tool-btn-danger" onclick="resetCanvasGroup('flowchartCanvas')">Reset</button>
         </div>
         <div class="flowchart-container-wrap">
           <div class="flowchart-sidebar">
             <span style="font-size:0.75rem; text-transform:uppercase; letter-spacing:1px; color:var(--accent-blue);">Quick Stamps</span>
             ${state.pages.map(p => `<div class="flowchart-stamp" onclick="stampTextOnCanvas('flowchartCanvas', '${p}')">${p}</div>`).join('')}
-            <div class="flowchart-stamp" onclick="stampTextOnCanvas('flowchartCanvas', 'Payment')">Payment</div>
-            <div class="flowchart-stamp" onclick="stampTextOnCanvas('flowchartCanvas', 'Email')">Email Auto</div>
-            <div class="flowchart-stamp" onclick="stampTextOnCanvas('flowchartCanvas', 'Booking')">Booking</div>
           </div>
           <canvas id="flowchartCanvas" class="flowchart-canvas" width="700" height="500"></canvas>
         </div>
@@ -407,7 +412,6 @@ function renderAdvancedPlan(container) {
   container.insertAdjacentHTML('beforeend', flowchartHtml);
   setTimeout(() => { initCanvas('flowchartCanvas', 'flowGroup'); }, 100);
 
-  // 2. Page Planner
   const intro = `<div style="text-align:center; margin:40px 0 30px 0;"><h2>Deep Dive: Page Planning</h2><p>Define strategy, SEO, and Layout for every page.</p></div>`;
   container.insertAdjacentHTML('beforeend', intro);
   renderSharedCanvasCards(container, true); 
@@ -442,7 +446,6 @@ function renderSharedCanvasCards(container, isAdvanced = false) {
               <option value="Book Call" ${plan.conversion === 'Book Call' ? 'selected' : ''}>Book Appointment</option>
               <option value="Contact Form" ${plan.conversion === 'Contact Form' ? 'selected' : ''}>Fill Contact Form</option>
               <option value="Subscribe" ${plan.conversion === 'Subscribe' ? 'selected' : ''}>Newsletter Signup</option>
-              <option value="Inform" ${plan.conversion === 'Inform' ? 'selected' : ''}>Inform / Edu</option>
             </select>
           </div>
           <div>
@@ -454,9 +457,8 @@ function renderSharedCanvasCards(container, isAdvanced = false) {
       `;
     }
 
-    // UPDATED LAYOUT: Strategy HTML moved below canvas
     const html = `
-      <div class="plan-card" id="card-${index}">
+      <div class="plan-card collapsed" id="card-${index}">
         <div class="plan-card-header" onclick="togglePlanCard(this)">
           <div class="plan-card-title-group">
             <span class="plan-card-chevron">▼</span>
@@ -479,15 +481,16 @@ function renderSharedCanvasCards(container, isAdvanced = false) {
             <button class="tool-btn" title="Text" onclick="setTool('${groupName}', 'text', this)">T</button>
             <button class="tool-btn" title="Eraser" onclick="setTool('${groupName}', 'eraser', this)">🧹</button>
             <div style="width:1px; height:20px; background:var(--border-light); margin:0 10px;"></div>
+            <button class="tool-btn tool-btn-danger" title="Undo" onclick="undoLastAction('${mobileId}'); undoLastAction('${desktopId}')">↩</button>
             <button class="tool-btn tool-btn-danger" title="Clear Canvas" onclick="resetCanvasGroup('${mobileId}', '${desktopId}')">🗑️</button>
           </div>
 
           <div class="canvas-pair-container">
-            <div class="canvas-wrap">
+            <div class="canvas-wrap" id="wrap-${mobileId}">
               <span class="canvas-label">Mobile</span>
               <canvas id="${mobileId}" class="canvas-standard" width="240" height="400"></canvas>
             </div>
-            <div class="canvas-wrap">
+            <div class="canvas-wrap" id="wrap-${desktopId}">
               <span class="canvas-label">Desktop</span>
               <canvas id="${desktopId}" class="canvas-standard" width="550" height="400"></canvas>
             </div>
@@ -564,21 +567,18 @@ function renderPageFileList(pageName, listId) {
   });
 }
 
-// UPDATED: Now downloads notes for each page
 async function downloadAllProjectAssets() {
   if (!confirm("This will download all sketches, files, and notes. Allow multiple downloads?")) return;
   for (const page of state.pages) {
     const index = state.pages.indexOf(page);
     downloadPageAssets(page, `cvs-m-${index}`, `cvs-d-${index}`);
-    await new Promise(r => setTimeout(r, 1000)); // Increased delay for safety
+    await new Promise(r => setTimeout(r, 1000));
   }
 }
 
 function downloadPageAssets(pageName, mobileId, desktopId) {
-  // 1. Download Sketch
   downloadPageSketchOnly(pageName, mobileId, desktopId);
   
-  // 2. Download Files
   const files = pageAttachments[pageName] || [];
   let delay = 500;
   files.forEach(file => {
@@ -594,19 +594,9 @@ function downloadPageAssets(pageName, mobileId, desktopId) {
     delay += 500;
   });
 
-  // 3. Download Notes / Strategy
   setTimeout(() => {
     const plan = state.pagePlans[pageName] || {};
-    const notesContent = `
-PAGE: ${pageName}
--------------------------
-SEO Focus: ${plan.seo || 'N/A'}
-Conversion: ${plan.conversion || 'N/A'}
-Integrations: ${plan.integrations || 'N/A'}
-
-NOTES:
-${plan.notes || 'No notes provided.'}
-    `;
+    const notesContent = `PAGE: ${pageName}\nNOTES:\n${plan.notes || 'No notes provided.'}`;
     const blob = new Blob([notesContent], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -696,7 +686,7 @@ function savePageMeta(pageName, field, value) {
   saveState();
 }
 
-// --- CANVAS TOOLS ---
+// --- CANVAS TOOLS & DRAGGABLE TEXT ---
 const canvasState = {}; 
 
 function setTool(groupName, tool, btn) {
@@ -709,7 +699,96 @@ function setTool(groupName, tool, btn) {
   }
 }
 
+function createFloatingTextInput(x, y, canvasId, groupName) {
+  const canvas = document.getElementById(canvasId);
+  const wrap = canvas.parentElement;
+  
+  // Create Elements
+  const container = document.createElement('div');
+  container.className = 'floating-text-input';
+  container.style.left = `${x}px`;
+  container.style.top = `${y}px`;
+
+  const handle = document.createElement('div');
+  handle.className = 'text-drag-handle';
+
+  const textarea = document.createElement('textarea');
+  textarea.className = 'text-input-field';
+  textarea.placeholder = "Type here...";
+
+  const controls = document.createElement('div');
+  controls.className = 'text-tool-controls';
+
+  const btnConfirm = document.createElement('button');
+  btnConfirm.className = 'text-btn text-btn-confirm';
+  btnConfirm.innerHTML = '✓';
+  
+  const btnCancel = document.createElement('button');
+  btnCancel.className = 'text-btn text-btn-cancel';
+  btnCancel.innerHTML = 'X';
+
+  // Assembly
+  controls.appendChild(btnCancel);
+  controls.appendChild(btnConfirm);
+  container.appendChild(handle);
+  container.appendChild(textarea);
+  container.appendChild(controls);
+  wrap.appendChild(container);
+
+  textarea.focus();
+
+  // Drag Logic
+  let isDragging = false;
+  let dragStartX, dragStartY, initialLeft, initialTop;
+
+  handle.addEventListener('mousedown', (e) => {
+    isDragging = true;
+    dragStartX = e.clientX;
+    dragStartY = e.clientY;
+    initialLeft = container.offsetLeft;
+    initialTop = container.offsetTop;
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    const dx = e.clientX - dragStartX;
+    const dy = e.clientY - dragStartY;
+    container.style.left = `${initialLeft + dx}px`;
+    container.style.top = `${initialTop + dy}px`;
+  });
+
+  document.addEventListener('mouseup', () => { isDragging = false; });
+
+  // Buttons Logic
+  btnConfirm.onclick = () => {
+    const text = textarea.value;
+    if (text) {
+      saveCanvasState(canvasId); // Save before stamping for Undo
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#fff';
+      ctx.font = '16px Montserrat';
+      // Calculate relative position to canvas
+      const rect = canvas.getBoundingClientRect();
+      const boxRect = textarea.getBoundingClientRect();
+      // Simple offset adjustment
+      const finalX = (container.offsetLeft - canvas.offsetLeft) + 10;
+      const finalY = (container.offsetTop - canvas.offsetTop) + 35;
+      
+      ctx.fillText(text, finalX, finalY);
+    }
+    wrap.removeChild(container);
+    setTool(groupName, 'pencil', null); // Reset to pencil
+  };
+
+  btnCancel.onclick = () => {
+    wrap.removeChild(container);
+    setTool(groupName, 'pencil', null);
+  };
+}
+
 function stampTextOnCanvas(canvasId, text) {
+  saveCanvasState(canvasId);
   const canvas = document.getElementById(canvasId);
   if(!canvas) return;
   const ctx = canvas.getContext('2d');
@@ -736,46 +815,73 @@ function initCanvas(canvasId, groupName) {
 
   let isDrawing = false;
   let startX, startY;
+  let snapshot;
 
   ctx.strokeStyle = '#2CA6E0'; ctx.lineWidth = 3; ctx.lineCap = 'round';
   ctx.fillStyle = 'rgba(44, 166, 224, 0.1)';
 
   canvas.addEventListener('mousedown', e => {
-    isDrawing = true; startX = e.offsetX; startY = e.offsetY;
     const tool = canvasState[groupName].tool;
-    ctx.beginPath(); ctx.moveTo(startX, startY);
+    
+    // Text Tool Logic (New)
     if (tool === 'text') {
-       const text = prompt("Enter text:", "Header");
-       if (text) {
-         ctx.fillStyle = '#fff'; ctx.font = '16px Montserrat'; ctx.fillText(text, startX, startY);
-         ctx.fillStyle = 'rgba(44, 166, 224, 0.1)'; 
-       }
-       isDrawing = false;
+      createFloatingTextInput(e.offsetX, e.offsetY, canvasId, groupName);
+      return; 
     }
+
+    isDrawing = true; 
+    startX = e.offsetX; 
+    startY = e.offsetY;
+    
+    // Save snapshot for previewing shapes without permanent drawing
+    snapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    saveCanvasState(canvasId); // Save undo state before new action
+
+    ctx.beginPath(); ctx.moveTo(startX, startY);
   });
 
   canvas.addEventListener('mousemove', e => {
     if (!isDrawing) return;
     const tool = canvasState[groupName].tool;
     const x = e.offsetX; const y = e.offsetY;
+
+    // PREVIEW LOGIC: Restore snapshot then draw on top
+    if (tool === 'box' || tool === 'rect' || tool === 'circle' || tool === 'triangle' || tool === 'diamond') {
+      ctx.putImageData(snapshot, 0, 0);
+    }
+
     if (tool === 'pencil') {
       ctx.lineWidth = 3; ctx.globalCompositeOperation = 'source-over'; ctx.lineTo(x, y); ctx.stroke();
     } else if (tool === 'eraser') {
       ctx.lineWidth = 20; ctx.globalCompositeOperation = 'destination-out'; ctx.lineTo(x, y); ctx.stroke(); ctx.globalCompositeOperation = 'source-over'; 
+    } else {
+      // Shape Drawing for Preview
+      drawShape(ctx, tool, startX, startY, x, y);
     }
   });
 
   canvas.addEventListener('mouseup', e => {
     if (!isDrawing) return;
     isDrawing = false;
-    const endX = e.offsetX; const endY = e.offsetY;
+    // Final draw happens here
     const tool = canvasState[groupName].tool;
-    ctx.lineWidth = 3; ctx.strokeStyle = '#2CA6E0'; ctx.globalCompositeOperation = 'source-over';
+    if (tool !== 'pencil' && tool !== 'eraser') {
+      ctx.putImageData(snapshot, 0, 0); // Restore one last time to avoid artifacts
+      drawShape(ctx, tool, startX, startY, e.offsetX, e.offsetY);
+    }
+  });
+}
+
+function drawShape(ctx, tool, startX, startY, endX, endY) {
+    ctx.lineWidth = 3; ctx.strokeStyle = '#2CA6E0'; 
+    ctx.globalCompositeOperation = 'source-over';
     
-    const w = endX - startX; const h = endY - startY;
+    const w = endX - startX; 
+    const h = endY - startY;
+    
     if (tool === 'box' || tool === 'rect') {
       const hFinal = (tool === 'box') ? w : h; 
-      ctx.rect(startX, startY, w, hFinal); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.rect(startX, startY, w, hFinal); ctx.fill(); ctx.stroke();
     } else if (tool === 'circle') {
       const radius = Math.sqrt(Math.pow(w, 2) + Math.pow(h, 2));
       ctx.beginPath(); ctx.arc(startX, startY, radius, 0, 2 * Math.PI); ctx.fill(); ctx.stroke();
@@ -787,18 +893,21 @@ function initCanvas(canvasId, groupName) {
        ctx.lineTo(startX + w/2, endY); ctx.lineTo(startX, startY + h/2);
        ctx.closePath(); ctx.fill(); ctx.stroke();
     }
-  });
 }
 
 function resetCanvasGroup(id1, id2) {
   if(confirm("Clear sketches?")) {
     [id1, id2].forEach(id => {
       const c = document.getElementById(id);
-      if(c) { c.getContext('2d').clearRect(0, 0, c.width, c.height); }
+      if(c) { 
+        c.getContext('2d').clearRect(0, 0, c.width, c.height); 
+        saveCanvasState(id); // Save blank state
+      }
     });
   }
 }
 
+// ... rest of toggle functions ...
 function toggleBrandKit(element) {
   state.brandKit = !state.brandKit;
   document.querySelectorAll('.brand-kit-ref').forEach(el => { el.classList.toggle('selected', state.brandKit); });
