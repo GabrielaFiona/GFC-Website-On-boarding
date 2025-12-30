@@ -13,12 +13,9 @@
 <body class="step2">
 
   <div id="floating-widget" class="collapsed">
-    <div class="fw-header-row">
-      <button class="fw-dock-btn" onclick="toggleWidgetDock(event)" title="Move out of way">»</button>
-      <div class="fw-header-content" onclick="toggleWidget()">
-        <span>Estimated Investment</span>
-        <span id="fw-header-total">$0</span>
-      </div>
+    <div class="fw-header" onclick="toggleWidget()">
+      <span>Estimated Investment</span>
+      <span id="fw-header-total">$0</span>
     </div>
     <div class="fw-content">
       <div id="fw-items"><p class="empty-state">Select a package to start...</p></div>
