@@ -121,10 +121,6 @@ function handleFileUpload(e) {
 
 // UPDATED: Now downloads notes text file too
 function downloadAllFiles() {
-  if (uploadedFiles.length === 0) { 
-    // allow download of notes even if no files
-  }
-
   // 1. Download Attached Files
   uploadedFiles.forEach(file => {
     const url = URL.createObjectURL(file);
@@ -157,26 +153,48 @@ function toggleCustomBrandingUI(panelId) {
   if (panel) panel.classList.toggle('hidden');
 }
 
-// UPDATED: Fixes the 1-character bug by skipping the active input
+// UPDATED: Logic to fix 1-character bug AND ensure Total adds up correctly
 function updateCustomBrandingState() {
   const names = document.querySelectorAll('.custom-brand-name');
   const prices = document.querySelectorAll('.custom-brand-price');
-  let nameVal = "";
-  let priceVal = 0;
-
-  // Find the values from whichever input has data
-  names.forEach(input => { if(input.value) nameVal = input.value; });
-  prices.forEach(input => { if(input.value) priceVal = Number(input.value); });
   
-  // Sync the OTHER inputs, but do NOT overwrite the one the user is typing in
-  names.forEach(input => { 
-    if (input !== document.activeElement) input.value = nameVal; 
+  let activeName = "";
+  let activePrice = 0;
+
+  // 1. Capture the "Source of Truth"
+  // If the user is actively typing in a name field, use that value.
+  if (document.activeElement && document.activeElement.classList.contains('custom-brand-name')) {
+    activeName = document.activeElement.value;
+  } else {
+    // Fallback: iterate to find existing value if not typing
+    names.forEach(input => { if (input.value) activeName = input.value; });
+  }
+
+  // If the user is actively typing in a price field, use that value.
+  if (document.activeElement && document.activeElement.classList.contains('custom-brand-price')) {
+    activePrice = Number(document.activeElement.value);
+  } else {
+    // Fallback: iterate to find existing value if not typing
+    prices.forEach(input => { if (input.value) activePrice = Number(input.value); });
+  }
+
+  // 2. Sync values to the hidden/inactive inputs
+  // We skip the active element so the cursor doesn't reset (fixing the 1-char bug)
+  names.forEach(input => {
+    if (input !== document.activeElement) input.value = activeName;
   });
-  prices.forEach(input => { 
-    if (input !== document.activeElement) input.value = priceVal || ""; 
+  prices.forEach(input => {
+    if (input !== document.activeElement) input.value = activePrice || "";
   });
 
-  state.customBranding = { active: (priceVal > 0), name: nameVal || "Custom Branding", price: priceVal };
+  // 3. Update State & Total
+  // We ensure price is a valid number for calculation
+  state.customBranding = { 
+    active: (activePrice > 0), 
+    name: activeName || "Custom Branding", 
+    price: activePrice || 0
+  };
+
   calculateTotal();
   saveState();
 }
