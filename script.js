@@ -344,12 +344,39 @@ function initStep3() {
   const container = document.getElementById('planContainer');
   const pkgId = state.package ? state.package.id : 'basic';
   container.innerHTML = ''; 
-  if (pkgId === 'basic') renderBasicPlan(container);
-  else if (pkgId === 'standard') renderStandardPlan(container);
-  else if (pkgId === 'advanced') renderAdvancedPlan(container);
+  
+  // Create a separate container for drag-sortable items
+  const sortableList = document.createElement('div');
+  sortableList.id = 'sortable-list';
+  container.appendChild(sortableList);
+
+  if (pkgId === 'basic') renderBasicPlan(sortableList);
+  else if (pkgId === 'standard') renderStandardPlan(sortableList);
+  else if (pkgId === 'advanced') renderAdvancedPlan(sortableList);
+
+  // Inject the download button into the bottom navigation bar
+  injectDownloadButton();
 }
 
-// --- DRAG AND DROP LOGIC (Updated to reorder state.pages) ---
+function injectDownloadButton() {
+  // Remove existing download button if any
+  const existingBtn = document.getElementById('globalDownloadBtn');
+  if(existingBtn) existingBtn.remove();
+
+  const navContainer = document.querySelector('.step-nav-buttons');
+  if(navContainer) {
+    const btn = document.createElement('button');
+    btn.id = 'globalDownloadBtn';
+    btn.className = 'btn-download-all';
+    btn.textContent = 'Download Full Project Assets';
+    btn.onclick = downloadAllProjectAssets;
+    
+    // Insert before the "Next" button (last child)
+    navContainer.insertBefore(btn, navContainer.lastElementChild);
+  }
+}
+
+// --- DRAG AND DROP LOGIC ---
 function enableDragSort(containerId) {
   const container = document.getElementById(containerId);
   if (!container) return;
@@ -414,6 +441,8 @@ function getDragAfterElement(container, y) {
 function renderBasicPlan(container) {
   state.pages.forEach((page, index) => {
     const noteVal = state.pagePlans[page]?.notes || '';
+    const fileListId = `file-list-${index}`;
+    
     const html = `
       <div class="plan-card collapsed" draggable="true" data-page-name="${page}">
         <div class="plan-card-header" onclick="togglePlanCard(this)">
@@ -426,18 +455,33 @@ function renderBasicPlan(container) {
         <div class="plan-card-body">
           <label>Page Goals & Content Notes</label>
           <textarea rows="5" oninput="savePageNote('${page}', this.value)" placeholder="What should be on this page?">${noteVal}</textarea>
+          
+          <div style="margin-top:20px;">
+              <label>Page Assets</label>
+              <div class="file-upload-wrapper">
+                 <label for="file-input-${index}" class="custom-file-upload">
+                   <span style="font-size:1.2rem;">📂</span><br>Click to Upload
+                 </label>
+                 <input id="file-input-${index}" type="file" multiple onchange="handlePageFileUpload('${page}', this, '${fileListId}')" />
+              </div>
+              <div id="${fileListId}" class="mini-file-list"></div>
+          </div>
+
           <div style="margin-top:15px; text-align:right;">
-             <button class="btn btn-secondary btn-download-mini" onclick="downloadBasicPageNotes('${page}')">Download Notes</button>
+             <button class="btn btn-secondary btn-download-mini" onclick="downloadBasicPageNotes('${page}')">Download Notes & Files</button>
           </div>
         </div>
       </div>
     `;
     container.insertAdjacentHTML('beforeend', html);
+    // Slight delay to allow DOM to settle before rendering existing files
+    setTimeout(() => renderPageFileList(page, fileListId), 50);
   });
-  enableDragSort('planContainer');
+  enableDragSort('sortable-list');
 }
 
 function downloadBasicPageNotes(pageName) {
+    // 1. Download Notes
     const plan = state.pagePlans[pageName] || {};
     const notesContent = `PAGE: ${pageName}\nNOTES:\n${plan.notes || 'No notes provided.'}`;
     const blob = new Blob([notesContent], { type: "text/plain" });
@@ -448,16 +492,31 @@ function downloadBasicPageNotes(pageName) {
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
+
+    // 2. Download Files
+    const files = pageAttachments[pageName] || [];
+    let delay = 500;
+    files.forEach(file => {
+      setTimeout(() => {
+        const fUrl = URL.createObjectURL(file);
+        const fa = document.createElement('a');
+        fa.href = fUrl;
+        fa.download = file.name;
+        document.body.appendChild(fa);
+        fa.click();
+        document.body.removeChild(fa);
+      }, delay);
+      delay += 500;
+    });
 }
 
 
 function renderStandardPlan(container) {
   const intro = `<div style="text-align:center; margin-bottom:30px;"><p>Sketch your layout for Mobile and Desktop views.</p></div>`;
-  container.insertAdjacentHTML('beforeend', intro);
+  // Insert intro before the list
+  container.insertAdjacentHTML('beforebegin', intro);
   renderSharedCanvasCards(container); 
-  const downloadAllBtn = `<button class="btn-download-all" onclick="downloadAllProjectAssets()">Download Full Project Assets</button>`;
-  container.insertAdjacentHTML('beforeend', downloadAllBtn);
-  enableDragSort('planContainer');
+  enableDragSort('sortable-list');
 }
 
 function renderAdvancedPlan(container) {
@@ -494,15 +553,14 @@ function renderAdvancedPlan(container) {
       </div>
     </div>
   `;
-  container.insertAdjacentHTML('beforeend', flowchartHtml);
+  // Insert flow chart BEFORE the list
+  container.insertAdjacentHTML('beforebegin', flowchartHtml);
   setTimeout(() => { initCanvas('flowchartCanvas', 'flowGroup'); }, 100);
 
   const intro = `<div style="text-align:center; margin:40px 0 30px 0;"><h2>Deep Dive: Page Planning</h2><p>Define strategy, SEO, and Layout for every page.</p></div>`;
-  container.insertAdjacentHTML('beforeend', intro);
+  container.insertAdjacentHTML('beforebegin', intro);
   renderSharedCanvasCards(container, true); 
-  const downloadAllBtn = `<button class="btn-download-all" onclick="downloadAllProjectAssets()">Download Full Project Assets</button>`;
-  container.insertAdjacentHTML('beforeend', downloadAllBtn);
-  enableDragSort('planContainer');
+  enableDragSort('sortable-list');
 }
 
 
@@ -513,8 +571,6 @@ function renderSharedCanvasCards(container, isAdvanced = false) {
     const groupName = `group-${index}`;
     const fileListId = `file-list-${index}`;
     
-    // REMOVED orderOptions dropdown logic
-
     let strategyHtml = '';
     if (isAdvanced) {
       const plan = state.pagePlans[page] || {};
@@ -654,7 +710,15 @@ async function downloadAllProjectAssets() {
   if (!confirm("This will download all sketches, files, and notes. Allow multiple downloads?")) return;
   for (const page of state.pages) {
     const index = state.pages.indexOf(page);
-    downloadPageAssets(page, `cvs-m-${index}`, `cvs-d-${index}`);
+    const mId = `cvs-m-${index}`;
+    const dId = `cvs-d-${index}`;
+    
+    // Check if canvas exists (Basic plan won't have them)
+    if(document.getElementById(mId)) {
+      downloadPageAssets(page, mId, dId);
+    } else {
+      downloadBasicPageNotes(page);
+    }
     await new Promise(r => setTimeout(r, 1000));
   }
 }
@@ -998,13 +1062,7 @@ function updateBrandKitDisplay() {
   });
 }
 
-// --- UPDATED WIDGET BEHAVIOR ---
-
-let isWidgetDragging = false;
-
 function toggleWidget() {
-  // Only toggle if we are NOT in the middle of a drag
-  if (isWidgetDragging) return;
   const widget = document.getElementById('floating-widget');
   if (widget) widget.classList.toggle('collapsed');
 }
@@ -1030,47 +1088,9 @@ function initCollapsibles() {
   });
 }
 
-function initDraggableWidget() {
-  const widget = document.getElementById('floating-widget');
-  const header = widget ? widget.querySelector('.fw-header') : null;
-  if(!widget || !header) return;
-
-  let startX = 0;
-  let initialRight = 30; // Matches css 'right' property
-  let isDown = false;
-
-  header.addEventListener('mousedown', (e) => {
-    isDown = true;
-    isWidgetDragging = false; // Reset drag status
-    startX = e.clientX;
-    // Calculate current 'right' value from computed style
-    const style = window.getComputedStyle(widget);
-    initialRight = parseInt(style.right, 10);
-  });
-
-  document.addEventListener('mousemove', (e) => {
-    if (!isDown) return;
-    const dx = startX - e.clientX; // Dragging left increases 'right' value
-    
-    // Threshold to consider it a drag vs a click
-    if (Math.abs(dx) > 5) isWidgetDragging = true;
-    
-    widget.style.right = `${initialRight + dx}px`;
-    widget.style.left = 'auto'; // ensure we are positioning via right
-  });
-
-  document.addEventListener('mouseup', () => {
-    isDown = false;
-    // Note: isWidgetDragging stays true if we moved, 
-    // blocking the 'click' event in toggleWidget
-    setTimeout(() => { isWidgetDragging = false; }, 100);
-  });
-}
-
 document.addEventListener('DOMContentLoaded', () => {
   loadState();
   initCollapsibles();
-  initDraggableWidget(); // NEW DRAG LOGIC
   if (window.location.pathname.includes('step2')) {
     initPageBuilder();
     if(state.package) handlePackageSelected(true);
