@@ -1,52 +1,90 @@
-// --- STATE MANAGEMENT ---
+// ======================================================
+// --- 1. USER DATA SOURCE (https://docs.google.com/spreadsheets/d/1L9Nic5O9H7ihnjFVoScWl_r1FFFn4-Sjdd_kCQYrA3k/edit?usp=sharing) ---
+// ======================================================
+
+// This replaces the old suggestion system. 
+// "pages": The suggested sitemap.
+// "layouts": The default blocks for those pages.
+const INDUSTRY_DB = {
+  "Restaurant": {
+    pages: ["Home", "Menu", "Reservations", "Events", "Contact"],
+    layouts: {
+      "Home": ["Hero: Food Visuals", "Intro: Atmosphere", "Featured Dishes", "Testimonials", "Map & Hours", "Footer"],
+      "Menu": ["Menu Categories", "Starters List", "Mains List", "Desserts List", "PDF Download Link", "Footer"],
+      "Reservations": ["Booking Widget (OpenTable/Resy)", "Policy Text", "Contact Info", "Footer"]
+    }
+  },
+  "Boutique": {
+    pages: ["Home", "Shop All", "New Arrivals", "Lookbook", "Contact"],
+    layouts: {
+      "Home": ["Hero: Lifestyle Image", "New Arrivals Slider", "Category Grid", "Newsletter Signup", "Instagram Feed", "Footer"],
+      "Shop All": ["Filters Sidebar", "Product Grid (3-col)", "Pagination", "Footer"],
+      "Lookbook": ["Masonry Gallery", "Shop the Look Links", "Footer"]
+    }
+  },
+  "Contractor": {
+    pages: ["Home", "Services", "Portfolio", "Testimonials", "Get a Quote"],
+    layouts: {
+      "Home": ["Hero: Completed Project", "Trust Badges/Licensing", "Services Overview", "Process Steps", "CTA: Free Estimate", "Footer"],
+      "Portfolio": ["Gallery Grid", "Before/After Slider", "Project Details", "Footer"],
+      "Get a Quote": ["Multi-step Form", "Contact Details", "Service Area Map", "Footer"]
+    }
+  },
+  "Hotel": {
+    pages: ["Home", "Rooms", "Amenities", "Local Guide", "Booking"],
+    layouts: {
+      "Home": ["Hero: Resort View", "Booking Bar (Dates)", "Room Previews", "Amenities Highlights", "Footer"],
+      "Rooms": ["Room List (Image + Price)", "Comparison Table", "Footer"]
+    }
+  },
+  "Ecommerce": {
+    pages: ["Home", "Shop", "About", "FAQ", "Contact"],
+    layouts: {
+      "Home": ["Hero: Sale Banner", "Best Sellers", "Brand Story", "Trust Icons", "Footer"]
+    }
+  },
+  // Add your 70+ industries here following this format
+};
+
+// Fallback layouts if a specific page doesn't have a match in the industry
+const GENERIC_LAYOUTS = {
+  "Home": ["Hero Section", "Features/Services", "About Snippet", "Testimonials", "Call to Action", "Footer"],
+  "Contact": ["Contact Form", "Map/Location", "Social Links", "Footer"],
+  "About": ["Hero: Team Photo", "Our Story", "Values/Mission", "Team Members", "Footer"],
+  "Services": ["Service List", "Pricing Tables", "FAQ Accordion", "Footer"],
+  "Gallery": ["Image Grid", "Lightbox Viewer", "Footer"],
+  "default": ["Header", "Content Block", "Image Block", "Call to Action", "Footer"]
+};
+
+// Available blocks for the "Add Block" feature
+const BLOCK_LIBRARY = [
+  "Hero Section", "Text Content", "Image/Gallery", "Contact Form", 
+  "Testimonials", "Map/Location", "Team Grid", "Pricing Table", 
+  "FAQ Accordion", "Newsletter Signup", "Video Player", "Calendar/Booking",
+  "Blog Post Feed", "Social Media Feed"
+];
+
+// ======================================================
+// --- 2. STATE MANAGEMENT ---
+// ======================================================
+
 const state = {
   package: null,
   brandKit: false,
   industry: "",
   pages: [],
   addons: [],
-  pagePlans: {},
+  // Stores the block layout for each page: { "Home": ["Hero", "Footer"], ... }
+  pageLayouts: {}, 
+  // Stores simple notes for Package 1
+  pageNotes: {}, 
   brandingProvided: null,
   customBranding: { active: false, name: "", price: 0 },
-  advancedNotes: ""
 };
 
-// Store files in memory
+// Store uploaded files in memory
 const pageAttachments = {}; 
-
 const BASE_BRAND_KIT_PRICE = 500;
-
-const SUGGESTION_DB = {
-  "restaurant": ["Menu", "Reservations", "Events", "About Us", "Gallery", "Catering"],
-  "boutique": ["Shop", "Lookbook", "About Us", "FAQ", "Press", "Returns"],
-  "contractor": ["Services", "Projects", "Testimonials", "About Us", "Get Quote"],
-  "hotel": ["Rooms", "Amenities", "Local Guide", "Booking", "Gallery"],
-  "ecommerce": ["Shop All", "New Arrivals", "About", "Shipping Info", "Track Order"],
-  "default": ["Home", "Contact", "About", "Services", "Gallery"]
-};
-
-// --- UNDO HISTORY ---
-const canvasHistory = {};
-
-function saveCanvasState(canvasId) {
-  const c = document.getElementById(canvasId);
-  if (!canvasHistory[canvasId]) canvasHistory[canvasId] = [];
-  if (canvasHistory[canvasId].length > 10) canvasHistory[canvasId].shift(); // Limit history to 10
-  canvasHistory[canvasId].push(c.toDataURL());
-}
-
-function undoLastAction(canvasId) {
-  if (!canvasHistory[canvasId] || canvasHistory[canvasId].length === 0) return;
-  const lastState = canvasHistory[canvasId].pop();
-  const c = document.getElementById(canvasId);
-  const ctx = c.getContext('2d');
-  const img = new Image();
-  img.onload = () => {
-    ctx.clearRect(0, 0, c.width, c.height);
-    ctx.drawImage(img, 0, 0);
-  };
-  img.src = lastState;
-}
 
 // --- PERSISTENCE ---
 function saveState() {
@@ -63,19 +101,23 @@ function nextStep(stepNumber) {
   window.location.href = `step${stepNumber}.html`;
 }
 
-// --- STEP 2 LOGIC ---
+// ======================================================
+// --- 3. STEP 2 LOGIC (STRUCTURE & PACKAGES) ---
+// ======================================================
+
 function selectPackage(id, name, price, limit, brandKitBundlePrice, extraPageCost, element) {
   document.querySelectorAll('.package-card').forEach(el => el.classList.remove('selected'));
   if (element) element.classList.add('selected');
 
   state.package = { id, name, price, limit, brandKitBundlePrice, extraPageCost };
   
+  // Initialize pages if empty
   if (state.pages.length === 0) state.pages = ['Home', 'Contact'];
   
   handlePackageSelected();
   calculateTotal();
   updateBrandKitDisplay();
-  updatePageBuilderUI(); 
+  renderActivePages(); 
   saveState();
 }
 
@@ -86,161 +128,92 @@ function handlePackageSelected(isRestore) {
   
   if (notice) notice.classList.add('hidden');
   if (unlocked) unlocked.classList.remove('hidden');
-  if (pageBuilder) {
-    pageBuilder.classList.remove('hidden');
-  }
+  if (pageBuilder) pageBuilder.classList.remove('hidden');
 
   const branding = document.getElementById('brandingSection');
   if (branding && !isRestore) branding.classList.remove('collapsed'); 
-  
-  if (window.initCollapsibles) window.initCollapsibles(); 
 }
 
-function toggleBrandingPanels(value) {
-  state.brandingProvided = value;
-  const yesPanel = document.getElementById('brandingProvidedPanel');
-  const noPanel = document.getElementById('brandingNotProvidedPanel');
-  if (yesPanel) yesPanel.classList.toggle('hidden', value !== 'yes');
-  if (noPanel) noPanel.classList.toggle('hidden', value !== 'no');
-  saveState();
-}
-
-// STEP 2 FILE UPLOAD (BRANDING)
-let uploadedFiles = []; 
-function handleFileUpload(e) {
-  const files = e.target.files;
-  const box = document.getElementById('file-staging-box');
-  const list = document.getElementById('file-list-content');
-  
-  if (!files || !files.length) {
-    box.classList.add('hidden');
-    return;
-  }
-  
-  box.classList.remove('hidden');
-  list.innerHTML = ''; 
-  uploadedFiles = Array.from(files); 
-
-  uploadedFiles.forEach(file => {
-    const row = document.createElement('div');
-    row.className = 'file-list-item';
-    const nameSpan = document.createElement('span');
-    nameSpan.textContent = file.name;
-    const url = URL.createObjectURL(file);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = file.name;
-    link.className = 'btn-download-mini';
-    link.textContent = 'Download';
-    row.appendChild(nameSpan);
-    row.appendChild(link);
-    list.appendChild(row);
-  });
-}
-
-function downloadAllFiles() {
-  uploadedFiles.forEach(file => {
-    const url = URL.createObjectURL(file);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = file.name;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  });
-
-  const notesArea = document.getElementById('brandingProvidedNotes');
-  if (notesArea && notesArea.value.trim() !== "") {
-    const blob = new Blob([notesArea.value], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = "branding-notes.txt";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  } else if (uploadedFiles.length === 0) {
-    alert("No files or notes to download.");
-  }
-}
-
-function toggleCustomBrandingUI(panelId) {
-  const panel = document.getElementById(panelId);
-  if (panel) panel.classList.toggle('hidden');
-}
-
-function updateCustomBrandingState() {
-  const names = document.querySelectorAll('.custom-brand-name');
-  const prices = document.querySelectorAll('.custom-brand-price');
-  
-  let activeName = "";
-  let activePrice = 0;
-
-  if (document.activeElement && document.activeElement.classList.contains('custom-brand-name')) {
-    activeName = document.activeElement.value;
-  } else {
-    names.forEach(input => { if (input.value) activeName = input.value; });
-  }
-
-  if (document.activeElement && document.activeElement.classList.contains('custom-brand-price')) {
-    activePrice = Number(document.activeElement.value);
-  } else {
-    prices.forEach(input => { if (input.value) activePrice = Number(input.value); });
-  }
-
-  names.forEach(input => {
-    if (input !== document.activeElement) input.value = activeName;
-  });
-  prices.forEach(input => {
-    if (input !== document.activeElement) input.value = activePrice || "";
-  });
-
-  state.customBranding = { 
-    active: (activePrice > 0), 
-    name: activeName || "Custom Branding", 
-    price: activePrice || 0
-  };
-
-  calculateTotal();
-  saveState();
-}
-
+// --- INDUSTRY SEARCH (AUTOFILL) ---
 function initPageBuilder() {
   const input = document.getElementById('industryInput');
-  const fileInput = document.getElementById('brandingUploads');
-  if (fileInput) fileInput.addEventListener('change', handleFileUpload);
+  const suggestionsBox = document.createElement('ul');
+  suggestionsBox.id = 'industry-suggestions';
+  suggestionsBox.className = 'autocomplete-list hidden';
+  
+  if(input) {
+    input.parentNode.style.position = 'relative'; // Ensure relative parent for absolute dropdown
+    input.parentNode.appendChild(suggestionsBox);
 
-  if (state.brandingProvided) {
-    const radio = document.querySelector(`input[name="brandingProvided"][value="${state.brandingProvided}"]`);
-    if (radio) { radio.checked = true; toggleBrandingPanels(state.brandingProvided); }
+    input.addEventListener('input', (e) => handleIndustrySearch(e.target.value));
+    
+    // Close suggestions on click outside
+    document.addEventListener('click', (e) => {
+      if (e.target !== input && e.target !== suggestionsBox) {
+        suggestionsBox.classList.add('hidden');
+      }
+    });
   }
-  if (state.customBranding && state.customBranding.price > 0) {
-     const names = document.querySelectorAll('.custom-brand-name');
-     const prices = document.querySelectorAll('.custom-brand-price');
-     names.forEach(i => i.value = state.customBranding.name);
-     prices.forEach(i => i.value = state.customBranding.price);
-     document.querySelectorAll('.custom-panel').forEach(p => p.classList.remove('hidden'));
+
+  // Restore state
+  if (state.industry && input) {
+    input.value = state.industry;
+    renderChips(getIndustryPages(state.industry));
   }
-  if (!input) return;
   renderActivePages();
-  input.addEventListener('keyup', (e) => {
-    if (e.key === 'Enter') { generateSuggestions(input.value); state.industry = input.value; saveState(); }
-  });
-  if (state.industry) { input.value = state.industry; generateSuggestions(state.industry); }
 }
 
-function generateSuggestions(query) {
+function handleIndustrySearch(query) {
+  const list = document.getElementById('industry-suggestions');
+  if (!query) {
+    list.classList.add('hidden');
+    return;
+  }
+
+  // "Generous Autofill": Case insensitive check
+  const matches = Object.keys(INDUSTRY_DB).filter(key => 
+    key.toLowerCase().includes(query.toLowerCase())
+  );
+
+  list.innerHTML = '';
+  if (matches.length > 0) {
+    list.classList.remove('hidden');
+    matches.forEach(match => {
+      const li = document.createElement('li');
+      li.textContent = match;
+      li.onclick = () => selectIndustry(match);
+      list.appendChild(li);
+    });
+  } else {
+    list.classList.add('hidden');
+  }
+}
+
+function selectIndustry(industryName) {
+  const input = document.getElementById('industryInput');
+  input.value = industryName;
+  state.industry = industryName;
+  document.getElementById('industry-suggestions').classList.add('hidden');
+  
+  // Auto-populate suggested pages
+  const suggestedPages = getIndustryPages(industryName);
+  renderChips(suggestedPages);
+  
+  saveState();
+}
+
+function getIndustryPages(industryName) {
+  if (INDUSTRY_DB[industryName]) {
+    return INDUSTRY_DB[industryName].pages;
+  }
+  return GENERIC_LAYOUTS["default"]; // Fallback
+}
+
+function renderChips(pages) {
   const container = document.getElementById('suggestionChips');
   if (!container) return;
   container.innerHTML = '';
-  let found = false;
-  Object.keys(SUGGESTION_DB).forEach(key => {
-    if (query.toLowerCase().includes(key)) { renderChips(SUGGESTION_DB[key], container); found = true; }
-  });
-  if (!found) renderChips(SUGGESTION_DB['default'], container);
-}
-
-function renderChips(pages, container) {
+  
   pages.forEach(page => {
     const chip = document.createElement('div');
     chip.className = 'suggestion-chip';
@@ -255,11 +228,18 @@ function addPage(nameRaw) {
   const input = document.getElementById('customPageInput');
   const name = nameRaw || input.value.trim();
   if (!name) return;
+  
   if (!state.pages.includes(name)) {
     state.pages.push(name);
+    // Initialize default layout for this page immediately
+    if (!state.pageLayouts[name]) {
+        state.pageLayouts[name] = getDefaultLayoutForPage(name);
+    }
+    
     if (input) input.value = '';
     renderActivePages();
-    generateSuggestions(state.industry || '');
+    // Re-render chips to show "added" state
+    if (state.industry) renderChips(getIndustryPages(state.industry));
     calculateTotal();
     saveState();
   }
@@ -268,7 +248,7 @@ function addPage(nameRaw) {
 function removePage(name) {
   state.pages = state.pages.filter(p => p !== name);
   renderActivePages();
-  generateSuggestions(state.industry || '');
+  if (state.industry) renderChips(getIndustryPages(state.industry));
   calculateTotal();
   saveState();
 }
@@ -278,6 +258,7 @@ function renderActivePages() {
   const countEl = document.getElementById('pageCountDisplay');
   const warning = document.getElementById('pageLimitWarning');
   if (!list || !state.package) return;
+  
   list.innerHTML = '';
   state.pages.forEach(page => {
     const tag = document.createElement('div');
@@ -285,9 +266,11 @@ function renderActivePages() {
     tag.innerHTML = `${page} <span class="page-tag-remove" onclick="removePage('${page}')">&times;</span>`;
     list.appendChild(tag);
   });
+  
   const limit = state.package.limit;
   const current = state.pages.length;
   if (countEl) countEl.textContent = `${current}/${limit}`;
+  
   if (current > limit) {
     const extra = current - limit;
     const cost = extra * state.package.extraPageCost;
@@ -296,7 +279,18 @@ function renderActivePages() {
   } else { warning.classList.remove('visible'); }
 }
 
-function updatePageBuilderUI() { renderActivePages(); }
+function getDefaultLayoutForPage(pageName) {
+  // 1. Check Industry Specific Layouts first
+  if (state.industry && INDUSTRY_DB[state.industry] && INDUSTRY_DB[state.industry].layouts[pageName]) {
+    return [...INDUSTRY_DB[state.industry].layouts[pageName]]; // Return copy
+  }
+  // 2. Check Generic Layouts
+  if (GENERIC_LAYOUTS[pageName]) {
+    return [...GENERIC_LAYOUTS[pageName]];
+  }
+  // 3. Default
+  return [...GENERIC_LAYOUTS["default"]];
+}
 
 function calculateTotal() {
   const fwItems = document.getElementById('fw-items');
@@ -324,12 +318,10 @@ function calculateTotal() {
     html += `<div class="fw-item"><span>+ ${state.customBranding.name}</span><span>$${state.customBranding.price.toLocaleString()}</span></div>`;
     total += state.customBranding.price;
   }
-  state.addons.forEach(addon => {
-    html += `<div class="fw-item"><span>+ ${addon.name}</span><span>$${Number(addon.price).toLocaleString()}</span></div>`;
-    total += Number(addon.price) || 0;
-  });
+  
   if (!html) html = '<p class="empty-state">Select a package to start...</p>';
   fwItems.innerHTML = html;
+  
   const headerTotalEl = document.getElementById('fw-header-total');
   if (headerTotalEl) headerTotalEl.textContent = `$${total.toLocaleString()}`;
   const fullTotalEl = document.getElementById('fw-full-total');
@@ -338,123 +330,46 @@ function calculateTotal() {
   if (depositEl) depositEl.textContent = `$${(total / 2).toLocaleString()}`;
 }
 
-// --- STEP 3: PLAN & CANVAS LOGIC ---
+
+// ======================================================
+// --- 4. STEP 3 LOGIC (LAYOUT BUILDER) ---
+// ======================================================
+
 function initStep3() {
   if (!document.body.classList.contains('step3')) return;
   const container = document.getElementById('planContainer');
   const pkgId = state.package ? state.package.id : 'basic';
   container.innerHTML = ''; 
+
+  // Basic Package: Text Notes Only
+  if (pkgId === 'basic') {
+    renderBasicPlan(container);
+  } 
+  // Standard & Advanced: Visual Block Builder
+  else {
+    renderVisualLayoutBuilder(container);
+  }
   
-  // Create a separate container for drag-sortable items
-  const sortableList = document.createElement('div');
-  sortableList.id = 'sortable-list';
-  container.appendChild(sortableList);
-
-  if (pkgId === 'basic') renderBasicPlan(sortableList);
-  else if (pkgId === 'standard') renderStandardPlan(sortableList);
-  else if (pkgId === 'advanced') renderAdvancedPlan(sortableList);
-
-  // Inject the download button into the bottom navigation bar
   injectDownloadButton();
 }
 
-function injectDownloadButton() {
-  // Remove existing download button if any
-  const existingBtn = document.getElementById('globalDownloadBtn');
-  if(existingBtn) existingBtn.remove();
-
-  const navContainer = document.querySelector('.step-nav-buttons');
-  if(navContainer) {
-    const btn = document.createElement('button');
-    btn.id = 'globalDownloadBtn';
-    btn.className = 'btn-download-all';
-    btn.textContent = 'Download Full Project Assets';
-    btn.onclick = downloadAllProjectAssets;
-    
-    // Insert before the "Next" button (last child)
-    navContainer.insertBefore(btn, navContainer.lastElementChild);
-  }
-}
-
-// --- DRAG AND DROP LOGIC ---
-function enableDragSort(containerId) {
-  const container = document.getElementById(containerId);
-  if (!container) return;
-
-  container.addEventListener('dragstart', (e) => {
-    if (e.target.classList.contains('plan-card')) {
-      e.target.classList.add('dragging');
-    }
-  });
-
-  container.addEventListener('dragend', (e) => {
-    if (e.target.classList.contains('plan-card')) {
-      e.target.classList.remove('dragging');
-      // Update State Order
-      const newOrder = [];
-      const cards = container.querySelectorAll('.plan-card');
-      cards.forEach(card => {
-        if(card.dataset.pageName) newOrder.push(card.dataset.pageName);
-      });
-      
-      // Only if order changed
-      if (JSON.stringify(state.pages) !== JSON.stringify(newOrder)) {
-        state.pages = newOrder;
-        saveAllCanvasStates(); // Save canvas before re-rendering or just update indices
-        
-        // Update Index Labels (1, 2, 3...)
-        cards.forEach((card, idx) => {
-          const headerSpan = card.querySelector('.plan-card-header span:last-child');
-          if(headerSpan) headerSpan.textContent = `${idx + 1}. ${card.dataset.pageName}`;
-        });
-        
-        saveState();
-      }
-    }
-  });
-
-  container.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    const afterElement = getDragAfterElement(container, e.clientY);
-    const draggable = container.querySelector('.dragging');
-    if (afterElement == null) {
-      container.appendChild(draggable);
-    } else {
-      container.insertBefore(draggable, afterElement);
-    }
-  });
-}
-
-function getDragAfterElement(container, y) {
-  const draggableElements = [...container.querySelectorAll('.plan-card:not(.dragging)')];
-  return draggableElements.reduce((closest, child) => {
-    const box = child.getBoundingClientRect();
-    const offset = y - box.top - box.height / 2;
-    if (offset < 0 && offset > closest.offset) {
-      return { offset: offset, element: child };
-    } else {
-      return closest;
-    }
-  }, { offset: Number.NEGATIVE_INFINITY }).element;
-}
-
+// --- BASIC PLAN (Text Only) ---
 function renderBasicPlan(container) {
   state.pages.forEach((page, index) => {
-    const noteVal = state.pagePlans[page]?.notes || '';
+    const noteVal = state.pageNotes[page] || '';
     const fileListId = `file-list-${index}`;
     
     const html = `
-      <div class="plan-card collapsed" draggable="true" data-page-name="${page}">
+      <div class="plan-card collapsed">
         <div class="plan-card-header" onclick="togglePlanCard(this)">
             <div class="plan-card-title-group">
                 <span class="plan-card-chevron">▼</span>
                 <span>${index + 1}. ${page}</span>
             </div>
-            <div class="drag-handle">☰</div>
         </div>
         <div class="plan-card-body">
           <label>Page Goals & Content Notes</label>
-          <textarea rows="5" oninput="savePageNote('${page}', this.value)" placeholder="What should be on this page?">${noteVal}</textarea>
+          <textarea rows="5" oninput="savePageNote('${page}', this.value)" placeholder="Describe what you want on this page...">${noteVal}</textarea>
           
           <div style="margin-top:20px;">
               <label>Page Assets</label>
@@ -466,206 +381,238 @@ function renderBasicPlan(container) {
               </div>
               <div id="${fileListId}" class="mini-file-list"></div>
           </div>
-
-          <div style="margin-top:15px; text-align:right;">
-             <button class="btn btn-secondary btn-download-mini" onclick="downloadBasicPageNotes('${page}')">Download Notes & Files</button>
-          </div>
         </div>
       </div>
     `;
     container.insertAdjacentHTML('beforeend', html);
-    // Slight delay to allow DOM to settle before rendering existing files
     setTimeout(() => renderPageFileList(page, fileListId), 50);
   });
-  enableDragSort('sortable-list');
 }
 
-function downloadBasicPageNotes(pageName) {
-    // 1. Download Notes
-    const plan = state.pagePlans[pageName] || {};
-    const notesContent = `PAGE: ${pageName}\nNOTES:\n${plan.notes || 'No notes provided.'}`;
-    const blob = new Blob([notesContent], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${pageName}-notes.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-
-    // 2. Download Files
-    const files = pageAttachments[pageName] || [];
-    let delay = 500;
-    files.forEach(file => {
-      setTimeout(() => {
-        const fUrl = URL.createObjectURL(file);
-        const fa = document.createElement('a');
-        fa.href = fUrl;
-        fa.download = file.name;
-        document.body.appendChild(fa);
-        fa.click();
-        document.body.removeChild(fa);
-      }, delay);
-      delay += 500;
-    });
+function savePageNote(pageName, text) {
+  state.pageNotes[pageName] = text;
+  saveState();
 }
 
-
-function renderStandardPlan(container) {
-  const intro = `<div style="text-align:center; margin-bottom:30px;"><p>Sketch your layout for Mobile and Desktop views.</p></div>`;
-  // Insert intro before the list
+// --- VISUAL LAYOUT BUILDER (Packages 2 & 3) ---
+function renderVisualLayoutBuilder(container) {
+  const intro = `<div style="text-align:center; margin-bottom:30px;"><p>Drag and drop blocks to arrange your page layout.</p></div>`;
   container.insertAdjacentHTML('beforebegin', intro);
-  renderSharedCanvasCards(container); 
-  enableDragSort('sortable-list');
-}
 
-function renderAdvancedPlan(container) {
-  const flowchartHtml = `
-    <div class="plan-card collapsed">
-      <div class="plan-card-header" onclick="togglePlanCard(this)">
-        <div class="plan-card-title-group">
-          <span style="font-size:1.5rem">⚡</span>
-          <span>Business Logic & Integrations Flow</span>
-        </div>
-      </div>
-      <div class="plan-card-body">
-        <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:20px;">
-          Map how your website pages connect to your business tools.
-        </p>
-        <div class="mockup-toolbar">
-           <button class="tool-btn active" onclick="setTool('flowGroup', 'pencil', this)">✏️</button>
-           <button class="tool-btn" onclick="setTool('flowGroup', 'box', this)">⬜</button>
-           <button class="tool-btn" onclick="setTool('flowGroup', 'diamond', this)">◇</button>
-           <button class="tool-btn" onclick="setTool('flowGroup', 'circle', this)">⭕</button>
-           <button class="tool-btn" onclick="setTool('flowGroup', 'text', this)">T</button>
-           <button class="tool-btn" onclick="setTool('flowGroup', 'eraser', this)">🧹</button>
-           <div style="width:1px; height:20px; background:var(--border-light); margin:0 10px;"></div>
-           <button class="tool-btn tool-btn-danger" onclick="undoLastAction('flowchartCanvas')">↩ Undo</button>
-           <button class="tool-btn tool-btn-danger" onclick="resetCanvasGroup('flowchartCanvas')">Reset</button>
-        </div>
-        <div class="flowchart-container-wrap">
-          <div class="flowchart-sidebar">
-            <span style="font-size:0.75rem; text-transform:uppercase; letter-spacing:1px; color:var(--accent-blue);">Quick Stamps</span>
-            ${state.pages.map(p => `<div class="flowchart-stamp" onclick="stampTextOnCanvas('flowchartCanvas', '${p}')">${p}</div>`).join('')}
-          </div>
-          <canvas id="flowchartCanvas" class="flowchart-canvas" width="700" height="500"></canvas>
-        </div>
-      </div>
-    </div>
-  `;
-  // Insert flow chart BEFORE the list
-  container.insertAdjacentHTML('beforebegin', flowchartHtml);
-  setTimeout(() => { initCanvas('flowchartCanvas', 'flowGroup'); }, 100);
-
-  const intro = `<div style="text-align:center; margin:40px 0 30px 0;"><h2>Deep Dive: Page Planning</h2><p>Define strategy, SEO, and Layout for every page.</p></div>`;
-  container.insertAdjacentHTML('beforebegin', intro);
-  renderSharedCanvasCards(container, true); 
-  enableDragSort('sortable-list');
-}
-
-
-function renderSharedCanvasCards(container, isAdvanced = false) {
   state.pages.forEach((page, index) => {
-    const mobileId = `cvs-m-${index}`;
-    const desktopId = `cvs-d-${index}`;
-    const groupName = `group-${index}`;
     const fileListId = `file-list-${index}`;
     
-    let strategyHtml = '';
-    if (isAdvanced) {
-      const plan = state.pagePlans[page] || {};
-      strategyHtml = `
-        <div class="adv-meta-grid">
-          <div>
-            <label>SEO Focus Keyword</label>
-            <input type="text" placeholder="e.g. 'Best Pizza Newport'" 
-              value="${plan.seo || ''}" onchange="savePageMeta('${page}', 'seo', this.value)">
-          </div>
-          <div>
-            <label>Conversion Action</label>
-            <select onchange="savePageMeta('${page}', 'conversion', this.value)">
-              <option value="" disabled ${!plan.conversion ? 'selected' : ''}>Select Goal...</option>
-              <option value="Buy Now" ${plan.conversion === 'Buy Now' ? 'selected' : ''}>Buy Now / Checkout</option>
-              <option value="Book Call" ${plan.conversion === 'Book Call' ? 'selected' : ''}>Book Appointment</option>
-              <option value="Contact Form" ${plan.conversion === 'Contact Form' ? 'selected' : ''}>Fill Contact Form</option>
-              <option value="Subscribe" ${plan.conversion === 'Subscribe' ? 'selected' : ''}>Newsletter Signup</option>
-            </select>
-          </div>
-          <div>
-            <label>Integration Needs</label>
-            <input type="text" placeholder="e.g. Stripe, Calendly"
-              value="${plan.integrations || ''}" onchange="savePageMeta('${page}', 'integrations', this.value)">
-          </div>
-        </div>
-      `;
+    // Ensure we have a layout, if not, get the default
+    if (!state.pageLayouts[page]) {
+      state.pageLayouts[page] = getDefaultLayoutForPage(page);
     }
-
+    
     const html = `
-      <div class="plan-card collapsed" id="card-${index}" draggable="true" data-page-name="${page}">
+      <div class="plan-card collapsed" data-page="${page}">
         <div class="plan-card-header" onclick="togglePlanCard(this)">
-          <div class="plan-card-title-group">
-            <span class="plan-card-chevron">▼</span>
-            <span>${index + 1}. ${page}</span>
-          </div>
-          <div class="drag-handle" title="Drag to reorder">☰</div>
+            <div class="plan-card-title-group">
+                <span class="plan-card-chevron">▼</span>
+                <span>${index + 1}. ${page}</span>
+            </div>
         </div>
         <div class="plan-card-body">
+          <div class="layout-builder-wrapper">
+             <label>Layout Structure</label>
+             <p style="font-size:0.8rem; margin-bottom:15px; opacity:0.7;">Drag items to reorder. Click X to remove.</p>
+             
+             <div class="layout-blocks-container" id="blocks-${index}">
+                ${renderBlocks(page)}
+             </div>
+
+             <button class="btn-dashed" onclick="openBlockLibrary('${page}', 'blocks-${index}')">+ Add Block</button>
+          </div>
+
+          <div style="margin-top:30px; padding-top:20px; border-top:1px solid var(--border-light);">
+              <label>Specific Content Notes</label>
+              <textarea rows="3" oninput="savePageNote('${page}', this.value)" placeholder="Any specific details for these blocks?">${state.pageNotes[page] || ''}</textarea>
+          </div>
           
-          <div class="mockup-toolbar" id="toolbar-${index}">
-            <button class="tool-btn active" title="Pencil" onclick="setTool('${groupName}', 'pencil', this)">✏️</button>
-            <button class="tool-btn" title="Box" onclick="setTool('${groupName}', 'box', this)">⬜</button>
-            <button class="tool-btn" title="Rectangle" onclick="setTool('${groupName}', 'rect', this)">▬</button>
-            <button class="tool-btn" title="Triangle" onclick="setTool('${groupName}', 'triangle', this)">🔺</button>
-            <button class="tool-btn" title="Circle" onclick="setTool('${groupName}', 'circle', this)">⭕</button>
-            <button class="tool-btn" title="Text" onclick="setTool('${groupName}', 'text', this)">T</button>
-            <button class="tool-btn" title="Eraser" onclick="setTool('${groupName}', 'eraser', this)">🧹</button>
-            <div style="width:1px; height:20px; background:var(--border-light); margin:0 10px;"></div>
-            <button class="tool-btn tool-btn-danger" title="Undo" onclick="undoLastAction('${mobileId}'); undoLastAction('${desktopId}')">↩</button>
-            <button class="tool-btn tool-btn-danger" title="Clear Canvas" onclick="resetCanvasGroup('${mobileId}', '${desktopId}')">🗑️</button>
-          </div>
-
-          <div class="canvas-pair-container">
-            <div class="canvas-wrap" id="wrap-${mobileId}">
-              <span class="canvas-label">Mobile</span>
-              <canvas id="${mobileId}" class="canvas-standard" width="240" height="400"></canvas>
-            </div>
-            <div class="canvas-wrap" id="wrap-${desktopId}">
-              <span class="canvas-label">Desktop</span>
-              <canvas id="${desktopId}" class="canvas-standard" width="550" height="400"></canvas>
-            </div>
-          </div>
-
-          ${strategyHtml}
-
-          <div class="plan-footer">
-            <div class="plan-notes-area">
-              <label>Layout & Content Notes</label>
-              <textarea oninput="savePageNote('${page}', this.value)" placeholder="Describe specific content, copy, or logic for this page...">${state.pagePlans[page]?.notes || ''}</textarea>
-            </div>
-            <div class="plan-files-area">
-              <label>Page Assets</label>
+          <div style="margin-top:20px;">
+              <label>Page Files</label>
               <div class="file-upload-wrapper">
                  <label for="file-input-${index}" class="custom-file-upload">
-                   <span style="font-size:1.2rem;">📂</span><br>Click to Upload
+                   <span>📂 Upload Files</span>
                  </label>
                  <input id="file-input-${index}" type="file" multiple onchange="handlePageFileUpload('${page}', this, '${fileListId}')" />
               </div>
               <div id="${fileListId}" class="mini-file-list"></div>
-              <button class="btn btn-secondary btn-download-mini" style="width:100%; margin-top:15px; padding:12px;" 
-                onclick="downloadPageAssets('${page}', '${mobileId}', '${desktopId}')">Download Sketch & Files & Notes ⇩</button>
-            </div>
           </div>
         </div>
       </div>
     `;
     container.insertAdjacentHTML('beforeend', html);
+    
+    // Initialize Drag and Drop for this container
     setTimeout(() => {
-      initCanvas(mobileId, groupName);
-      initCanvas(desktopId, groupName);
-      restoreCanvasData(page, mobileId, desktopId);
-      renderPageFileList(page, fileListId);
+        enableBlockSort(`blocks-${index}`, page);
+        renderPageFileList(page, fileListId);
     }, 100);
   });
+}
+
+function renderBlocks(pageName) {
+  const blocks = state.pageLayouts[pageName] || [];
+  return blocks.map((block, i) => `
+    <div class="layout-block" draggable="true" data-index="${i}">
+      <span class="block-drag-handle">::</span>
+      <span class="block-name">${block}</span>
+      <span class="block-remove" onclick="removeBlock('${pageName}', ${i})">&times;</span>
+    </div>
+  `).join('');
+}
+
+function enableBlockSort(containerId, pageName) {
+  const container = document.getElementById(containerId);
+  if(!container) return;
+
+  container.addEventListener('dragstart', e => {
+    if(e.target.classList.contains('layout-block')) {
+      e.target.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    }
+  });
+
+  container.addEventListener('dragend', e => {
+    if(e.target.classList.contains('layout-block')) {
+      e.target.classList.remove('dragging');
+      updateBlockOrder(container, pageName);
+    }
+  });
+
+  container.addEventListener('dragover', e => {
+    e.preventDefault();
+    const afterElement = getDragAfterBlock(container, e.clientY);
+    const draggable = container.querySelector('.dragging');
+    if (afterElement == null) {
+      container.appendChild(draggable);
+    } else {
+      container.insertBefore(draggable, afterElement);
+    }
+  });
+}
+
+function getDragAfterBlock(container, y) {
+  const draggableElements = [...container.querySelectorAll('.layout-block:not(.dragging)')];
+  return draggableElements.reduce((closest, child) => {
+    const box = child.getBoundingClientRect();
+    const offset = y - box.top - box.height / 2;
+    if (offset < 0 && offset > closest.offset) {
+      return { offset: offset, element: child };
+    } else {
+      return closest;
+    }
+  }, { offset: Number.NEGATIVE_INFINITY }).element;
+}
+
+function updateBlockOrder(container, pageName) {
+  const newBlocks = [];
+  container.querySelectorAll('.layout-block').forEach(el => {
+    newBlocks.push(el.querySelector('.block-name').textContent);
+  });
+  state.pageLayouts[pageName] = newBlocks;
+  // Re-render to fix indices
+  container.innerHTML = renderBlocks(pageName);
+  saveState();
+}
+
+function removeBlock(pageName, index) {
+  state.pageLayouts[pageName].splice(index, 1);
+  const containerId = `blocks-${state.pages.indexOf(pageName)}`;
+  const container = document.getElementById(containerId);
+  if(container) container.innerHTML = renderBlocks(pageName);
+  saveState();
+}
+
+function openBlockLibrary(pageName, containerId) {
+  // Simple prompt for now, or you could build a modal
+  // Ideally, this creates a temporary overlay
+  const existingOverlay = document.getElementById('block-library-overlay');
+  if(existingOverlay) existingOverlay.remove();
+
+  const overlay = document.createElement('div');
+  overlay.className = 'block-library-overlay';
+  
+  let optionsHtml = '';
+  BLOCK_LIBRARY.forEach(block => {
+      optionsHtml += `<div class="library-option" onclick="addBlockToPage('${pageName}', '${block}', '${containerId}')">${block}</div>`;
+  });
+
+  overlay.innerHTML = `
+    <div class="block-library-modal">
+        <h3>Add Block</h3>
+        <div class="library-grid">${optionsHtml}</div>
+        <button onclick="document.getElementById('block-library-overlay').remove()" class="btn-close-modal">Close</button>
+    </div>
+  `;
+  overlay.id = 'block-library-overlay';
+  document.body.appendChild(overlay);
+}
+
+function addBlockToPage(pageName, blockName, containerId) {
+    state.pageLayouts[pageName].push(blockName);
+    const container = document.getElementById(containerId);
+    if(container) container.innerHTML = renderBlocks(pageName);
+    saveState();
+    document.getElementById('block-library-overlay').remove();
+}
+
+// ======================================================
+// --- 5. COMMON UTILS & DOWNLOADS ---
+// ======================================================
+
+function togglePlanCard(header) {
+  const card = header.closest('.plan-card');
+  card.classList.toggle('collapsed');
+}
+
+function injectDownloadButton() {
+  const existingBtn = document.getElementById('globalDownloadBtn');
+  if(existingBtn) existingBtn.remove();
+
+  const navContainer = document.querySelector('.step-nav-buttons');
+  if(navContainer) {
+    const btn = document.createElement('button');
+    btn.id = 'globalDownloadBtn';
+    btn.className = 'btn-download-all';
+    btn.textContent = 'Download Project Outline';
+    btn.onclick = downloadProjectOutline;
+    navContainer.insertBefore(btn, navContainer.lastElementChild);
+  }
+}
+
+function downloadProjectOutline() {
+    let content = `PROJECT OUTLINE\n\nINDUSTRY: ${state.industry}\nPACKAGE: ${state.package ? state.package.name : 'None'}\n\n`;
+    
+    state.pages.forEach(page => {
+        content += `--------------------------------\nPAGE: ${page}\n`;
+        if (state.pageLayouts[page]) {
+            content += `LAYOUT:\n`;
+            state.pageLayouts[page].forEach((block, i) => {
+                content += `  ${i+1}. ${block}\n`;
+            });
+        }
+        if (state.pageNotes[page]) {
+            content += `NOTES:\n${state.pageNotes[page]}\n`;
+        }
+        content += `\n`;
+    });
+
+    const blob = new Blob([content], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = "project-outline.txt";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    
+    // Also trigger file downloads
+    downloadAllFiles();
 }
 
 function handlePageFileUpload(pageName, input, listId) {
@@ -676,20 +623,13 @@ function handlePageFileUpload(pageName, input, listId) {
   }
 }
 
-function removePageFile(pageName, index, listId) {
-  if (pageAttachments[pageName]) {
-    pageAttachments[pageName].splice(index, 1);
-    renderPageFileList(pageName, listId);
-  }
-}
-
 function renderPageFileList(pageName, listId) {
   const container = document.getElementById(listId);
   if (!container) return;
   container.innerHTML = '';
   const files = pageAttachments[pageName] || [];
   if (files.length === 0) {
-    container.innerHTML = '<div style="font-size:0.75rem; color:var(--text-muted); text-align:center; margin-top:5px;">No files attached</div>';
+    container.innerHTML = '<div style="font-size:0.75rem; color:var(--text-muted); text-align:center;">No files attached</div>';
     return;
   }
   files.forEach((file, i) => {
@@ -699,352 +639,30 @@ function renderPageFileList(pageName, listId) {
     const delBtn = document.createElement('span');
     delBtn.innerHTML = '&times;';
     delBtn.className = 'delete-file-btn';
-    delBtn.title = 'Remove File';
-    delBtn.onclick = () => removePageFile(pageName, i, listId);
+    delBtn.onclick = () => {
+        pageAttachments[pageName].splice(i, 1);
+        renderPageFileList(pageName, listId);
+    };
     div.appendChild(delBtn);
     container.appendChild(div);
   });
 }
 
-async function downloadAllProjectAssets() {
-  if (!confirm("This will download all sketches, files, and notes. Allow multiple downloads?")) return;
-  for (const page of state.pages) {
-    const index = state.pages.indexOf(page);
-    const mId = `cvs-m-${index}`;
-    const dId = `cvs-d-${index}`;
-    
-    // Check if canvas exists (Basic plan won't have them)
-    if(document.getElementById(mId)) {
-      downloadPageAssets(page, mId, dId);
-    } else {
-      downloadBasicPageNotes(page);
-    }
-    await new Promise(r => setTimeout(r, 1000));
-  }
-}
-
-function downloadPageAssets(pageName, mobileId, desktopId) {
-  downloadPageSketchOnly(pageName, mobileId, desktopId);
-  
-  const files = pageAttachments[pageName] || [];
-  let delay = 500;
-  files.forEach(file => {
-    setTimeout(() => {
-      const url = URL.createObjectURL(file);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = file.name;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    }, delay);
-    delay += 500;
-  });
-
-  setTimeout(() => {
-    const plan = state.pagePlans[pageName] || {};
-    const notesContent = `PAGE: ${pageName}\nNOTES:\n${plan.notes || 'No notes provided.'}`;
-    const blob = new Blob([notesContent], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${pageName}-details.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  }, delay + 500);
-}
-
-function downloadPageSketchOnly(pageName, mobileId, desktopId) {
-  const mCanvas = document.getElementById(mobileId);
-  const dCanvas = document.getElementById(desktopId);
-  if (mCanvas && dCanvas) {
-    const gap = 20;
-    const w = mCanvas.width + dCanvas.width + gap;
-    const h = Math.max(mCanvas.height, dCanvas.height);
-    const comp = document.createElement('canvas');
-    comp.width = w; comp.height = h;
-    const ctx = comp.getContext('2d');
-    ctx.fillStyle = '#0f1322'; ctx.fillRect(0,0,w,h);
-    ctx.drawImage(mCanvas, 0, 0); ctx.drawImage(dCanvas, mCanvas.width + gap, 0);
-    ctx.fillStyle = '#fff'; ctx.font = '20px Montserrat';
-    ctx.fillText("Mobile", 10, 30); ctx.fillText("Desktop", mCanvas.width + gap + 10, 30);
-    const link = document.createElement('a');
-    link.download = `${pageName}-layout-sketch.png`;
-    link.href = comp.toDataURL();
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  }
-}
-
-function togglePlanCard(header) {
-  const card = header.closest('.plan-card');
-  card.classList.toggle('collapsed');
-}
-
-function saveAllCanvasStates() {
-  state.pages.forEach((page, idx) => {
-    const mCanvas = document.getElementById(`cvs-m-${idx}`);
-    const dCanvas = document.getElementById(`cvs-d-${idx}`);
-    if (mCanvas && dCanvas) {
-      if (!state.pagePlans[page]) state.pagePlans[page] = {};
-      state.pagePlans[page].mobileData = mCanvas.toDataURL();
-      state.pagePlans[page].desktopData = dCanvas.toDataURL();
-    }
-  });
-  saveState();
-}
-
-function restoreCanvasData(page, mId, dId) {
-  const plan = state.pagePlans[page];
-  if (!plan) return;
-  if (plan.mobileData) {
-    const img = new Image();
-    img.onload = function() { document.getElementById(mId).getContext('2d').drawImage(img, 0, 0); };
-    img.src = plan.mobileData;
-  }
-  if (plan.desktopData) {
-    const img = new Image();
-    img.onload = function() { document.getElementById(dId).getContext('2d').drawImage(img, 0, 0); };
-    img.src = plan.desktopData;
-  }
-}
-
-function savePageNote(pageName, text) {
-  if (!state.pagePlans[pageName]) state.pagePlans[pageName] = {};
-  state.pagePlans[pageName].notes = text;
-  saveState();
-}
-
-function savePageMeta(pageName, field, value) {
-  if (!state.pagePlans[pageName]) state.pagePlans[pageName] = {};
-  state.pagePlans[pageName][field] = value;
-  saveState();
-}
-
-// --- CANVAS TOOLS & DRAGGABLE TEXT ---
-const canvasState = {}; 
-
-function setTool(groupName, tool, btn) {
-  if (!canvasState[groupName]) canvasState[groupName] = { tool: 'pencil' };
-  canvasState[groupName].tool = tool;
-  if (btn) {
-    const parent = btn.parentElement;
-    parent.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-  }
-}
-
-function createFloatingTextInput(x, y, canvasId, groupName) {
-  const canvas = document.getElementById(canvasId);
-  const wrap = canvas.parentElement;
-  
-  // Create Elements
-  const container = document.createElement('div');
-  container.className = 'floating-text-input';
-  container.style.left = `${x}px`;
-  container.style.top = `${y}px`;
-
-  const handle = document.createElement('div');
-  handle.className = 'text-drag-handle';
-
-  const textarea = document.createElement('textarea');
-  textarea.className = 'text-input-field';
-  textarea.placeholder = "Type here...";
-
-  const controls = document.createElement('div');
-  controls.className = 'text-tool-controls';
-
-  const btnConfirm = document.createElement('button');
-  btnConfirm.className = 'text-btn text-btn-confirm';
-  btnConfirm.innerHTML = '✓';
-  
-  const btnCancel = document.createElement('button');
-  btnCancel.className = 'text-btn text-btn-cancel';
-  btnCancel.innerHTML = 'X';
-
-  // Assembly
-  controls.appendChild(btnCancel);
-  controls.appendChild(btnConfirm);
-  container.appendChild(handle);
-  container.appendChild(textarea);
-  container.appendChild(controls);
-  wrap.appendChild(container);
-
-  textarea.focus();
-
-  // Drag Logic
-  let isDragging = false;
-  let dragStartX, dragStartY, initialLeft, initialTop;
-
-  handle.addEventListener('mousedown', (e) => {
-    isDragging = true;
-    dragStartX = e.clientX;
-    dragStartY = e.clientY;
-    initialLeft = container.offsetLeft;
-    initialTop = container.offsetTop;
-    e.preventDefault();
-  });
-
-  document.addEventListener('mousemove', (e) => {
-    if (!isDragging) return;
-    const dx = e.clientX - dragStartX;
-    const dy = e.clientY - dragStartY;
-    container.style.left = `${initialLeft + dx}px`;
-    container.style.top = `${initialTop + dy}px`;
-  });
-
-  document.addEventListener('mouseup', () => { isDragging = false; });
-
-  // Buttons Logic
-  btnConfirm.onclick = () => {
-    const text = textarea.value;
-    if (text) {
-      saveCanvasState(canvasId); // Save before stamping for Undo
-      const ctx = canvas.getContext('2d');
-      ctx.fillStyle = '#fff';
-      ctx.font = '16px Montserrat';
-      // Calculate relative position to canvas
-      const rect = canvas.getBoundingClientRect();
-      const boxRect = textarea.getBoundingClientRect();
-      // Simple offset adjustment
-      const finalX = (container.offsetLeft - canvas.offsetLeft) + 10;
-      const finalY = (container.offsetTop - canvas.offsetTop) + 35;
-      
-      ctx.fillText(text, finalX, finalY);
-    }
-    wrap.removeChild(container);
-    setTool(groupName, 'pencil', null); // Reset to pencil
-  };
-
-  btnCancel.onclick = () => {
-    wrap.removeChild(container);
-    setTool(groupName, 'pencil', null);
-  };
-}
-
-function stampTextOnCanvas(canvasId, text) {
-  saveCanvasState(canvasId);
-  const canvas = document.getElementById(canvasId);
-  if(!canvas) return;
-  const ctx = canvas.getContext('2d');
-  const x = 50 + Math.random() * 50;
-  const y = 50 + Math.random() * 50;
-  ctx.fillStyle = 'rgba(44, 166, 224, 0.1)';
-  ctx.strokeStyle = '#2CA6E0';
-  ctx.lineWidth = 2;
-  const width = 120;
-  const height = 50;
-  ctx.fillRect(x, y, width, height);
-  ctx.strokeRect(x, y, width, height);
-  ctx.fillStyle = '#fff';
-  ctx.font = '14px Montserrat';
-  ctx.textAlign = 'center';
-  ctx.fillText(text, x + (width/2), y + (height/2) + 5);
-}
-
-function initCanvas(canvasId, groupName) {
-  const canvas = document.getElementById(canvasId);
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  if (!canvasState[groupName]) canvasState[groupName] = { tool: 'pencil' };
-
-  let isDrawing = false;
-  let startX, startY;
-  let snapshot;
-
-  ctx.strokeStyle = '#2CA6E0'; ctx.lineWidth = 3; ctx.lineCap = 'round';
-  ctx.fillStyle = 'rgba(44, 166, 224, 0.1)';
-
-  canvas.addEventListener('mousedown', e => {
-    const tool = canvasState[groupName].tool;
-    
-    // Text Tool Logic (New)
-    if (tool === 'text') {
-      createFloatingTextInput(e.offsetX, e.offsetY, canvasId, groupName);
-      return; 
-    }
-
-    isDrawing = true; 
-    startX = e.offsetX; 
-    startY = e.offsetY;
-    
-    // Save snapshot for previewing shapes without permanent drawing
-    snapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    saveCanvasState(canvasId); // Save undo state before new action
-
-    ctx.beginPath(); ctx.moveTo(startX, startY);
-  });
-
-  canvas.addEventListener('mousemove', e => {
-    if (!isDrawing) return;
-    const tool = canvasState[groupName].tool;
-    const x = e.offsetX; const y = e.offsetY;
-
-    // PREVIEW LOGIC: Restore snapshot then draw on top
-    if (tool === 'box' || tool === 'rect' || tool === 'circle' || tool === 'triangle' || tool === 'diamond') {
-      ctx.putImageData(snapshot, 0, 0);
-    }
-
-    if (tool === 'pencil') {
-      ctx.lineWidth = 3; ctx.globalCompositeOperation = 'source-over'; ctx.lineTo(x, y); ctx.stroke();
-    } else if (tool === 'eraser') {
-      ctx.lineWidth = 20; ctx.globalCompositeOperation = 'destination-out'; ctx.lineTo(x, y); ctx.stroke(); ctx.globalCompositeOperation = 'source-over'; 
-    } else {
-      // Shape Drawing for Preview
-      drawShape(ctx, tool, startX, startY, x, y);
-    }
-  });
-
-  canvas.addEventListener('mouseup', e => {
-    if (!isDrawing) return;
-    isDrawing = false;
-    // Final draw happens here
-    const tool = canvasState[groupName].tool;
-    if (tool !== 'pencil' && tool !== 'eraser') {
-      ctx.putImageData(snapshot, 0, 0); // Restore one last time to avoid artifacts
-      drawShape(ctx, tool, startX, startY, e.offsetX, e.offsetY);
-    }
-  });
-}
-
-function drawShape(ctx, tool, startX, startY, endX, endY) {
-    ctx.lineWidth = 3; ctx.strokeStyle = '#2CA6E0'; 
-    ctx.globalCompositeOperation = 'source-over';
-    
-    const w = endX - startX; 
-    const h = endY - startY;
-    
-    if (tool === 'box' || tool === 'rect') {
-      const hFinal = (tool === 'box') ? w : h; 
-      ctx.beginPath(); ctx.rect(startX, startY, w, hFinal); ctx.fill(); ctx.stroke();
-    } else if (tool === 'circle') {
-      const radius = Math.sqrt(Math.pow(w, 2) + Math.pow(h, 2));
-      ctx.beginPath(); ctx.arc(startX, startY, radius, 0, 2 * Math.PI); ctx.fill(); ctx.stroke();
-    } else if (tool === 'triangle') {
-      ctx.beginPath(); ctx.moveTo(startX, startY); ctx.lineTo(endX, endY); ctx.lineTo(startX - w, endY); ctx.closePath(); ctx.fill(); ctx.stroke();
-    } else if (tool === 'diamond') {
-       ctx.beginPath();
-       ctx.moveTo(startX + w/2, startY); ctx.lineTo(endX, startY + h/2);
-       ctx.lineTo(startX + w/2, endY); ctx.lineTo(startX, startY + h/2);
-       ctx.closePath(); ctx.fill(); ctx.stroke();
-    }
-}
-
-function resetCanvasGroup(id1, id2) {
-  if(confirm("Clear sketches?")) {
-    [id1, id2].forEach(id => {
-      const c = document.getElementById(id);
-      if(c) { 
-        c.getContext('2d').clearRect(0, 0, c.width, c.height); 
-        saveCanvasState(id); // Save blank state
-      }
+function downloadAllFiles() {
+    Object.keys(pageAttachments).forEach(page => {
+        pageAttachments[page].forEach(file => {
+            const url = URL.createObjectURL(file);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${page}-${file.name}`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        });
     });
-  }
 }
 
-// ... rest of toggle functions ...
+// Brand Kit & Widget toggles
 function toggleBrandKit(element) {
   state.brandKit = !state.brandKit;
   document.querySelectorAll('.brand-kit-ref').forEach(el => { el.classList.toggle('selected', state.brandKit); });
@@ -1075,6 +693,12 @@ function togglePackageDetails(buttonEl) {
   }
 }
 
+// File Upload Handler (Global)
+let uploadedFiles = [];
+function handleFileUpload(e) {
+    // ... existing global file logic if needed ...
+}
+
 function initCollapsibles() {
   const sections = document.querySelectorAll('[data-collapsible]');
   sections.forEach(section => {
@@ -1088,6 +712,7 @@ function initCollapsibles() {
   });
 }
 
+// Initialization
 document.addEventListener('DOMContentLoaded', () => {
   loadState();
   initCollapsibles();
@@ -1099,3 +724,60 @@ document.addEventListener('DOMContentLoaded', () => {
   calculateTotal();
   updateBrandKitDisplay();
 });
+
+// CSS Injection for new Layout Builder UI
+const style = document.createElement('style');
+style.innerHTML = `
+  /* Autocomplete Dropdown */
+  .autocomplete-list {
+    position: absolute; top: 100%; left: 0; right: 0;
+    background: #0f1322; border: 1px solid var(--border-light);
+    border-radius: 0 0 8px 8px; z-index: 1000;
+    max-height: 200px; overflow-y: auto; list-style: none; padding: 0; margin: 0;
+  }
+  .autocomplete-list li {
+    padding: 10px 15px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .autocomplete-list li:hover { background: var(--surface-hover); color: var(--accent-blue); }
+
+  /* Layout Blocks */
+  .layout-blocks-container {
+    display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;
+    min-height: 50px; background: rgba(0,0,0,0.1); padding: 15px; border-radius: 8px;
+  }
+  .layout-block {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--surface-base); border: 1px solid var(--border-light);
+    padding: 12px 15px; border-radius: 6px; cursor: grab;
+    transition: all 0.2s;
+  }
+  .layout-block:hover { border-color: var(--accent-blue); }
+  .layout-block.dragging { opacity: 0.5; background: var(--accent-blue); }
+  .block-drag-handle { margin-right: 15px; color: var(--text-muted); cursor: grab; font-weight: bold; }
+  .block-name { flex-grow: 1; font-size: 0.95rem; }
+  .block-remove { cursor: pointer; color: #ff6b6b; font-size: 1.2rem; }
+  
+  /* Modal */
+  .block-library-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.8); z-index: 2000;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .block-library-modal {
+    background: #0f1322; padding: 30px; border-radius: 12px;
+    width: 90%; max-width: 600px; border: 1px solid var(--accent-blue);
+  }
+  .library-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0; max-height: 400px; overflow-y: auto;
+  }
+  .library-option {
+    padding: 15px; background: var(--surface-base); border: 1px solid var(--border-light);
+    border-radius: 6px; cursor: pointer; text-align: center;
+  }
+  .library-option:hover { background: var(--accent-blue); color: white; }
+  .btn-close-modal {
+    background: transparent; border: 1px solid var(--border-light); color: var(--text-muted);
+    padding: 8px 16px; cursor: pointer; float: right; border-radius: 4px;
+  }
+`;
+document.head.appendChild(style);
