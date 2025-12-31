@@ -78,16 +78,16 @@ p { margin-bottom: 24px; font-weight: 300; font-size: 1.05rem; color: var(--text
 }
 .r-content p { font-size: 0.95rem; margin: 0; opacity: 0.8; }
 
-/* --- COMPACT PROGRESS HEADER (FIXED ALIGNMENT) --- */
+/* --- COMPACT PROGRESS HEADER --- */
 .progress-header {
   position: sticky; top: 0; background: rgba(5, 5, 8, 0.95); backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px); z-index: 100; 
-  height: 70px; /* Fixed height to contain everything */
+  height: 70px;
   border-bottom: 1px solid var(--border-light); display: flex; align-items: center; justify-content: center;
 }
 .progress-bar { 
   display: flex; width: 90%; max-width: 800px; position: relative; justify-content: space-between; 
-  align-items: center; /* Vertically center items */
+  align-items: center; 
 }
 .progress-line-bg {
   position: absolute; top: 50%; left: 0; width: 100%; height: 1px;
@@ -101,7 +101,7 @@ p { margin-bottom: 24px; font-weight: 300; font-size: 1.05rem; color: var(--text
 .step-indicator {
   position: relative; z-index: 3; background: var(--bg-dark); border: 1px solid var(--border-light);
   color: var(--text-muted); 
-  width: 28px; height: 28px; /* Slightly smaller */
+  width: 28px; height: 28px;
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   font-family: var(--font-body); font-size: 0.75rem; 
@@ -113,12 +113,12 @@ p { margin-bottom: 24px; font-weight: 300; font-size: 1.05rem; color: var(--text
 .step-indicator.completed { background: var(--accent-blue); border-color: var(--accent-blue); color: #fff; }
 .step-label {
   position: absolute; 
-  top: 34px; /* Push down just below circle */
+  top: 34px;
   left: 50%; transform: translateX(-50%);
   font-size: 0.65rem; 
   text-transform: uppercase; letter-spacing: 1px;
   white-space: nowrap; color: var(--text-muted); opacity: 0.5; transition: opacity 0.3s, color 0.3s;
-  line-height: 1; /* Prevent hanging */
+  line-height: 1;
 }
 .step-indicator.active .step-label { opacity: 1; color: var(--accent-blue); font-weight: 700; }
 .step-indicator.completed .step-label { opacity: 1; color: var(--text-main); }
@@ -205,7 +205,6 @@ select option { background: #0f1322; color: var(--text-main); }
 /* --- Floating Widget (DRAGGABLE) --- */
 #floating-widget {
   position: fixed; 
-  /* Initial position (bottom right) */
   bottom: 30px; 
   right: 30px; 
   width: 320px;
@@ -214,14 +213,12 @@ select option { background: #0f1322; color: var(--text-main); }
   border: 1px solid var(--border-light); border-radius: 12px;
   box-shadow: 0 20px 50px rgba(0,0,0,0.5); z-index: 1000;
   display: flex; flex-direction: column;
-  /* Removed transition:transform to allow smooth JS dragging */
 }
 
-/* Vertical Collapsed State */
+/* Vertical Collapsed State - STRICTLY HIDDEN CONTENT */
 #floating-widget.collapsed { 
-  /* We use height manipulation for collapse instead of transform so dragging isn't affected */
-  height: 60px;
-  overflow: hidden;
+  height: 60px !important;
+  overflow: hidden !important;
 }
 
 #floating-widget:not(.collapsed) {
@@ -237,10 +234,14 @@ select option { background: #0f1322; color: var(--text-main); }
   font-size: 0.8rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
   background: rgba(255,255,255,0.03); 
   border-bottom: 1px solid var(--border-light);
-  user-select: none; /* Prevent text selection while dragging */
+  user-select: none;
 }
 .fw-header:active { cursor: grabbing; background: rgba(255,255,255,0.06); }
 
+/* Ensure content is strictly hidden in collapsed mode */
+#floating-widget.collapsed .fw-content {
+  display: none;
+}
 .fw-content { padding: 25px; overflow-y: auto; }
 .fw-item { display:flex; justify-content:space-between; font-size:0.9rem; margin-bottom:12px; color: var(--text-muted); padding-bottom:8px; border-bottom:1px dashed var(--border-light); }
 .fw-total { margin-top:20px; padding-top:15px; display:flex; justify-content:space-between; font-family:var(--font-heading); font-size:1.5rem; color:var(--text-main); border-top: 1px solid var(--border-light); }
@@ -324,11 +325,17 @@ select option { background: #0f1322; color: var(--text-main); }
 .page-limit-warning { color: #ff6b6b; font-size: 0.8rem; margin-top: 10px; display: none; }
 .page-limit-warning.visible { display: block; }
 
-/* --- STEP 3 --- */
+/* --- STEP 3 (Dragging & Planning) --- */
 .planning-grid { display: grid; gap: 30px; }
 .plan-card {
   background: var(--surface-base); border: 1px solid var(--border-light); border-radius: 16px; overflow: hidden; margin-bottom: 20px; transition: all 0.3s ease;
 }
+/* Draggable Visuals */
+.plan-card.dragging {
+  opacity: 0.5;
+  border: 1px dashed var(--accent-blue);
+}
+
 .plan-card-header {
   padding: 20px 25px; background: rgba(0,0,0,0.2); border-bottom: 1px solid var(--border-light);
   font-family: var(--font-heading); font-size: 1.3rem; display: flex; justify-content: space-between; align-items: center; cursor: pointer;
@@ -338,12 +345,16 @@ select option { background: #0f1322; color: var(--text-main); }
 .plan-card.collapsed .plan-card-body { display: none; }
 .plan-card.collapsed .plan-card-header { border-bottom: none; }
 .plan-card-title-group { display: flex; align-items: center; gap: 15px; }
-.order-select {
-  background: var(--bg-dark); color: var(--accent-blue); border: 1px solid var(--border-light);
-  padding: 5px 10px; border-radius: 6px; font-family: var(--font-body); font-weight: 700; cursor: pointer;
-}
+
 .plan-card-chevron { transition: transform 0.3s; font-size: 0.9rem; opacity: 0.5; }
 .plan-card.collapsed .plan-card-chevron { transform: rotate(-90deg); }
+
+.drag-handle {
+  cursor: grab;
+  font-size: 1.5rem; color: var(--text-muted); padding: 0 10px;
+  user-select: none;
+}
+.drag-handle:active { cursor: grabbing; color: var(--accent-blue); }
 
 .mockup-toolbar {
   display: flex; gap: 8px; margin-bottom: 20px; padding: 10px;
