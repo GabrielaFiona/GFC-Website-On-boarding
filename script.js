@@ -1,5 +1,5 @@
 // ======================================================
-// --- 1. DATA DEFINITIONS (UNCHANGED) ---
+// --- 1. DATA DEFINITIONS ---
 // ======================================================
 
 const LAYOUT_DEFINITIONS = {
@@ -31,7 +31,6 @@ const LAYOUT_DEFINITIONS = {
   "default": ["Header", "Content Block", "Image Block", "Call to Action", "Footer"]
 };
 
-// Expanded to facilitate search
 const INDUSTRY_DB = {
   "Bakery / Donut Shop": { pages: ["Home", "Menu / Daily Flavors", "Pre-Order / Catering", "About the Baker", "Location & Hours"], layouts: { "Home": "L-01", "Menu / Daily Flavors": "L-06", "Pre-Order / Catering": "L-15", "About the Baker": "L-02", "Location & Hours": "L-05" } },
   "Brewery / Distillery / Winery": { pages: ["Home", "Our Beers/Wines", "Visit Tasting Room", "Events & Music", "Club Signup", "Shop Merch"], layouts: { "Home": "L-01", "Our Beers/Wines": "L-06", "Visit Tasting Room": "L-08", "Events & Music": "L-12", "Club Signup": "L-03", "Shop Merch": "L-10" } },
@@ -101,7 +100,6 @@ const state = {
   brandKit: false,
   industry: "",
   pages: [],
-  // Stores the block layout for each page: { "Home": [{id, x, y, w, h}, ...] }
   pageLayouts: {}, 
   pageNotes: {}, 
   brandingProvided: null,
@@ -155,7 +153,6 @@ function handlePackageSelected(isRestore) {
 function initPageBuilder() {
   const input = document.getElementById('industryInput');
   if(input) {
-      // Create autocomplete logic if not exists
       let list = document.getElementById('industry-suggestions');
       if(!list) {
           list = document.createElement('ul');
@@ -229,7 +226,6 @@ function addPage(nameRaw) {
   
   if (!state.pages.includes(name)) {
     state.pages.push(name);
-    // Init Grid Layout
     state.pageLayouts[name] = convertListToGrid(getDefaultLayoutForPage(name));
     if (input) input.value = '';
     renderActivePages();
@@ -247,7 +243,7 @@ function removePage(name) {
   saveState();
 }
 
-// --- UPDATE: PAGE REORDERING RESTORED ---
+// --- DRAG & DROP FOR PAGE SITEMAP ---
 function renderActivePages() {
   const list = document.getElementById('activePagesList');
   const countEl = document.getElementById('pageCountDisplay');
@@ -258,10 +254,10 @@ function renderActivePages() {
   state.pages.forEach((page, index) => {
     const tag = document.createElement('div');
     tag.className = 'page-tag';
-    tag.draggable = true; // Enable drag on page tag
+    tag.draggable = true; 
     tag.innerHTML = `<span class="drag-handle">::</span> ${page} <span class="page-tag-remove" onclick="removePage('${page}')">&times;</span>`;
     
-    // Drag Events for Page Reordering
+    // Page Reordering Logic
     tag.addEventListener('dragstart', (e) => {
       e.dataTransfer.effectAllowed = 'move';
       e.dataTransfer.setData('text/plain', index);
@@ -296,24 +292,18 @@ function renderActivePages() {
 }
 
 function getDefaultLayoutForPage(pageName) {
-  // 1. Look up Industry Specific
   if (state.industry && INDUSTRY_DB[state.industry] && INDUSTRY_DB[state.industry].layouts[pageName]) {
     const layoutID = INDUSTRY_DB[state.industry].layouts[pageName];
     if (LAYOUT_DEFINITIONS[layoutID]) return [...LAYOUT_DEFINITIONS[layoutID]];
   }
-  // 2. Fallback
   return [...LAYOUT_DEFINITIONS["default"]];
 }
 
-// Convert old simple array strings to Grid Objects
 function convertListToGrid(listItems) {
     return listItems.map((item, index) => ({
         id: `block-${Date.now()}-${index}`,
         name: item,
-        x: 1,      // Start col
-        y: index + 1, // Start row (stacked vertically by default)
-        w: 12,     // Full width (12 cols)
-        h: 2       // Default height
+        x: 1, y: index + 1, w: 12, h: 2
     }));
 }
 
@@ -361,27 +351,41 @@ function initStep3() {
   container.innerHTML = ''; 
 
   if (pkgId === 'basic') renderBasicPlan(container);
-  else renderVisualLayoutBuilder(container); // The Grid Builder
+  else renderVisualLayoutBuilder(container); 
   
   injectDownloadButton();
 }
 
 function renderBasicPlan(container) {
-    // Keep existing basic plan (text only) logic...
-    state.pages.forEach((page, index) => {
-        const noteVal = state.pageNotes[page] || '';
-        const html = `
-          <div class="plan-card collapsed">
-            <div class="plan-card-header" onclick="togglePlanCard(this)">
+  state.pages.forEach((page, index) => {
+    const noteVal = state.pageNotes[page] || '';
+    const fileListId = `file-list-${index}`;
+    
+    const html = `
+      <div class="plan-card collapsed">
+        <div class="plan-card-header" onclick="togglePlanCard(this)">
+            <div class="plan-card-title-group">
                 <span>${index + 1}. ${page}</span>
             </div>
-            <div class="plan-card-body">
-              <label>Notes</label>
-              <textarea oninput="savePageNote('${page}', this.value)">${noteVal}</textarea>
-            </div>
-          </div>`;
-        container.insertAdjacentHTML('beforeend', html);
-    });
+        </div>
+        <div class="plan-card-body">
+          <label>Page Goals & Content Notes</label>
+          <textarea rows="5" oninput="savePageNote('${page}', this.value)">${noteVal}</textarea>
+          
+          <div style="margin-top:20px;">
+              <label>Page Assets</label>
+              <div class="file-upload-wrapper">
+                 <label for="file-input-${index}" class="custom-file-upload"><span>📂 Click to Upload</span></label>
+                 <input id="file-input-${index}" type="file" multiple onchange="handlePageFileUpload('${page}', this, '${fileListId}')" />
+              </div>
+              <div id="${fileListId}" class="mini-file-list"></div>
+          </div>
+        </div>
+      </div>
+    `;
+    container.insertAdjacentHTML('beforeend', html);
+    setTimeout(() => renderPageFileList(page, fileListId), 50);
+  });
 }
 
 function savePageNote(pageName, text) {
@@ -389,20 +393,18 @@ function savePageNote(pageName, text) {
   saveState();
 }
 
-// --- NEW GRID BUILDER SYSTEM ---
 function renderVisualLayoutBuilder(container) {
   const intro = `<div style="text-align:center; margin-bottom:30px;"><p>Drag and resize blocks on the grid to design your layout.</p></div>`;
   container.insertAdjacentHTML('beforebegin', intro);
 
   state.pages.forEach((page, index) => {
-    // 1. Ensure Data Migration (String Array -> Grid Objects)
     if (!state.pageLayouts[page] || (state.pageLayouts[page].length > 0 && typeof state.pageLayouts[page][0] === 'string')) {
       const raw = state.pageLayouts[page] || getDefaultLayoutForPage(page);
       state.pageLayouts[page] = convertListToGrid(raw);
     }
     
-    // 2. Generate Layout Selector Options
     const layoutSelectorHtml = generateLayoutSelector(page);
+    const fileListId = `file-list-${index}`;
 
     const html = `
       <div class="plan-card collapsed" data-page="${page}">
@@ -420,11 +422,9 @@ function renderVisualLayoutBuilder(container) {
         </div>
         <div class="plan-card-body">
           <div class="layout-builder-wrapper">
-             
              <div class="grid-canvas" id="grid-${index}">
                  ${renderGridItems(page)}
              </div>
-
              <div class="grid-controls">
                 <button class="btn-dashed" onclick="openBlockLibrary('${page}', 'grid-${index}')">+ Add Block</button>
              </div>
@@ -434,6 +434,15 @@ function renderVisualLayoutBuilder(container) {
               <label>Content Notes</label>
               <textarea rows="3" oninput="savePageNote('${page}', this.value)" placeholder="Details...">${state.pageNotes[page] || ''}</textarea>
           </div>
+          
+          <div style="margin-top:20px;">
+              <label>Page Files (Restored)</label>
+              <div class="file-upload-wrapper">
+                 <label for="file-input-${index}" class="custom-file-upload"><span>📂 Upload Assets</span></label>
+                 <input id="file-input-${index}" type="file" multiple onchange="handlePageFileUpload('${page}', this, '${fileListId}')" />
+              </div>
+              <div id="${fileListId}" class="mini-file-list"></div>
+          </div>
         </div>
       </div>
     `;
@@ -441,31 +450,24 @@ function renderVisualLayoutBuilder(container) {
     
     setTimeout(() => {
         enableGridInteraction(`grid-${index}`, page);
+        renderPageFileList(page, fileListId);
     }, 100);
   });
 }
 
-// Generate Dropdown options by scanning Industry DB
 function generateLayoutSelector(currentPageName) {
     let options = `<optgroup label="Generic"><option value="default">Default Basic</option></optgroup>`;
-    
-    // Find all industries that have a page named 'currentPageName'
     const matches = [];
     Object.entries(INDUSTRY_DB).forEach(([indName, data]) => {
         if (data.pages.includes(currentPageName)) {
             matches.push({ industry: indName, layoutId: data.layouts[currentPageName] });
         }
     });
-
     if (matches.length > 0) {
         options += `<optgroup label="Industry Specific for '${currentPageName}'">`;
-        matches.forEach(m => {
-            options += `<option value="${m.layoutId}">${m.industry}</option>`;
-        });
+        matches.forEach(m => { options += `<option value="${m.layoutId}">${m.industry}</option>`; });
         options += `</optgroup>`;
     }
-    
-    // If Custom Page, show everything grouped
     if (matches.length === 0) {
         options += `<optgroup label="All Layouts">`;
         Object.entries(LAYOUT_DEFINITIONS).forEach(([lid, blocks]) => {
@@ -473,37 +475,29 @@ function generateLayoutSelector(currentPageName) {
         });
         options += `</optgroup>`;
     }
-
     return options;
 }
 
 function switchPageLayout(pageName, layoutId) {
     if(!layoutId) return;
-    
-    // UI Confirmation
     const choice = confirm("Do you want to REPLACE the current layout?\n\nOK = Replace Everything\nCancel = Add to Bottom");
     
-    const newBlocksRaw = LAYOUT_DEFINITIONS[layoutId] || LAYOUT_DEFINITIONS['default'];
+    let newBlocksRaw = LAYOUT_DEFINITIONS[layoutId] || LAYOUT_DEFINITIONS['default'];
     let newGridBlocks = convertListToGrid(newBlocksRaw);
 
     if (choice) {
-        // REPLACE
         state.pageLayouts[pageName] = newGridBlocks;
     } else {
-        // APPEND (Find lowest Y and add below)
         const currentBlocks = state.pageLayouts[pageName];
         const maxY = currentBlocks.reduce((max, b) => Math.max(max, b.y + b.h), 0);
-        
         newGridBlocks = newGridBlocks.map(b => ({ ...b, y: b.y + maxY }));
         state.pageLayouts[pageName] = [...currentBlocks, ...newGridBlocks];
     }
-    
-    // Re-render grid
     const containerId = `grid-${state.pages.indexOf(pageName)}`;
     const container = document.getElementById(containerId);
     if(container) {
         container.innerHTML = renderGridItems(pageName);
-        enableGridInteraction(containerId, pageName); // Re-bind events
+        enableGridInteraction(containerId, pageName); 
     }
     saveState();
 }
@@ -523,22 +517,20 @@ function renderGridItems(pageName) {
     `).join('');
 }
 
-// --- GRID INTERACTION (DESKTOP + MOBILE TOUCH) ---
+// --- GRID INTERACTION (FIXED: CLICK BUG REMOVED) ---
 function enableGridInteraction(containerId, pageName) {
     const container = document.getElementById(containerId);
     if (!container) return;
     
     let activeItem = null;
     let initialX, initialY, initialGridX, initialGridY;
-    let mode = null; // 'drag' or 'resize'
-    
-    // Helper to get grid coordinates
+    let mode = null; 
+    let hasMoved = false; // Fix for "Click Pile" bug
+
     const getGridCoords = (clientX, clientY) => {
         const rect = container.getBoundingClientRect();
-        // Assume 12 col grid. Width of 1 col = rect.width / 12
         const colWidth = rect.width / 12;
-        const rowHeight = 50; // Defined in CSS
-        
+        const rowHeight = 50; 
         const x = Math.ceil((clientX - rect.left) / colWidth);
         const y = Math.ceil((clientY - rect.top) / rowHeight);
         return { x: Math.max(1, Math.min(12, x)), y: Math.max(1, y) };
@@ -549,18 +541,13 @@ function enableGridInteraction(containerId, pageName) {
         const itemEl = target.closest('.grid-item');
         if (!itemEl) return;
         
-        // Check if resize handle
-        if (target.classList.contains('grid-resize-handle')) {
-            mode = 'resize';
-        } else if (target.closest('.grid-drag-handle') || target.classList.contains('grid-item-content')) {
-            mode = 'drag';
-        } else {
-            return;
-        }
+        if (target.classList.contains('grid-resize-handle')) mode = 'resize';
+        else if (target.closest('.grid-drag-handle') || target.classList.contains('grid-item-content')) mode = 'drag';
+        else return;
         
-        e.preventDefault(); // Prevent scrolling on touch
+        e.preventDefault();
         activeItem = itemEl;
-        activeItem.classList.add('interacting');
+        hasMoved = false; // Reset movement flag
         
         const clientX = e.touches ? e.touches[0].clientX : e.clientX;
         const clientY = e.touches ? e.touches[0].clientY : e.clientY;
@@ -568,40 +555,43 @@ function enableGridInteraction(containerId, pageName) {
         const coords = getGridCoords(clientX, clientY);
         initialGridX = coords.x;
         initialGridY = coords.y;
+        
+        // Don't add visual interaction class yet to prevent jumping on click
     };
     
     const moveInteraction = (e) => {
         if (!activeItem) return;
-        e.preventDefault(); // Stop mobile scroll
+        e.preventDefault();
         
         const clientX = e.touches ? e.touches[0].clientX : e.clientX;
         const clientY = e.touches ? e.touches[0].clientY : e.clientY;
         const curr = getGridCoords(clientX, clientY);
         
-        // Find block in state
+        // Threshold check: Ensure we actually dragged (blocks "click pile" bug)
+        if (!hasMoved && (curr.x === initialGridX && curr.y === initialGridY)) return;
+        
+        if (!hasMoved) {
+            hasMoved = true;
+            activeItem.classList.add('interacting'); // Now we show it dragging
+        }
+        
         const blockId = activeItem.id;
         const blockIdx = state.pageLayouts[pageName].findIndex(b => b.id === blockId);
         if (blockIdx === -1) return;
         const blockData = state.pageLayouts[pageName][blockIdx];
 
         if (mode === 'drag') {
-            // Calculate delta
             const dx = curr.x - initialGridX;
             const dy = curr.y - initialGridY;
-            
-            // Apply visual update directly for performance
             const newX = Math.max(1, Math.min(13 - blockData.w, blockData.x + dx));
             const newY = Math.max(1, blockData.y + dy);
-            
             activeItem.style.gridColumnStart = newX;
             activeItem.style.gridRowStart = newY;
         } else if (mode === 'resize') {
             const dx = curr.x - initialGridX;
             const dy = curr.y - initialGridY;
-            
             const newW = Math.max(1, Math.min(12 - blockData.x + 1, blockData.w + dx));
             const newH = Math.max(1, blockData.h + dy);
-            
             activeItem.style.gridColumnEnd = `span ${newW}`;
             activeItem.style.gridRowEnd = `span ${newH}`;
         }
@@ -610,39 +600,37 @@ function enableGridInteraction(containerId, pageName) {
     const endInteraction = (e) => {
         if (!activeItem) return;
         
-        // Save final state
-        const style = window.getComputedStyle(activeItem);
-        const newX = parseInt(style.gridColumnStart);
-        const newRowStart = parseInt(style.gridRowStart);
-        
-        // For span, we need to parse "span X"
-        const spanW = activeItem.style.gridColumnEnd.replace('span ', '').trim();
-        const spanH = activeItem.style.gridRowEnd.replace('span ', '').trim();
-        
-        const blockId = activeItem.id;
-        const blockIdx = state.pageLayouts[pageName].findIndex(b => b.id === blockId);
-        
-        if (blockIdx > -1) {
-            state.pageLayouts[pageName][blockIdx].x = newX;
-            state.pageLayouts[pageName][blockIdx].y = newRowStart;
-            if(spanW) state.pageLayouts[pageName][blockIdx].w = parseInt(spanW);
-            if(spanH) state.pageLayouts[pageName][blockIdx].h = parseInt(spanH);
+        // Only update state if we actually dragged
+        if (hasMoved) {
+            const style = window.getComputedStyle(activeItem);
+            const newX = parseInt(style.gridColumnStart);
+            const newRowStart = parseInt(style.gridRowStart);
+            const spanW = activeItem.style.gridColumnEnd.replace('span ', '').trim();
+            const spanH = activeItem.style.gridRowEnd.replace('span ', '').trim();
+            
+            const blockId = activeItem.id;
+            const blockIdx = state.pageLayouts[pageName].findIndex(b => b.id === blockId);
+            
+            if (blockIdx > -1) {
+                state.pageLayouts[pageName][blockIdx].x = newX;
+                state.pageLayouts[pageName][blockIdx].y = newRowStart;
+                if(spanW) state.pageLayouts[pageName][blockIdx].w = parseInt(spanW);
+                if(spanH) state.pageLayouts[pageName][blockIdx].h = parseInt(spanH);
+            }
+            activeItem.classList.remove('interacting');
         }
-        
-        activeItem.classList.remove('interacting');
+
         activeItem = null;
         mode = null;
-        saveState();
-        // Re-render to clean up styles
-        container.innerHTML = renderGridItems(pageName);
+        if (hasMoved) {
+            saveState();
+            container.innerHTML = renderGridItems(pageName);
+        }
     };
 
-    // Events Desktop
     container.addEventListener('mousedown', startInteraction);
     window.addEventListener('mousemove', moveInteraction);
     window.addEventListener('mouseup', endInteraction);
-    
-    // Events Mobile
     container.addEventListener('touchstart', startInteraction, {passive: false});
     window.addEventListener('touchmove', moveInteraction, {passive: false});
     window.addEventListener('touchend', endInteraction);
@@ -680,15 +668,12 @@ function openBlockLibrary(pageName, containerId) {
 
 function addBlockToGrid(pageName, blockName, containerId) {
     const currentBlocks = state.pageLayouts[pageName];
-    // Find next available row
     const maxY = currentBlocks.length > 0 ? Math.max(...currentBlocks.map(b => b.y + b.h)) : 1;
-    
     state.pageLayouts[pageName].push({
         id: `block-${Date.now()}`,
         name: blockName,
         x: 1, y: maxY, w: 12, h: 2
     });
-    
     const container = document.getElementById(containerId);
     if(container) container.innerHTML = renderGridItems(pageName);
     saveState();
@@ -696,7 +681,7 @@ function addBlockToGrid(pageName, blockName, containerId) {
 }
 
 // ======================================================
-// --- 5. COMMON UTILS ---
+// --- 5. COMMON UTILS & DOWNLOADS ---
 // ======================================================
 
 function togglePlanCard(header) {
@@ -721,7 +706,6 @@ function downloadProjectOutline() {
     state.pages.forEach(page => {
         content += `PAGE: ${page}\n`;
         const blocks = state.pageLayouts[page] || [];
-        // Sort by Y position
         blocks.sort((a,b) => a.y - b.y).forEach(b => {
              content += ` - ${b.name} (Row: ${b.y}, Width: ${b.w}/12)\n`;
         });
@@ -735,6 +719,54 @@ function downloadProjectOutline() {
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
+    downloadAllFiles();
+}
+
+function handlePageFileUpload(pageName, input, listId) {
+  if (input.files && input.files.length > 0) {
+    if (!pageAttachments[pageName]) pageAttachments[pageName] = [];
+    Array.from(input.files).forEach(f => pageAttachments[pageName].push(f));
+    renderPageFileList(pageName, listId);
+  }
+}
+
+function renderPageFileList(pageName, listId) {
+  const container = document.getElementById(listId);
+  if (!container) return;
+  container.innerHTML = '';
+  const files = pageAttachments[pageName] || [];
+  if (files.length === 0) {
+    container.innerHTML = '<div style="font-size:0.75rem; color:var(--text-muted); text-align:center;">No files attached</div>';
+    return;
+  }
+  files.forEach((file, i) => {
+    const div = document.createElement('div');
+    div.className = 'page-file-item';
+    div.innerHTML = `<span>📎 ${file.name}</span>`;
+    const delBtn = document.createElement('span');
+    delBtn.innerHTML = '&times;';
+    delBtn.className = 'delete-file-btn';
+    delBtn.onclick = () => {
+        pageAttachments[pageName].splice(i, 1);
+        renderPageFileList(pageName, listId);
+    };
+    div.appendChild(delBtn);
+    container.appendChild(div);
+  });
+}
+
+function downloadAllFiles() {
+    Object.keys(pageAttachments).forEach(page => {
+        pageAttachments[page].forEach(file => {
+            const url = URL.createObjectURL(file);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${page}-${file.name}`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        });
+    });
 }
 
 function toggleBrandKit(element) {
@@ -769,7 +801,7 @@ document.addEventListener('DOMContentLoaded', () => {
   updateBrandKitDisplay();
 });
 
-// --- CSS STYLES FOR NEW GRID SYSTEM ---
+// --- CSS STYLES (Grid visuals updated to be fainter) ---
 const style = document.createElement('style');
 style.innerHTML = `
   /* Autocomplete */
@@ -783,10 +815,11 @@ style.innerHTML = `
     grid-template-columns: repeat(12, 1fr);
     grid-auto-rows: 50px;
     gap: 10px;
-    background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-                      linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
-    background-size: 100% 50px, 8.33% 100%; /* Rows 50px, Cols 1/12 */
-    background-color: rgba(0,0,0,0.2);
+    /* Updated Fainter Lines */
+    background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 100% 50px, 8.33% 100%;
+    background-color: rgba(0,0,0,0.1); /* Lighter background */
     border: 1px solid var(--border-light);
     border-radius: 8px;
     padding: 10px;
@@ -801,8 +834,8 @@ style.innerHTML = `
     border-radius: 4px;
     position: relative;
     overflow: hidden;
-    touch-action: none; /* Critical for mobile drag */
-    transition: box-shadow 0.2s;
+    touch-action: none; 
+    transition: box-shadow 0.2s, opacity 0.2s;
   }
   
   .grid-item.interacting {
@@ -832,6 +865,7 @@ style.innerHTML = `
   /* Layout Selector */
   .plan-card-header { display: flex; justify-content: space-between; align-items: center; }
   .plan-card-title-group { flex-grow: 1; display: flex; align-items: center; cursor: pointer; }
+  .layout-selector-wrapper { margin-left: auto; padding-left: 10px; }
   .layout-select {
     background: #050508; color: #fff; border: 1px solid var(--border-light);
     padding: 5px 10px; border-radius: 4px; font-size: 0.8rem; max-width: 150px;
