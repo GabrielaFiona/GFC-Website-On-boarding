@@ -88,12 +88,10 @@ function handlePackageSelected(isRestore) {
   if (unlocked) unlocked.classList.remove('hidden');
   if (pageBuilder) {
     pageBuilder.classList.remove('hidden');
-    // We do NOT automatically open sections anymore based on user request.
-    // They will remain collapsed until clicked.
   }
 
   const branding = document.getElementById('brandingSection');
-  if (branding && !isRestore) branding.classList.remove('collapsed'); // Only open if just selected, else respect state
+  if (branding && !isRestore) branding.classList.remove('collapsed'); 
   
   if (window.initCollapsibles) window.initCollapsibles(); 
 }
@@ -351,21 +349,107 @@ function initStep3() {
   else if (pkgId === 'advanced') renderAdvancedPlan(container);
 }
 
+// --- DRAG AND DROP LOGIC (Updated to reorder state.pages) ---
+function enableDragSort(containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  container.addEventListener('dragstart', (e) => {
+    if (e.target.classList.contains('plan-card')) {
+      e.target.classList.add('dragging');
+    }
+  });
+
+  container.addEventListener('dragend', (e) => {
+    if (e.target.classList.contains('plan-card')) {
+      e.target.classList.remove('dragging');
+      // Update State Order
+      const newOrder = [];
+      const cards = container.querySelectorAll('.plan-card');
+      cards.forEach(card => {
+        if(card.dataset.pageName) newOrder.push(card.dataset.pageName);
+      });
+      
+      // Only if order changed
+      if (JSON.stringify(state.pages) !== JSON.stringify(newOrder)) {
+        state.pages = newOrder;
+        saveAllCanvasStates(); // Save canvas before re-rendering or just update indices
+        
+        // Update Index Labels (1, 2, 3...)
+        cards.forEach((card, idx) => {
+          const headerSpan = card.querySelector('.plan-card-header span:last-child');
+          if(headerSpan) headerSpan.textContent = `${idx + 1}. ${card.dataset.pageName}`;
+        });
+        
+        saveState();
+      }
+    }
+  });
+
+  container.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    const afterElement = getDragAfterElement(container, e.clientY);
+    const draggable = container.querySelector('.dragging');
+    if (afterElement == null) {
+      container.appendChild(draggable);
+    } else {
+      container.insertBefore(draggable, afterElement);
+    }
+  });
+}
+
+function getDragAfterElement(container, y) {
+  const draggableElements = [...container.querySelectorAll('.plan-card:not(.dragging)')];
+  return draggableElements.reduce((closest, child) => {
+    const box = child.getBoundingClientRect();
+    const offset = y - box.top - box.height / 2;
+    if (offset < 0 && offset > closest.offset) {
+      return { offset: offset, element: child };
+    } else {
+      return closest;
+    }
+  }, { offset: Number.NEGATIVE_INFINITY }).element;
+}
+
 function renderBasicPlan(container) {
   state.pages.forEach((page, index) => {
     const noteVal = state.pagePlans[page]?.notes || '';
     const html = `
-      <div class="plan-card collapsed">
-        <div class="plan-card-header" onclick="togglePlanCard(this)"><span>${index + 1}. ${page}</span></div>
+      <div class="plan-card collapsed" draggable="true" data-page-name="${page}">
+        <div class="plan-card-header" onclick="togglePlanCard(this)">
+            <div class="plan-card-title-group">
+                <span class="plan-card-chevron">▼</span>
+                <span>${index + 1}. ${page}</span>
+            </div>
+            <div class="drag-handle">☰</div>
+        </div>
         <div class="plan-card-body">
           <label>Page Goals & Content Notes</label>
           <textarea rows="5" oninput="savePageNote('${page}', this.value)" placeholder="What should be on this page?">${noteVal}</textarea>
+          <div style="margin-top:15px; text-align:right;">
+             <button class="btn btn-secondary btn-download-mini" onclick="downloadBasicPageNotes('${page}')">Download Notes</button>
+          </div>
         </div>
       </div>
     `;
     container.insertAdjacentHTML('beforeend', html);
   });
+  enableDragSort('planContainer');
 }
+
+function downloadBasicPageNotes(pageName) {
+    const plan = state.pagePlans[pageName] || {};
+    const notesContent = `PAGE: ${pageName}\nNOTES:\n${plan.notes || 'No notes provided.'}`;
+    const blob = new Blob([notesContent], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${pageName}-notes.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+}
+
 
 function renderStandardPlan(container) {
   const intro = `<div style="text-align:center; margin-bottom:30px;"><p>Sketch your layout for Mobile and Desktop views.</p></div>`;
@@ -373,6 +457,7 @@ function renderStandardPlan(container) {
   renderSharedCanvasCards(container); 
   const downloadAllBtn = `<button class="btn-download-all" onclick="downloadAllProjectAssets()">Download Full Project Assets</button>`;
   container.insertAdjacentHTML('beforeend', downloadAllBtn);
+  enableDragSort('planContainer');
 }
 
 function renderAdvancedPlan(container) {
@@ -417,6 +502,7 @@ function renderAdvancedPlan(container) {
   renderSharedCanvasCards(container, true); 
   const downloadAllBtn = `<button class="btn-download-all" onclick="downloadAllProjectAssets()">Download Full Project Assets</button>`;
   container.insertAdjacentHTML('beforeend', downloadAllBtn);
+  enableDragSort('planContainer');
 }
 
 
@@ -426,7 +512,8 @@ function renderSharedCanvasCards(container, isAdvanced = false) {
     const desktopId = `cvs-d-${index}`;
     const groupName = `group-${index}`;
     const fileListId = `file-list-${index}`;
-    const orderOptions = state.pages.map((_, i) => `<option value="${i}" ${i === index ? 'selected' : ''}>Order: ${i + 1}</option>`).join('');
+    
+    // REMOVED orderOptions dropdown logic
 
     let strategyHtml = '';
     if (isAdvanced) {
@@ -458,17 +545,13 @@ function renderSharedCanvasCards(container, isAdvanced = false) {
     }
 
     const html = `
-      <div class="plan-card collapsed" id="card-${index}">
+      <div class="plan-card collapsed" id="card-${index}" draggable="true" data-page-name="${page}">
         <div class="plan-card-header" onclick="togglePlanCard(this)">
           <div class="plan-card-title-group">
             <span class="plan-card-chevron">▼</span>
-            <span>${page}</span>
+            <span>${index + 1}. ${page}</span>
           </div>
-          <div onclick="event.stopPropagation()">
-            <select class="order-select" onchange="changePageOrder(${index}, this.value)">
-              ${orderOptions}
-            </select>
-          </div>
+          <div class="drag-handle" title="Drag to reorder">☰</div>
         </div>
         <div class="plan-card-body">
           
@@ -634,16 +717,6 @@ function downloadPageSketchOnly(pageName, mobileId, desktopId) {
 function togglePlanCard(header) {
   const card = header.closest('.plan-card');
   card.classList.toggle('collapsed');
-}
-
-function changePageOrder(oldIndex, newIndexStr) {
-  const newIndex = parseInt(newIndexStr);
-  if (oldIndex === newIndex) return;
-  saveAllCanvasStates();
-  const item = state.pages.splice(oldIndex, 1)[0];
-  state.pages.splice(newIndex, 0, item);
-  saveState();
-  initStep3();
 }
 
 function saveAllCanvasStates() {
@@ -959,7 +1032,7 @@ function initCollapsibles() {
 
 function initDraggableWidget() {
   const widget = document.getElementById('floating-widget');
-  const header = widget.querySelector('.fw-header');
+  const header = widget ? widget.querySelector('.fw-header') : null;
   if(!widget || !header) return;
 
   let startX = 0;
