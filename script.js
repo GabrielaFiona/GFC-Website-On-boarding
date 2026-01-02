@@ -1,335 +1,214 @@
 // ======================================================
 // --- 1. DATA & CONFIGURATION ---
 // ======================================================
-
 const BASE_BRAND_KIT_PRICE = 500;
-
-// VISUAL ICONS MAPPING
 const BLOCK_TYPES = {
   "Hero Section": { icon: "🖼️", type: "hero" },
-  "Hero: Full Screen Visual": { icon: "🖼️", type: "hero" },
-  "Hero: Brand Story": { icon: "📖", type: "hero" },
   "Text Content": { icon: "📝", type: "text" },
-  "Intro Blurb": { icon: "📝", type: "text" },
   "Image/Gallery": { icon: "📷", type: "image" },
-  "Visual Gallery Grid": { icon: "📷", type: "image" },
   "Button / CTA": { icon: "🖱️", type: "button" },
   "Contact Form": { icon: "✉️", type: "form" },
-  "Testimonials": { icon: "💬", type: "quote" },
-  "Map/Location": { icon: "📍", type: "map" },
   "Footer": { icon: "🔻", type: "footer" },
-  "Header/Nav": { icon: "🧭", type: "header" },
-  "Video Player": { icon: "▶️", type: "video" },
-  "Icon Grid": { icon: "💠", type: "grid" },
-  "Service A": { icon: "⚙️", type: "generic" },
-  "Service B": { icon: "⚙️", type: "generic" },
-  "Service C": { icon: "⚙️", type: "generic" }
+  "Header/Nav": { icon: "🧭", type: "header" }
 };
 
-// --- LAYOUT DEFINITIONS ---
 const LAYOUT_DEFINITIONS = {
-  "L-01": [ { name: "Hero: Full Screen Visual", x: 1, y: 1, w: 12, h: 5 }, { name: "Intro Blurb", x: 2, y: 6, w: 10, h: 2 }, { name: "Visual Gallery Grid", x: 1, y: 8, w: 12, h: 4 }, { name: "Button / CTA", x: 4, y: 12, w: 6, h: 1 }, { name: "Footer", x: 1, y: 13, w: 12, h: 2 } ],
-  "L-02": [ { name: "Hero: Brand Story", x: 1, y: 1, w: 12, h: 4 }, { name: "About the Founder", x: 1, y: 5, w: 6, h: 4 }, { name: "Our Values", x: 7, y: 5, w: 6, h: 4 }, { name: "Timeline/History", x: 1, y: 9, w: 12, h: 3 }, { name: "Footer", x: 1, y: 12, w: 12, h: 2 } ],
-  "L-03": [ { name: "Hero Section", x: 1, y: 1, w: 12, h: 3 }, { name: "Pricing Tier 1", x: 1, y: 4, w: 4, h: 4 }, { name: "Pricing Tier 2", x: 5, y: 4, w: 4, h: 4 }, { name: "Pricing Tier 3", x: 9, y: 4, w: 4, h: 4 }, { name: "Testimonials", x: 1, y: 8, w: 12, h: 2 }, { name: "Footer", x: 1, y: 10, w: 12, h: 2 } ],
-  "L-04": [ { name: "Service Overview", x: 1, y: 1, w: 12, h: 3 }, { name: "Step 1: Consult", x: 1, y: 4, w: 6, h: 2 }, { name: "Step 1 Image", x: 7, y: 4, w: 6, h: 2 }, { name: "Step 2: Build", x: 7, y: 6, w: 6, h: 2 }, { name: "Step 2 Image", x: 1, y: 6, w: 6, h: 2 }, { name: "Footer", x: 1, y: 8, w: 12, h: 2 } ],
-  "L-05": [ { name: "Map/Location", x: 1, y: 1, w: 8, h: 6 }, { name: "Address & Hours", x: 9, y: 1, w: 4, h: 3 }, { name: "Social Media Links", x: 9, y: 4, w: 4, h: 3 }, { name: "Contact Form", x: 1, y: 7, w: 12, h: 4 }, { name: "Footer", x: 1, y: 11, w: 12, h: 2 } ],
-  "default": [ { name: "Header/Nav", x: 1, y: 1, w: 12, h: 1 }, { name: "Hero Section", x: 1, y: 2, w: 12, h: 4 }, { name: "Text Content", x: 1, y: 6, w: 8, h: 3 }, { name: "Image", x: 9, y: 6, w: 4, h: 3 }, { name: "Footer", x: 1, y: 9, w: 12, h: 2 } ]
+  "default": [
+    { name: "Header/Nav", x: 1, y: 1, w: 12, h: 1 },
+    { name: "Hero Section", x: 1, y: 2, w: 12, h: 4 },
+    { name: "Text Content", x: 1, y: 6, w: 8, h: 3 },
+    { name: "Image/Gallery", x: 9, y: 6, w: 4, h: 3 },
+    { name: "Footer", x: 1, y: 9, w: 12, h: 2 }
+  ],
+  "L-01": [ { name: "Hero Section", x: 1, y: 1, w: 12, h: 5 }, { name: "Footer", x: 1, y: 6, w: 12, h: 2 } ]
 };
 
-const LAYOUT_NAMES = { "L-01": "Visual Hero / Gallery", "L-02": "Brand Story / Text", "L-03": "Service Tiers / Pricing", "L-04": "Zig-Zag Process", "L-05": "Location & Contact", "default": "Basic Starter" };
-const INDUSTRY_DB = { "Restaurant": { pages: ["Home", "Menu", "Reservations"], layouts: { "Home": "L-01", "Menu": "L-03", "Reservations": "L-05" } }, "Portfolio/Creative": { pages: ["Home", "Work", "About"], layouts: { "Home": "L-01", "Work": "L-01", "About": "L-02" } }, "Service Business": { pages: ["Home", "Services", "Contact"], layouts: { "Home": "L-04", "Services": "L-03", "Contact": "L-05" } } };
-const BLOCK_LIBRARY = Object.keys(BLOCK_TYPES);
+const LAYOUT_NAMES = { "default": "Basic Starter", "L-01": "Visual Hero / Gallery" };
+const INDUSTRY_DB = { "Restaurant": { pages: ["Home", "Menu"], layouts: { "Home": "L-01", "Menu": "default" } } };
 
 // ======================================================
 // --- 2. STATE MANAGEMENT ---
 // ======================================================
-const state = { package: null, brandKit: false, industry: "", pages: [], addons: [], pagePlans: {}, brandingProvided: null, customBranding: { active: false, name: "", price: 0 }, viewMode: {} };
-const pageAttachments = {}; 
+const state = {
+  package: null, brandKit: false, pages: [], pagePlans: {}, 
+  customBranding: { active: false, name: "", price: 0 }, viewMode: {} 
+};
 
 function saveState() { localStorage.setItem('onboardingState', JSON.stringify(state)); }
-function loadState() { const raw = localStorage.getItem('onboardingState'); if (raw) Object.assign(state, JSON.parse(raw)); }
+function loadState() { 
+    const raw = localStorage.getItem('onboardingState'); 
+    if (raw) Object.assign(state, JSON.parse(raw)); 
+}
 function nextStep(stepNumber) { saveState(); window.location.href = `step${stepNumber}.html`; }
 
 // ======================================================
-// --- 3. STEP 2 LOGIC ---
+// --- 3. CORE CALCULATIONS (GLOBAL) ---
 // ======================================================
-function selectPackage(id, name, price, limit, brandKitBundlePrice, extraPageCost, element) {
-  document.querySelectorAll('.package-card').forEach(el => el.classList.remove('selected'));
-  if (element) element.classList.add('selected');
-  state.package = { id, name, price, limit, brandKitBundlePrice, extraPageCost };
-  if (state.pages.length === 0) state.pages = ['Home', 'Contact'];
-  handlePackageSelected(); calculateTotal(); updateBrandKitDisplay(); updatePageBuilderUI(); saveState();
-}
-
-function handlePackageSelected(isRestore) {
-  const notice = document.getElementById('brandingLockedNotice');
-  const unlocked = document.getElementById('brandingUnlocked');
-  const pageBuilder = document.getElementById('pageBuilderSection');
-  if (notice) notice.classList.add('hidden');
-  if (unlocked) unlocked.classList.remove('hidden');
-  if (pageBuilder) pageBuilder.classList.remove('hidden');
-  const branding = document.getElementById('brandingSection');
-  if (branding && !isRestore) branding.classList.remove('collapsed'); 
-  if (window.initCollapsibles) window.initCollapsibles(); 
-}
-
-function toggleBrandingPanels(value) {
-  state.brandingProvided = value;
-  const yesPanel = document.getElementById('brandingProvidedPanel');
-  const noPanel = document.getElementById('brandingNotProvidedPanel');
-  if (yesPanel) yesPanel.classList.toggle('hidden', value !== 'yes');
-  if (noPanel) noPanel.classList.toggle('hidden', value !== 'no');
-  saveState();
-}
-
-let uploadedFiles = []; 
-function handleFileUpload(e) {
-  const files = e.target.files;
-  const box = document.getElementById('file-staging-box');
-  const list = document.getElementById('file-list-content');
-  if (!files || !files.length) { box.classList.add('hidden'); return; }
-  box.classList.remove('hidden'); list.innerHTML = ''; uploadedFiles = Array.from(files); 
-  uploadedFiles.forEach(file => {
-    const row = document.createElement('div'); row.className = 'file-list-item';
-    const nameSpan = document.createElement('span'); nameSpan.textContent = file.name;
-    const url = URL.createObjectURL(file);
-    const link = document.createElement('a'); link.href = url; link.download = file.name; link.className = 'btn-download-mini'; link.textContent = 'Download';
-    row.appendChild(nameSpan); row.appendChild(link); list.appendChild(row);
-  });
-}
-
-function downloadAllFiles() {
-  uploadedFiles.forEach(file => { const url = URL.createObjectURL(file); const link = document.createElement('a'); link.href = url; link.download = file.name; document.body.appendChild(link); link.click(); document.body.removeChild(link); });
-  const notesArea = document.getElementById('brandingProvidedNotes');
-  if (notesArea && notesArea.value.trim() !== "") { const blob = new Blob([notesArea.value], { type: "text/plain" }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = "branding-notes.txt"; document.body.appendChild(link); link.click(); document.body.removeChild(link); }
-}
-
-function toggleCustomBrandingUI(panelId) { const panel = document.getElementById(panelId); if (panel) panel.classList.toggle('hidden'); }
-
-function updateCustomBrandingState() {
-  const names = document.querySelectorAll('.custom-brand-name');
-  const prices = document.querySelectorAll('.custom-brand-price');
-  let activeName = ""; let activePrice = 0;
-  if (document.activeElement && document.activeElement.classList.contains('custom-brand-name')) activeName = document.activeElement.value; else names.forEach(input => { if (input.value) activeName = input.value; });
-  if (document.activeElement && document.activeElement.classList.contains('custom-brand-price')) activePrice = Number(document.activeElement.value); else prices.forEach(input => { if (input.value) activePrice = Number(input.value); });
-  names.forEach(input => { if (input !== document.activeElement) input.value = activeName; });
-  prices.forEach(input => { if (input !== document.activeElement) input.value = activePrice || ""; });
-  state.customBranding = { active: (activePrice > 0), name: activeName || "Custom Branding", price: activePrice || 0 };
-  calculateTotal(); saveState();
-}
-
-function initPageBuilder() {
-  const input = document.getElementById('industryInput');
-  const fileInput = document.getElementById('brandingUploads');
-  if (fileInput) fileInput.addEventListener('change', handleFileUpload);
-  if (state.brandingProvided) { const radio = document.querySelector(`input[name="brandingProvided"][value="${state.brandingProvided}"]`); if (radio) { radio.checked = true; toggleBrandingPanels(state.brandingProvided); } }
-  if (state.customBranding && state.customBranding.price > 0) { const names = document.querySelectorAll('.custom-brand-name'); const prices = document.querySelectorAll('.custom-brand-price'); names.forEach(i => i.value = state.customBranding.name); prices.forEach(i => i.value = state.customBranding.price); document.querySelectorAll('.custom-panel').forEach(p => p.classList.remove('hidden')); }
-  if(input) {
-      let list = document.getElementById('industry-suggestions');
-      if(!list) { list = document.createElement('ul'); list.id = 'industry-suggestions'; list.className = 'autocomplete-list hidden'; input.parentNode.style.position = 'relative'; input.parentNode.appendChild(list); }
-      input.addEventListener('input', (e) => handleIndustrySearch(e.target.value));
-      document.addEventListener('click', (e) => { if (e.target !== input && e.target !== list) list.classList.add('hidden'); });
-  }
-  if (state.industry && input) { input.value = state.industry; renderChips(getIndustryPages(state.industry)); }
-  renderActivePages();
-}
-
-function handleIndustrySearch(query) {
-  const list = document.getElementById('industry-suggestions'); if (!query) { list.classList.add('hidden'); return; }
-  const matches = Object.keys(INDUSTRY_DB).filter(key => key.toLowerCase().includes(query.toLowerCase())); list.innerHTML = '';
-  if (matches.length > 0) { list.classList.remove('hidden'); matches.forEach(match => { const li = document.createElement('li'); li.textContent = match; li.onclick = () => selectIndustry(match); list.appendChild(li); }); } else { list.classList.add('hidden'); }
-}
-window.generateSuggestions = handleIndustrySearch;
-
-function selectIndustry(industryName) { document.getElementById('industryInput').value = industryName; state.industry = industryName; document.getElementById('industry-suggestions').classList.add('hidden'); renderChips(getIndustryPages(industryName)); saveState(); }
-function getIndustryPages(industryName) { return (INDUSTRY_DB[industryName]) ? INDUSTRY_DB[industryName].pages : []; }
-function renderChips(pages) { const container = document.getElementById('suggestionChips'); if (!container) return; container.innerHTML = ''; if(pages.length === 0) { container.innerHTML = '<span style="opacity:0.5; font-style:italic;">Type an industry...</span>'; return; } pages.forEach(page => { const chip = document.createElement('div'); chip.className = 'suggestion-chip'; if (state.pages.includes(page)) chip.classList.add('added'); chip.textContent = `+ ${page}`; chip.onclick = () => addPage(page); container.appendChild(chip); }); }
-
-function addPage(nameRaw) { const input = document.getElementById('customPageInput'); const name = nameRaw || (input ? input.value.trim() : ''); if (!name) return; if (!state.pages.includes(name)) { state.pages.push(name); if (!state.pagePlans[name]) state.pagePlans[name] = {}; state.pagePlans[name].grid = convertListToGrid(getDefaultLayoutForPage(name)); if (input) input.value = ''; renderActivePages(); if (state.industry) renderChips(getIndustryPages(state.industry)); calculateTotal(); saveState(); } }
-function removePage(name) { state.pages = state.pages.filter(p => p !== name); renderActivePages(); if (state.industry) renderChips(getIndustryPages(state.industry)); calculateTotal(); saveState(); }
-
-function renderActivePages() {
-  const list = document.getElementById('activePagesList'); const countEl = document.getElementById('pageCountDisplay'); const warning = document.getElementById('pageLimitWarning'); if (!list || !state.package) return;
-  list.innerHTML = '';
-  state.pages.forEach((page, index) => {
-    const tag = document.createElement('div'); tag.className = 'page-tag'; tag.draggable = true;
-    tag.innerHTML = `<span class="drag-handle">::</span> ${page} <span class="page-tag-remove" onclick="removePage('${page}')">&times;</span>`;
-    tag.addEventListener('dragstart', (e) => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', index); tag.classList.add('dragging'); });
-    tag.addEventListener('dragend', () => tag.classList.remove('dragging'));
-    tag.addEventListener('dragover', (e) => e.preventDefault());
-    tag.addEventListener('drop', (e) => { e.preventDefault(); const fromIndex = parseInt(e.dataTransfer.getData('text/plain')); const toIndex = index; if (fromIndex !== toIndex) { const item = state.pages.splice(fromIndex, 1)[0]; state.pages.splice(toIndex, 0, item); renderActivePages(); saveState(); } });
-    list.appendChild(tag);
-  });
-  const limit = state.package.limit; const current = state.pages.length;
-  if (countEl) countEl.textContent = `${current}/${limit}`;
-  if (current > limit) { const extra = current - limit; const cost = extra * state.package.extraPageCost; warning.innerHTML = `You are ${extra} page(s) over your limit. Added cost: <strong>$${cost}</strong>`; warning.classList.add('visible'); } else { warning.classList.remove('visible'); }
-}
-function updatePageBuilderUI() { renderActivePages(); }
-
 function calculateTotal() {
-  const fwItems = document.getElementById('fw-items'); if (!fwItems) return;
+  const fwItems = document.getElementById('fw-items');
+  if (!fwItems) return;
+  
   let html = ''; let total = 0;
   if (state.package) {
-    html += `<div class="fw-item"><span>${state.package.name}</span><span>$${state.package.price.toLocaleString()}</span></div>`; total += state.package.price;
-    if (state.pages.length > state.package.limit) { const extra = state.pages.length - state.package.limit; const extraCost = extra * state.package.extraPageCost; html += `<div class="fw-item"><span style="color:#ff6b6b">${extra} Extra Pages</span><span>$${extraCost.toLocaleString()}</span></div>`; total += extraCost; }
+    html += `<div class="fw-item"><span>${state.package.name}</span><span>$${state.package.price.toLocaleString()}</span></div>`;
+    total += state.package.price;
+    if (state.pages.length > state.package.limit) {
+      const extra = state.pages.length - state.package.limit;
+      const extraCost = extra * state.package.extraPageCost;
+      html += `<div class="fw-item"><span>${extra} Extra Pages</span><span>$${extraCost.toLocaleString()}</span></div>`;
+      total += extraCost;
+    }
   }
-  if (state.brandKit) { let kitPrice = BASE_BRAND_KIT_PRICE; let label = 'Brand Kit'; if (state.package && state.package.brandKitBundlePrice) { kitPrice = Number(state.package.brandKitBundlePrice); label += ' (Bundled)'; } html += `<div class="fw-item"><span>+ ${label}</span><span>$${kitPrice.toLocaleString()}</span></div>`; total += kitPrice; }
-  if (state.customBranding && state.customBranding.price > 0) { html += `<div class="fw-item"><span>+ ${state.customBranding.name}</span><span>$${state.customBranding.price.toLocaleString()}</span></div>`; total += state.customBranding.price; }
-  state.addons.forEach(addon => { html += `<div class="fw-item"><span>+ ${addon.name}</span><span>$${Number(addon.price).toLocaleString()}</span></div>`; total += Number(addon.price) || 0; });
-  if (!html) html = '<p class="empty-state">Select a package to start...</p>';
-  fwItems.innerHTML = html;
-  const headerTotalEl = document.getElementById('fw-header-total'); if (headerTotalEl) headerTotalEl.textContent = `$${total.toLocaleString()}`;
-  const fullTotalEl = document.getElementById('fw-full-total'); if (fullTotalEl) fullTotalEl.textContent = `$${total.toLocaleString()}`;
-  const depositEl = document.getElementById('fw-deposit'); if (depositEl) depositEl.textContent = `$${(total / 2).toLocaleString()}`;
+  if (state.brandKit) {
+    let kitPrice = (state.package && state.package.brandKitBundlePrice) ? Number(state.package.brandKitBundlePrice) : BASE_BRAND_KIT_PRICE;
+    html += `<div class="fw-item"><span>Brand Kit</span><span>$${kitPrice.toLocaleString()}</span></div>`;
+    total += kitPrice;
+  }
+  if (state.customBranding.price > 0) {
+    html += `<div class="fw-item"><span>${state.customBranding.name}</span><span>$${state.customBranding.price.toLocaleString()}</span></div>`;
+    total += state.customBranding.price;
+  }
   
+  fwItems.innerHTML = html || '<p>Select a package...</p>';
+  document.getElementById('fw-header-total').textContent = `$${total.toLocaleString()}`;
+  document.getElementById('fw-full-total').textContent = `$${total.toLocaleString()}`;
+  document.getElementById('fw-deposit').textContent = `$${(total / 2).toLocaleString()}`;
+
   // Step 4 Sync
   const invItems = document.getElementById('final-invoice-items');
-  const invTotal = document.getElementById('final-invoice-total');
-  const invDeposit = document.getElementById('final-invoice-deposit');
-  if (invItems && invTotal && invDeposit) { invItems.innerHTML = html.replace(/fw-item/g, 'line-item'); invTotal.textContent = `$${total.toLocaleString()}`; invDeposit.textContent = `$${(total / 2).toLocaleString()}`; }
+  if (invItems) {
+      invItems.innerHTML = html.replace(/fw-item/g, 'line-item');
+      document.getElementById('final-invoice-total').textContent = `$${total.toLocaleString()}`;
+      document.getElementById('final-invoice-deposit').textContent = `$${(total / 2).toLocaleString()}`;
+  }
 }
 
 // ======================================================
-// --- 4. STEP 3: VISUAL LAYOUT BUILDER ---
+// --- 4. STEP 3: VISUAL BUILDER & SWAP LOGIC ---
 // ======================================================
 function initStep3() {
-  if (!document.body.classList.contains('step3')) return;
-  const container = document.getElementById('planContainer'); const pkgId = state.package ? state.package.id : 'basic'; container.innerHTML = ''; 
-  if (pkgId === 'basic') { const sortableList = document.createElement('div'); sortableList.id = 'sortable-list'; container.appendChild(sortableList); renderBasicPlan(sortableList); } else { renderVisualLayoutBuilder(container); }
-  injectDownloadButton();
+    if (!document.body.classList.contains('step3')) return;
+    const container = document.getElementById('planContainer');
+    container.innerHTML = '';
+    
+    state.pages.forEach((page, index) => {
+        if (!state.pagePlans[page]) state.pagePlans[page] = {};
+        if (!state.pagePlans[page].grid) state.pagePlans[page].grid = JSON.parse(JSON.stringify(LAYOUT_DEFINITIONS['default']));
+        if (!state.viewMode[page]) state.viewMode[page] = 'desktop';
+
+        const html = `
+          <div class="plan-card" data-page="${page}">
+            <div class="plan-card-header" onclick="this.closest('.plan-card').classList.toggle('collapsed')">
+                <span>${index + 1}. ${page}</span>
+            </div>
+            <div class="plan-card-body">
+              <div class="builder-layout-container">
+                <div class="editor-pane">
+                   <div class="editor-header"><span id="title-${index}">Desktop Edit</span></div>
+                   <div class="grid-canvas" id="grid-${index}"></div>
+                </div>
+                <div class="preview-pane" id="preview-${index}" onclick="toggleViewMode('${page}', ${index})"></div>
+              </div>
+            </div>
+          </div>`;
+        container.insertAdjacentHTML('beforeend', html);
+        refreshPageBuilderUI(page, index);
+    });
 }
 
-function renderVisualLayoutBuilder(container) {
-  const intro = `<div style="text-align:center; margin-bottom:30px;"><p>Drag & Drop Wireframe Tool. Move elements freely. They will snap back if they overlap.</p></div>`; container.insertAdjacentHTML('beforebegin', intro);
-  state.pages.forEach((page, index) => {
-    if(!state.pagePlans[page]) state.pagePlans[page] = {};
-    if (!state.pagePlans[page].grid || state.pagePlans[page].grid.length === 0) state.pagePlans[page].grid = convertListToGrid(getDefaultLayoutForPage(page));
-    const gridId = `grid-canvas-${index}`; const mobileId = `mobile-preview-${index}`; const fileListId = `file-list-${index}`; const layoutSelectorHtml = generateLayoutSelector(page);
-    const html = `
-      <div class="plan-card collapsed" data-page="${page}">
-        <div class="plan-card-header">
-            <div class="plan-card-title-group" onclick="togglePlanCard(this)"><span class="plan-card-chevron">▼</span><span>${index + 1}. ${page}</span></div>
-            <div class="layout-selector-wrapper"><select class="layout-select" onchange="switchPageLayout('${page}', this.value)"><option value="" disabled selected>Load Layout...</option>${layoutSelectorHtml}</select></div>
-        </div>
-        <div class="plan-card-body">
-          <div class="builder-layout-container">
-            <div class="editor-pane"><div class="editor-header"><span id="editor-title-${index}">Desktop Wireframe</span><button class="btn-dashed" style="width:auto; margin:0; padding:5px 10px;" onclick="openBlockLibrary('${page}', '${gridId}')">+ Add Element</button></div><div class="grid-canvas" id="${gridId}"></div></div>
-            <div class="preview-pane" id="preview-area-${index}" onclick="toggleViewMode('${page}', ${index})"></div>
-          </div>
-          <div style="margin-top:30px; border-top:1px solid var(--border-light); padding-top:20px;"><label>Content Notes</label><textarea rows="3" oninput="savePageNote('${page}', this.value)">${state.pagePlans[page].notes || ''}</textarea></div>
-          <div style="margin-top:20px;"><label>Page Assets</label><div class="file-upload-wrapper"><label for="file-input-${index}" class="custom-file-upload"><span>📂 Upload Assets</span></label><input id="file-input-${index}" type="file" multiple onchange="handlePageFileUpload('${page}', this, '${fileListId}')" /></div><div id="${fileListId}" class="mini-file-list"></div></div>
-        </div>
-      </div>`;
-    container.insertAdjacentHTML('beforeend', html); setTimeout(() => { refreshPageBuilderUI(page, index); renderPageFileList(page, fileListId); }, 100);
-  });
-}
+function refreshPageBuilderUI(page, index) {
+    const gridEl = document.getElementById(`grid-${index}`);
+    const prevEl = document.getElementById(`preview-${index}`);
+    const titleEl = document.getElementById(`title-${index}`);
+    if (!gridEl) return;
 
-function toggleViewMode(page, index) { if(!state.viewMode) state.viewMode = {}; const current = state.viewMode[page] || 'desktop'; state.viewMode[page] = (current === 'desktop') ? 'mobile' : 'desktop'; refreshPageBuilderUI(page, index); saveState(); }
-function getDefaultLayoutForPage(pageName) { if (state.industry && INDUSTRY_DB[state.industry] && INDUSTRY_DB[state.industry].layouts[pageName]) { const layoutID = INDUSTRY_DB[state.industry].layouts[pageName]; if (LAYOUT_DEFINITIONS[layoutID]) return [...LAYOUT_DEFINITIONS[layoutID]]; } return [...LAYOUT_DEFINITIONS["default"]]; }
-function convertListToGrid(listItems) { return listItems.map((item, index) => ({ id: `block-${Date.now()}-${index}`, name: item.name || item, x: item.x || 1, y: item.y || (1 + (index * 2)), w: item.w || 12, h: item.h || 2 })); }
-function generateLayoutSelector(currentPageName) { let options = `<option value="default" disabled>-- Suggestions --</option>`; const matches = []; Object.entries(INDUSTRY_DB).forEach(([indName, data]) => { if (data.pages.includes(currentPageName)) { matches.push({ industry: indName, layoutId: data.layouts[currentPageName] }); } }); if (matches.length > 0) { matches.forEach(m => { const name = LAYOUT_NAMES[m.layoutId] || m.layoutId; options += `<option value="${m.layoutId}">${m.industry} / ${currentPageName}</option>`; }); } options += `<option disabled>──────────</option>`; Object.entries(LAYOUT_DEFINITIONS).forEach(([lid, blocks]) => { const friendlyName = LAYOUT_NAMES[lid] || lid; options += `<option value="${lid}">${friendlyName}</option>`; }); return options; }
-function switchPageLayout(pageName, layoutId) { if(!layoutId) return; const choice = confirm("Replace current layout?"); let newBlocksRaw = LAYOUT_DEFINITIONS[layoutId] || LAYOUT_DEFINITIONS['default']; let newGridBlocks = convertListToGrid(newBlocksRaw); if (choice) { state.pagePlans[pageName].grid = newGridBlocks; } else { const currentBlocks = state.pagePlans[pageName].grid; const maxY = currentBlocks.length > 0 ? Math.max(...currentBlocks.map(b => b.y + b.h)) : 1; newGridBlocks = newGridBlocks.map(b => ({ ...b, y: b.y + maxY })); state.pagePlans[pageName].grid = [...currentBlocks, ...newGridBlocks]; } const index = state.pages.indexOf(pageName); refreshPageBuilderUI(pageName, index); saveState(); }
+    gridEl.innerHTML = '';
+    const mode = state.viewMode[page] || 'desktop';
+    titleEl.textContent = mode === 'desktop' ? 'Desktop Wireframe' : 'Mobile Wireframe';
 
-function refreshPageBuilderUI(pageName, index) {
-    const gridId = `grid-canvas-${index}`; const previewId = `preview-area-${index}`; const titleId = `editor-title-${index}`;
-    const gridContainer = document.getElementById(gridId); const previewContainer = document.getElementById(previewId); const titleEl = document.getElementById(titleId);
-    if(!gridContainer || !previewContainer) return;
-    gridContainer.innerHTML = '';
-    const mode = (state.viewMode && state.viewMode[pageName]) ? state.viewMode[pageName] : 'desktop';
-    if(titleEl) titleEl.textContent = mode === 'desktop' ? "Desktop Wireframe" : "Mobile Wireframe";
-    const blocks = state.pagePlans[pageName].grid || []; const sortedBlocks = [...blocks].sort((a,b) => a.y - b.y);
+    const blocks = state.pagePlans[page].grid;
     blocks.forEach((block, idx) => {
         const info = BLOCK_TYPES[block.name] || { icon: "📦", type: "generic" };
-        const el = document.createElement('div'); el.className = `grid-item block-type-${info.type}`; el.id = block.id; el.style.gridColumnStart = block.x; el.style.gridColumnEnd = `span ${block.w}`; el.style.gridRowStart = block.y; el.style.gridRowEnd = `span ${block.h}`;
-        el.innerHTML = `<div class="grid-remove" onclick="removeBlock('${pageName}', '${block.id}')">&times;</div><div class="grid-item-content"><div class="grid-visual-icon">${info.icon}</div><div class="grid-label">${block.name}</div></div><div class="grid-resize-handle"></div>`;
-        setupFreeInteraction(el, pageName, idx, index); gridContainer.appendChild(el);
+        const el = document.createElement('div');
+        el.className = `grid-item block-type-${info.type}`;
+        el.style.gridColumn = `${block.x} / span ${block.w}`;
+        el.style.gridRow = `${block.y} / span ${block.h}`;
+        el.innerHTML = `<div class="grid-item-content"><div class="grid-label">${block.name}</div></div>`;
+        
+        setupSwapInteraction(el, page, idx, index);
+        gridEl.appendChild(el);
     });
-    if(mode === 'desktop') {
-        let previewHtml = `<div class="mobile-frame"><div class="mobile-notch"></div><div class="mobile-screen">`; sortedBlocks.forEach(block => { const info = BLOCK_TYPES[block.name] || { icon: "📦" }; previewHtml += `<div class="mobile-block ${info.type === 'button' ? 'mobile-block-button' : ''}"><span class="mobile-block-icon">${info.icon}</span> <span>${block.name}</span></div>`; }); previewHtml += `</div></div>`; previewContainer.innerHTML = previewHtml;
+
+    // Render Preview
+    if (mode === 'desktop') {
+        let html = `<div class="mobile-frame"><div class="mobile-screen">`;
+        blocks.sort((a,b) => a.y - b.y).forEach(b => html += `<div class="mobile-block"><span>${b.name}</span></div>`);
+        prevEl.innerHTML = html + `</div></div>`;
     } else {
-        let previewHtml = `<div class="desktop-frame"><div class="desktop-screen">`; sortedBlocks.forEach(block => { const info = BLOCK_TYPES[block.name] || { icon: "📦" }; const widthPercent = (block.w / 12) * 100; previewHtml += `<div class="mini-desktop-block" style="width: calc(${widthPercent}% - 5px);">${block.name}</div>`; }); previewHtml += `</div><div class="desktop-stand"></div></div>`; previewContainer.innerHTML = previewHtml;
+        let html = `<div class="desktop-frame"><div class="desktop-screen">`;
+        blocks.sort((a,b) => a.y - b.y).forEach(b => html += `<div class="mini-desktop-block" style="width: calc(${(b.w/12)*100}% - 5px)">${b.name}</div>`);
+        prevEl.innerHTML = html + `</div></div>`;
     }
 }
 
-function findOverlappingBlock(pageName, movingId, x, y, w, h) { const blocks = state.pagePlans[pageName].grid; for (let i = 0; i < blocks.length; i++) { const b = blocks[i]; if (b.id === movingId) continue; if (x < b.x + b.w && x + w > b.x && y < b.y + b.h && y + h > b.y) return i; } return -1; }
-function setupFreeInteraction(element, pageName, index, pageIndex) {
-    const container = document.getElementById(`grid-canvas-${pageIndex}`); let startX, startY, startGridX, startGridY; let originalGridX, originalGridY; 
+function setupSwapInteraction(element, page, blockIdx, pageIdx) {
+    let originalX, originalY;
     element.addEventListener('mousedown', (e) => {
-        if(e.target.classList.contains('grid-resize-handle') || e.target.classList.contains('grid-remove')) return;
-        e.preventDefault(); element.classList.add('interacting'); const rect = container.getBoundingClientRect(); const colWidth = rect.width / 12; const rowHeight = 60; 
-        startX = e.clientX; startY = e.clientY; const blockData = state.pagePlans[pageName].grid[index]; startGridX = blockData.x; startGridY = blockData.y; originalGridX = blockData.x; originalGridY = blockData.y;
-        const onMove = (moveEvent) => { const diffX = moveEvent.clientX - startX; const diffY = moveEvent.clientY - startY; const colsMoved = Math.round(diffX / colWidth); const rowsMoved = Math.round(diffY / rowHeight); let newX = startGridX + colsMoved; let newY = startGridY + rowsMoved; if(newX < 1) newX = 1; if(newX + blockData.w > 13) newX = 13 - blockData.w; if(newY < 1) newY = 1; element.style.gridColumnStart = newX; element.style.gridRowStart = newY; };
-        const onUp = (upEvent) => { element.classList.remove('interacting'); window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); const finalStyle = window.getComputedStyle(element); const potentialX = parseInt(finalStyle.gridColumnStart); const potentialY = parseInt(finalStyle.gridRowStart); const overlappedIdx = findOverlappingBlock(pageName, blockData.id, potentialX, potentialY, blockData.w, blockData.h); if (overlappedIdx !== -1) { state.pagePlans[pageName].grid[overlappedIdx].x = originalGridX; state.pagePlans[pageName].grid[overlappedIdx].y = originalGridY; state.pagePlans[pageName].grid[index].x = potentialX; state.pagePlans[pageName].grid[index].y = potentialY; } else { state.pagePlans[pageName].grid[index].x = potentialX; state.pagePlans[pageName].grid[index].y = potentialY; } saveState(); refreshPageBuilderUI(pageName, pageIndex); };
-        window.addEventListener('mousemove', onMove); window.addEventListener('mouseup', onUp);
-    });
-    const resizeHandle = element.querySelector('.grid-resize-handle');
-    resizeHandle.addEventListener('mousedown', (e) => { e.stopPropagation(); e.preventDefault(); const rect = container.getBoundingClientRect(); const colWidth = rect.width / 12; const rowHeight = 60; startX = e.clientX; startY = e.clientY; const blockData = state.pagePlans[pageName].grid[index]; const startW = blockData.w; const startH = blockData.h; const onResize = (moveEvent) => { const diffX = moveEvent.clientX - startX; const diffY = moveEvent.clientY - startY; let newW = startW + Math.round(diffX / colWidth); let newH = startH + Math.round(diffY / rowHeight); if(newW < 2) newW = 2; if(newW + blockData.x > 13) newW = 13 - blockData.x; if(newH < 1) newH = 1; element.style.gridColumnEnd = `span ${newW}`; element.style.gridRowEnd = `span ${newH}`; }; const onEndResize = () => { const spanW = parseInt(element.style.gridColumnEnd.replace('span ','')); const spanH = parseInt(element.style.gridRowEnd.replace('span ','')); state.pagePlans[pageName].grid[index].w = spanW; state.pagePlans[pageName].grid[index].h = spanH; saveState(); refreshPageBuilderUI(pageName, pageIndex); window.removeEventListener('mousemove', onResize); window.removeEventListener('mouseup', onEndResize); }; window.addEventListener('mousemove', onResize); window.addEventListener('mouseup', onEndResize); });
-}
+        e.preventDefault();
+        element.classList.add('interacting');
+        const block = state.pagePlans[page].grid[blockIdx];
+        originalX = block.x; originalY = block.y;
+        
+        const onMove = (me) => {
+            const rect = element.parentElement.getBoundingClientRect();
+            const x = Math.round(((me.clientX - rect.left) / rect.width) * 12) + 1;
+            const y = Math.round((me.clientY - rect.top) / 60) + 1;
+            if (x >= 1 && x <= 13 - block.w) element.style.gridColumnStart = x;
+            if (y >= 1) element.style.gridRowStart = y;
+        };
 
-function openBlockLibrary(pageName, gridId) { const pageIndex = gridId.split('-')[2]; const existing = document.getElementById('lib-modal'); if(existing) existing.remove(); const overlay = document.createElement('div'); overlay.id = 'lib-modal'; overlay.className = 'block-library-overlay'; const items = BLOCK_LIBRARY.map(name => { const info = BLOCK_TYPES[name]; return `<div class="library-option" onclick="addBlock('${pageName}', '${name}', '${pageIndex}')"><span class="library-icon">${info.icon}</span><span>${name}</span></div>`; }).join(''); overlay.innerHTML = `<div class="block-library-modal"><h3>Add Element</h3><div class="library-grid">${items}</div><button class="btn-close-modal" onclick="this.closest('.block-library-overlay').remove()">Cancel</button></div>`; document.body.appendChild(overlay); }
-function addBlock(pageName, blockName, pageIndex) { const grid = state.pagePlans[pageName].grid; const maxY = grid.length > 0 ? Math.max(...grid.map(b => b.y + b.h)) : 1; grid.push({ id: `block-${Date.now()}`, name: blockName, x: 1, y: maxY, w: 12, h: 2 }); document.getElementById('lib-modal').remove(); refreshPageBuilderUI(pageName, pageIndex); saveState(); }
-function removeBlock(pageName, id) { state.pagePlans[pageName].grid = state.pagePlans[pageName].grid.filter(b => b.id !== id); const idx = state.pages.indexOf(pageName); refreshPageBuilderUI(pageName, idx); saveState(); }
-
-// --- BASIC PLAN LOGIC ---
-function renderBasicPlan(container) {
-  state.pages.forEach((page, index) => { if(!state.pagePlans[page]) state.pagePlans[page] = {}; const noteVal = state.pagePlans[page].notes || ''; const fileListId = `file-list-${index}`; const html = `<div class="plan-card collapsed" draggable="true" data-page-name="${page}"><div class="plan-card-header" onclick="togglePlanCard(this)"><div class="plan-card-title-group"><span class="plan-card-chevron">▼</span><span>${index + 1}. ${page}</span></div><div class="drag-handle">☰</div></div><div class="plan-card-body"><label>Page Goals & Content Notes</label><textarea rows="5" oninput="savePageNote('${page}', this.value)" placeholder="What should be on this page?">${noteVal}</textarea><div style="margin-top:20px;"><label>Page Assets</label><div class="file-upload-wrapper"><label for="file-input-${index}" class="custom-file-upload"><span>📂 Upload Assets</span></label><input id="file-input-${index}" type="file" multiple onchange="handlePageFileUpload('${page}', this, '${fileListId}')" /></div><div id="${fileListId}" class="mini-file-list"></div></div></div></div>`; container.insertAdjacentHTML('beforeend', html); setTimeout(() => renderPageFileList(page, fileListId), 50); });
-}
-function handlePageFileUpload(pageName, input, listId) { if (input.files && input.files.length > 0) { if (!pageAttachments[pageName]) pageAttachments[pageName] = []; Array.from(input.files).forEach(f => pageAttachments[pageName].push(f)); renderPageFileList(pageName, listId); } }
-function renderPageFileList(pageName, listId) { const container = document.getElementById(listId); if (!container) return; container.innerHTML = ''; const files = pageAttachments[pageName] || []; if (files.length === 0) { container.innerHTML = '<div style="font-size:0.75rem; color:var(--text-muted); text-align:center;">No files attached</div>'; return; } files.forEach((file, i) => { const div = document.createElement('div'); div.className = 'page-file-item'; div.innerHTML = `<span>📎 ${file.name}</span>`; const delBtn = document.createElement('span'); delBtn.innerHTML = '&times;'; delBtn.className = 'delete-file-btn'; delBtn.onclick = () => { pageAttachments[pageName].splice(i, 1); renderPageFileList(pageName, listId); }; div.appendChild(delBtn); container.appendChild(div); }); }
-function togglePlanCard(header) { const card = header.closest('.plan-card'); card.classList.toggle('collapsed'); }
-function savePageNote(pageName, text) { if(!state.pagePlans[pageName]) state.pagePlans[pageName] = {}; state.pagePlans[pageName].notes = text; saveState(); }
-function toggleBrandKit(element) { state.brandKit = !state.brandKit; document.querySelectorAll('.brand-kit-ref').forEach(el => { el.classList.toggle('selected', state.brandKit); }); calculateTotal(); updateBrandKitDisplay(); saveState(); }
-function updateBrandKitDisplay() { document.querySelectorAll('.brand-kit-ref').forEach(bar => { const finalPriceEl = bar.querySelector('.bk-final-price'); if (!finalPriceEl) return; const hasBundle = !!(state.package && state.package.brandKitBundlePrice); const displayPrice = hasBundle ? Number(state.package.brandKitBundlePrice) : BASE_BRAND_KIT_PRICE; finalPriceEl.textContent = `$${displayPrice.toLocaleString()}`; bar.classList.toggle('selected', !!state.brandKit); }); }
-function toggleWidget() { const widget = document.getElementById('floating-widget'); if (widget) widget.classList.toggle('collapsed'); }
-function togglePackageDetails(buttonEl) { const card = buttonEl.closest('.package-card'); if (card) { const expanded = card.classList.toggle('expanded'); buttonEl.textContent = expanded ? 'Close Details' : 'View Details'; } }
-function initCollapsibles() { const sections = document.querySelectorAll('[data-collapsible]'); sections.forEach(section => { const header = section.querySelector('[data-collapsible-header]'); if (!header || header.hasAttribute('data-has-listener')) return; header.setAttribute('data-has-listener', 'true'); header.addEventListener('click', (e) => { e.preventDefault(); section.classList.toggle('collapsed'); }); }); }
-function injectDownloadButton() { const existingBtn = document.getElementById('globalDownloadBtn'); if(existingBtn) existingBtn.remove(); const navContainer = document.querySelector('.step-nav-buttons'); if(navContainer) { const btn = document.createElement('button'); btn.id = 'globalDownloadBtn'; btn.className = 'btn-download-all'; btn.textContent = 'Download Project Outline'; btn.onclick = downloadProjectOutline; navContainer.insertBefore(btn, navContainer.lastElementChild); } }
-
-// --- FINALIZATION & STEP 4 LOGIC ---
-function initStep1() {
-    // Logic for Step 1 input saving
-    const inputs = document.querySelectorAll('.save-me');
-    inputs.forEach(input => {
-      const saved = localStorage.getItem(input.id);
-      if (saved !== null) input.value = saved;
-      input.addEventListener('input', function() { localStorage.setItem(this.id, this.value); });
+        const onUp = () => {
+            element.classList.remove('interacting');
+            window.removeEventListener('mousemove', onMove);
+            window.removeEventListener('mouseup', onUp);
+            
+            const newX = parseInt(element.style.gridColumnStart);
+            const newY = parseInt(element.style.gridRowStart);
+            
+            // SWAP LOGIC: Find if dropped on another block
+            const targetIdx = state.pagePlans[page].grid.findIndex((b, i) => i !== blockIdx && newX < b.x + b.w && newX + block.w > b.x && newY < b.y + b.h && newY + block.h > b.y);
+            
+            if (targetIdx !== -1) {
+                state.pagePlans[page].grid[targetIdx].x = originalX;
+                state.pagePlans[page].grid[targetIdx].y = originalY;
+            }
+            state.pagePlans[page].grid[blockIdx].x = newX;
+            state.pagePlans[page].grid[blockIdx].y = newY;
+            
+            saveState(); refreshPageBuilderUI(page, pageIdx);
+        };
+        window.addEventListener('mousemove', onMove);
+        window.addEventListener('mouseup', onUp);
     });
 }
 
-function initStep4() {
-    const storedClientName = localStorage.getItem('clientName') || '';
-    const storedBusinessName = localStorage.getItem('businessName') || '';
-    const storedEmail = localStorage.getItem('clientEmail') || '';
-    const nameInput = document.getElementById('fullName');
-    const busInput = document.getElementById('businessName');
-    const emailInput = document.getElementById('email');
-    if (nameInput) nameInput.value = storedClientName;
-    if (busInput) busInput.value = storedBusinessName;
-    if (emailInput) emailInput.value = storedEmail;
-    calculateTotal();
+function toggleViewMode(page, index) {
+    state.viewMode[page] = (state.viewMode[page] === 'desktop') ? 'mobile' : 'desktop';
+    refreshPageBuilderUI(page, index);
 }
 
-function handleFinalize(e) {
-    e.preventDefault();
-    if (!confirm("Are you ready to submit your deposit and start the project?")) return;
-    const projectSummary = {
-        client: { name: document.getElementById('fullName').value, business: document.getElementById('businessName').value, email: document.getElementById('email').value },
-        package: state.package, pages: state.pages, pagePlans: state.pagePlans, brandKit: state.brandKit, customBranding: state.customBranding,
-        total: document.getElementById('final-invoice-total').textContent, deposit: document.getElementById('final-invoice-deposit').textContent
-    };
-    const textContent = JSON.stringify(projectSummary, null, 2);
-    const blob = new Blob([textContent], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = `Project-Kickoff-${projectSummary.client.business || 'Client'}.txt`; document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    alert("🎉 SUCCESS! \n\n1. Your deposit receipt has been emailed to you.\n2. A project summary has been sent to the admin team.\n\n(Note: A backup file has also been downloaded to your computer just in case!)");
-}
-
+// ======================================================
+// --- 5. INITIALIZATION ---
+// ======================================================
 document.addEventListener('DOMContentLoaded', () => {
-  loadState();
-  initCollapsibles();
-  if (window.location.pathname.includes('index')) initStep1();
-  if (window.location.pathname.includes('step2')) { initPageBuilder(); if(state.package) handlePackageSelected(true); }
-  if (window.location.pathname.includes('step3')) initStep3();
-  if (window.location.pathname.includes('step4')) initStep4();
-  calculateTotal(); updateBrandKitDisplay();
+    loadState();
+    if (window.location.pathname.includes('step3')) initStep3();
+    if (window.location.pathname.includes('step4')) {
+        document.getElementById('fullName').value = localStorage.getItem('clientName') || '';
+        document.getElementById('businessName').value = localStorage.getItem('businessName') || '';
+        document.getElementById('email').value = localStorage.getItem('clientEmail') || '';
+    }
+    calculateTotal();
 });
+
+function toggleWidget() { document.getElementById('floating-widget').classList.toggle('collapsed'); }
