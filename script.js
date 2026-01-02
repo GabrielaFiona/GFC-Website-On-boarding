@@ -4,7 +4,6 @@
 
 const BASE_BRAND_KIT_PRICE = 500;
 
-// --- LAYOUT DEFINITIONS (The Blocks for each Layout ID) ---
 const LAYOUT_DEFINITIONS = {
   "L-01": ["Hero: Full Screen Visual", "Intro Blurb", "Visual Gallery Grid", "Instagram Feed", "Footer"],
   "L-02": ["Hero: Brand Story", "About the Founder", "Our Values", "Timeline/History", "Footer"],
@@ -34,7 +33,6 @@ const LAYOUT_DEFINITIONS = {
   "default": ["Header", "Content Block", "Image Block", "Call to Action", "Footer"]
 };
 
-// --- INDUSTRY DATABASE (For Auto-Suggestions & Layouts) ---
 const INDUSTRY_DB = {
   "Bakery / Donut Shop": { pages: ["Home", "Menu / Daily Flavors", "Pre-Order / Catering", "About the Baker", "Location & Hours"], layouts: { "Home": "L-01", "Menu / Daily Flavors": "L-06", "Pre-Order / Catering": "L-15", "About the Baker": "L-02", "Location & Hours": "L-05" } },
   "Brewery / Distillery / Winery": { pages: ["Home", "Our Beers/Wines", "Visit Tasting Room", "Events & Music", "Club Signup", "Shop Merch"], layouts: { "Home": "L-01", "Our Beers/Wines": "L-06", "Visit Tasting Room": "L-08", "Events & Music": "L-12", "Club Signup": "L-03", "Shop Merch": "L-10" } },
@@ -104,7 +102,6 @@ const state = {
   industry: "",
   pages: [],
   addons: [],
-  // Use a unified structure for both text notes and grid layouts
   pagePlans: {}, // { "Home": { notes: "", grid: [] }, ... }
   brandingProvided: null,
   customBranding: { active: false, name: "", price: 0 },
@@ -114,7 +111,6 @@ const state = {
 // Store files in memory
 const pageAttachments = {}; 
 
-// --- PERSISTENCE ---
 function saveState() {
   localStorage.setItem('onboardingState', JSON.stringify(state));
 }
@@ -239,7 +235,6 @@ function toggleCustomBrandingUI(panelId) {
 function updateCustomBrandingState() {
   const names = document.querySelectorAll('.custom-brand-name');
   const prices = document.querySelectorAll('.custom-brand-price');
-  
   let activeName = "";
   let activePrice = 0;
 
@@ -360,7 +355,7 @@ function addPage(nameRaw) {
     state.pages.push(name);
     // Initialize default grid layout in pagePlans
     if (!state.pagePlans[name]) state.pagePlans[name] = {};
-    state.pagePlans[name].grid = convertListToGrid(getDefaultLayoutForPage(name));
+    state.pagePlans[name].grid = convertListToFlowGrid(getDefaultLayoutForPage(name));
     
     if (input) input.value = '';
     renderActivePages();
@@ -467,7 +462,7 @@ function calculateTotal() {
 }
 
 // ======================================================
-// --- 4. STEP 3: PLAN & LAYOUT LOGIC ---
+// --- 4. STEP 3: PLAN & LAYOUT LOGIC (UPDATED) ---
 // ======================================================
 
 function initStep3() {
@@ -476,15 +471,14 @@ function initStep3() {
   const pkgId = state.package ? state.package.id : 'basic';
   container.innerHTML = ''; 
   
-  // Package 1: Basic (Text Notes + Files) - KEEPING OLD LOGIC
+  // Package 1: Basic (Text Notes + Files)
   if (pkgId === 'basic') {
-    // Create a container for drag-sortable items
     const sortableList = document.createElement('div');
     sortableList.id = 'sortable-list';
     container.appendChild(sortableList);
     renderBasicPlan(sortableList);
   } 
-  // Package 2 & 3: Standard/Advanced (NEW GRID LAYOUT)
+  // Package 2 & 3: Standard/Advanced (NEW VISUAL BUILDER)
   else {
     renderVisualLayoutBuilder(container); 
   }
@@ -506,12 +500,10 @@ function injectDownloadButton() {
   }
 }
 
-// --- PACKAGE 1: BASIC PLAN LOGIC (Unchanged) ---
+// --- PACKAGE 1: BASIC PLAN LOGIC ---
 function renderBasicPlan(container) {
   state.pages.forEach((page, index) => {
-    // Ensure state obj exists
     if(!state.pagePlans[page]) state.pagePlans[page] = {};
-    
     const noteVal = state.pagePlans[page].notes || '';
     const fileListId = `file-list-${index}`;
     
@@ -527,45 +519,40 @@ function renderBasicPlan(container) {
         <div class="plan-card-body">
           <label>Page Goals & Content Notes</label>
           <textarea rows="5" oninput="savePageNote('${page}', this.value)" placeholder="What should be on this page?">${noteVal}</textarea>
-          
           <div style="margin-top:20px;">
               <label>Page Assets</label>
               <div class="file-upload-wrapper">
-                 <label for="file-input-${index}" class="custom-file-upload">
-                   <span style="font-size:1.2rem;">📂</span><br>Click to Upload
-                 </label>
+                 <label for="file-input-${index}" class="custom-file-upload"><span>📂 Upload Assets</span></label>
                  <input id="file-input-${index}" type="file" multiple onchange="handlePageFileUpload('${page}', this, '${fileListId}')" />
               </div>
               <div id="${fileListId}" class="mini-file-list"></div>
           </div>
         </div>
-      </div>
-    `;
+      </div>`;
     container.insertAdjacentHTML('beforeend', html);
     setTimeout(() => renderPageFileList(page, fileListId), 50);
   });
-  
-  // Basic Drag Sort (re-using your specific basic logic if needed, or simple drag)
-  // For basic text cards, simple drag is fine.
 }
 
-// --- PACKAGES 2 & 3: NEW GRID LAYOUT BUILDER ---
+// --- PACKAGES 2 & 3: NEW VISUAL LAYOUT BUILDER ---
 
 function renderVisualLayoutBuilder(container) {
-  const intro = `<div style="text-align:center; margin-bottom:30px;"><p>Drag and resize blocks on the grid to design your layout.</p></div>`;
+  const intro = `<div style="text-align:center; margin-bottom:30px;"><p>Drag items to reorder. Resize width for desktop. <strong>Mobile updates automatically.</strong></p></div>`;
   container.insertAdjacentHTML('beforebegin', intro);
 
   state.pages.forEach((page, index) => {
     if(!state.pagePlans[page]) state.pagePlans[page] = {};
     
-    // Ensure we have a grid layout
+    // Initialize default grid layout if empty
     if (!state.pagePlans[page].grid || state.pagePlans[page].grid.length === 0) {
       const rawLayout = getDefaultLayoutForPage(page);
-      state.pagePlans[page].grid = convertListToGrid(rawLayout);
+      state.pagePlans[page].grid = convertListToFlowGrid(rawLayout);
     }
     
     const layoutSelectorHtml = generateLayoutSelector(page);
     const fileListId = `file-list-${index}`;
+    const gridId = `grid-canvas-${index}`;
+    const mobileId = `mobile-preview-${index}`;
 
     const html = `
       <div class="plan-card collapsed" data-page="${page}">
@@ -576,24 +563,38 @@ function renderVisualLayoutBuilder(container) {
             </div>
             <div class="layout-selector-wrapper">
                 <select class="layout-select" onchange="switchPageLayout('${page}', this.value)">
-                    <option value="" disabled selected>Load Layout...</option>
+                    <option value="" disabled selected>Load Template...</option>
                     ${layoutSelectorHtml}
                 </select>
             </div>
         </div>
+        
         <div class="plan-card-body">
-          <div class="layout-builder-wrapper">
-             <div class="grid-canvas" id="grid-${index}">
-                 ${renderGridItems(page)}
-             </div>
-             <div class="grid-controls">
-                <button class="btn-dashed" onclick="openBlockLibrary('${page}', 'grid-${index}')">+ Add Block</button>
-             </div>
+          <div class="builder-layout-container">
+            
+            <div class="editor-pane">
+               <div class="editor-header">
+                 <span style="font-size:0.8rem; text-transform:uppercase; letter-spacing:1px; color:var(--accent-blue);">Desktop Layout</span>
+                 <button class="btn-dashed" style="width:auto; margin:0; padding:5px 10px; font-size:0.75rem;" onclick="openBlockLibrary('${page}', '${gridId}')">+ Add Block</button>
+               </div>
+               <div class="grid-canvas" id="${gridId}">
+                   </div>
+            </div>
+
+            <div class="preview-pane">
+              <div style="text-align:center; margin-bottom:10px; font-size:0.8rem; color:var(--text-muted);">Mobile Preview</div>
+              <div class="mobile-frame">
+                 <div class="mobile-screen" id="${mobileId}">
+                    <div class="mobile-notch"></div>
+                    </div>
+              </div>
+            </div>
+
           </div>
 
           <div style="margin-top:30px; border-top:1px solid var(--border-light); padding-top:20px;">
               <label>Content Notes</label>
-              <textarea rows="3" oninput="savePageNote('${page}', this.value)" placeholder="Details...">${state.pagePlans[page].notes || ''}</textarea>
+              <textarea rows="3" oninput="savePageNote('${page}', this.value)" placeholder="Details specific to these blocks...">${state.pagePlans[page].notes || ''}</textarea>
           </div>
           
           <div style="margin-top:20px;">
@@ -609,11 +610,22 @@ function renderVisualLayoutBuilder(container) {
     `;
     container.insertAdjacentHTML('beforeend', html);
     
+    // Render the internal contents
     setTimeout(() => {
-        enableGridInteraction(`grid-${index}`, page);
+        refreshPageBuilderUI(page, gridId, mobileId);
         renderPageFileList(page, fileListId);
     }, 100);
   });
+}
+
+// Convert simple list to objects with Width (w) and Height (h)
+function convertListToFlowGrid(listItems) {
+    return listItems.map((item, index) => ({
+        id: `block-${Date.now()}-${index}`,
+        name: item,
+        w: 12, // Default full width
+        h: 1   // Default height unit
+    }));
 }
 
 function getDefaultLayoutForPage(pageName) {
@@ -622,18 +634,6 @@ function getDefaultLayoutForPage(pageName) {
     if (LAYOUT_DEFINITIONS[layoutID]) return [...LAYOUT_DEFINITIONS[layoutID]];
   }
   return [...LAYOUT_DEFINITIONS["default"]];
-}
-
-function convertListToGrid(listItems) {
-    // FIX: Stack vertically without overlap. h=2, so y should increment by 2.
-    return listItems.map((item, index) => ({
-        id: `block-${Date.now()}-${index}`,
-        name: item,
-        x: 1, 
-        y: 1 + (index * 2), // Start at 1, 3, 5...
-        w: 12, 
-        h: 2
-    }));
 }
 
 function generateLayoutSelector(currentPageName) {
@@ -645,186 +645,188 @@ function generateLayoutSelector(currentPageName) {
         }
     });
     if (matches.length > 0) {
-        options += `<optgroup label="Industry Specific for '${currentPageName}'">`;
+        options += `<optgroup label="Industry Suggestions">`;
         matches.forEach(m => { options += `<option value="${m.layoutId}">${m.industry}</option>`; });
         options += `</optgroup>`;
     }
-    if (matches.length === 0) {
-        options += `<optgroup label="All Layouts">`;
-        Object.entries(LAYOUT_DEFINITIONS).forEach(([lid, blocks]) => {
-            options += `<option value="${lid}">${lid} (${blocks.length} blocks)</option>`;
-        });
-        options += `</optgroup>`;
-    }
+    options += `<optgroup label="All Layouts">`;
+    Object.entries(LAYOUT_DEFINITIONS).forEach(([lid, blocks]) => {
+        options += `<option value="${lid}">${lid} (${blocks.length} blocks)</option>`;
+    });
+    options += `</optgroup>`;
     return options;
 }
 
 function switchPageLayout(pageName, layoutId) {
     if(!layoutId) return;
-    const choice = confirm("Do you want to REPLACE the current layout?\n\nOK = Replace Everything\nCancel = Add to Bottom");
-    
+    const choice = confirm("Replace current layout?");
     let newBlocksRaw = LAYOUT_DEFINITIONS[layoutId] || LAYOUT_DEFINITIONS['default'];
-    let newGridBlocks = convertListToGrid(newBlocksRaw);
+    let newGridBlocks = convertListToFlowGrid(newBlocksRaw);
 
     if (choice) {
         state.pagePlans[pageName].grid = newGridBlocks;
     } else {
-        const currentBlocks = state.pagePlans[pageName].grid;
-        // Find bottom most block
-        const maxY = currentBlocks.length > 0 ? Math.max(...currentBlocks.map(b => b.y + b.h)) : 1;
-        
-        // Offset new blocks
-        newGridBlocks = newGridBlocks.map(b => ({ ...b, y: b.y + maxY - 1 })); // -1 because grid is 1-based but offset is relative
-        state.pagePlans[pageName].grid = [...currentBlocks, ...newGridBlocks];
+        state.pagePlans[pageName].grid = [...state.pagePlans[pageName].grid, ...newGridBlocks];
     }
-    const containerId = `grid-${state.pages.indexOf(pageName)}`;
-    const container = document.getElementById(containerId);
-    if(container) {
-        container.innerHTML = renderGridItems(pageName);
-        enableGridInteraction(containerId, pageName); 
-    }
+    
+    const index = state.pages.indexOf(pageName);
+    refreshPageBuilderUI(pageName, `grid-canvas-${index}`, `mobile-preview-${index}`);
     saveState();
 }
 
-function renderGridItems(pageName) {
+// --- RENDER FUNCTIONS (UI) ---
+
+function refreshPageBuilderUI(pageName, gridContainerId, mobileContainerId) {
+    const gridContainer = document.getElementById(gridContainerId);
+    const mobileContainer = document.getElementById(mobileContainerId);
+    if(!gridContainer || !mobileContainer) return;
+
+    // 1. Render Desktop Grid
+    gridContainer.innerHTML = '';
     const blocks = state.pagePlans[pageName].grid || [];
-    return blocks.map((block) => `
-      <div class="grid-item" id="${block.id}" 
-           style="grid-column-start: ${block.x}; grid-column-end: span ${block.w}; grid-row-start: ${block.y}; grid-row-end: span ${block.h};">
-        <div class="grid-item-content">
-            <span class="grid-drag-handle">::</span>
-            <span class="grid-label">${block.name}</span>
-            <span class="grid-remove" onclick="removeGridBlock('${pageName}', '${block.id}')">&times;</span>
-            <div class="grid-resize-handle"></div>
-        </div>
-      </div>
-    `).join('');
+    
+    blocks.forEach((block, idx) => {
+        // Grid Item HTML
+        const el = document.createElement('div');
+        el.className = 'grid-item';
+        el.id = block.id;
+        // Desktop: Use grid-column-end to span width. Order is determined by DOM order (Index).
+        el.style.gridColumnEnd = `span ${block.w}`;
+        el.style.gridRowEnd = `span ${block.h || 1}`;
+        
+        el.innerHTML = `
+          <div class="grid-item-content">
+             <div class="grid-icon-placeholder">⬚</div>
+             <div class="grid-label">${block.name}</div>
+             <div class="grid-drag-handle" title="Drag to Reorder">::</div>
+             <div class="grid-remove" onclick="removeGridBlock('${pageName}', '${block.id}')">&times;</div>
+             <div class="grid-resize-handle" title="Drag to Resize Width"></div>
+          </div>
+        `;
+        
+        // Add events
+        setupInteraction(el, pageName, idx, gridContainerId, mobileContainerId);
+        gridContainer.appendChild(el);
+    });
+
+    // 2. Render Mobile Preview (Simple Stack)
+    mobileContainer.innerHTML = '<div class="mobile-notch"></div>';
+    blocks.forEach(block => {
+        const div = document.createElement('div');
+        div.className = 'mobile-block';
+        div.innerText = block.name;
+        mobileContainer.appendChild(div);
+    });
 }
 
-// --- GRID INTERACTION (WITH CLICK-PILE FIX) ---
-function enableGridInteraction(containerId, pageName) {
-    const container = document.getElementById(containerId);
-    if (!container) return;
+// --- INTERACTION LOGIC (REORDERING & RESIZING) ---
+
+function setupInteraction(element, pageName, index, gridId, mobileId) {
+    const gridContainer = document.getElementById(gridId);
     
-    let activeItem = null;
-    let initialX, initialY, initialGridX, initialGridY;
-    let mode = null; 
-    let hasMoved = false; 
-
-    const getGridCoords = (clientX, clientY) => {
-        const rect = container.getBoundingClientRect();
-        const colWidth = rect.width / 12;
-        const rowHeight = 50; 
-        const x = Math.ceil((clientX - rect.left) / colWidth);
-        const y = Math.ceil((clientY - rect.top) / rowHeight);
-        return { x: Math.max(1, Math.min(12, x)), y: Math.max(1, y) };
-    };
-
-    const startInteraction = (e) => {
-        const target = e.target;
-        const itemEl = target.closest('.grid-item');
-        if (!itemEl) return;
-        
-        if (target.classList.contains('grid-resize-handle')) mode = 'resize';
-        else if (target.closest('.grid-drag-handle') || target.classList.contains('grid-item-content')) mode = 'drag';
-        else return;
-        
+    // DRAG (REORDER) LOGIC
+    const dragHandle = element.querySelector('.grid-drag-handle');
+    
+    dragHandle.addEventListener('mousedown', (e) => {
         e.preventDefault();
-        activeItem = itemEl;
-        hasMoved = false; 
-        
-        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-        
-        const coords = getGridCoords(clientX, clientY);
-        initialGridX = coords.x;
-        initialGridY = coords.y;
-    };
-    
-    const moveInteraction = (e) => {
-        if (!activeItem) return;
+        element.draggable = true; 
+    });
+
+    element.addEventListener('dragstart', (e) => {
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', index);
+        element.classList.add('dragging-active');
+        setTimeout(() => element.style.opacity = '0.5', 0);
+    });
+
+    element.addEventListener('dragend', () => {
+        element.classList.remove('dragging-active');
+        element.style.opacity = '1';
+        element.draggable = false;
+    });
+
+    element.addEventListener('dragover', (e) => {
         e.preventDefault();
-        
-        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-        const curr = getGridCoords(clientX, clientY);
-        
-        // Threshold check: Ensure we actually dragged
-        if (!hasMoved && (curr.x === initialGridX && curr.y === initialGridY)) return;
-        
-        if (!hasMoved) {
-            hasMoved = true;
-            activeItem.classList.add('interacting'); 
-        }
-        
-        const blockId = activeItem.id;
-        const blockIdx = state.pagePlans[pageName].grid.findIndex(b => b.id === blockId);
-        if (blockIdx === -1) return;
-        const blockData = state.pagePlans[pageName].grid[blockIdx];
+        element.style.borderTop = "2px solid var(--accent-blue)";
+    });
 
-        if (mode === 'drag') {
-            const dx = curr.x - initialGridX;
-            const dy = curr.y - initialGridY;
-            const newX = Math.max(1, Math.min(13 - blockData.w, blockData.x + dx));
-            const newY = Math.max(1, blockData.y + dy);
-            activeItem.style.gridColumnStart = newX;
-            activeItem.style.gridRowStart = newY;
-        } else if (mode === 'resize') {
-            const dx = curr.x - initialGridX;
-            const dy = curr.y - initialGridY;
-            const newW = Math.max(1, Math.min(12 - blockData.x + 1, blockData.w + dx));
-            const newH = Math.max(1, blockData.h + dy);
-            activeItem.style.gridColumnEnd = `span ${newW}`;
-            activeItem.style.gridRowEnd = `span ${newH}`;
-        }
-    };
-    
-    const endInteraction = (e) => {
-        if (!activeItem) return;
-        
-        if (hasMoved) {
-            const style = window.getComputedStyle(activeItem);
-            const newX = parseInt(style.gridColumnStart);
-            const newRowStart = parseInt(style.gridRowStart);
-            const spanW = activeItem.style.gridColumnEnd.replace('span ', '').trim();
-            const spanH = activeItem.style.gridRowEnd.replace('span ', '').trim();
-            
-            const blockId = activeItem.id;
-            const blockIdx = state.pagePlans[pageName].grid.findIndex(b => b.id === blockId);
-            
-            if (blockIdx > -1) {
-                state.pagePlans[pageName].grid[blockIdx].x = newX;
-                state.pagePlans[pageName].grid[blockIdx].y = newRowStart;
-                if(spanW) state.pagePlans[pageName].grid[blockIdx].w = parseInt(spanW);
-                if(spanH) state.pagePlans[pageName].grid[blockIdx].h = parseInt(spanH);
-            }
-            activeItem.classList.remove('interacting');
-        }
+    element.addEventListener('dragleave', () => {
+        element.style.borderTop = "";
+    });
 
-        activeItem = null;
-        mode = null;
-        if (hasMoved) {
+    element.addEventListener('drop', (e) => {
+        e.preventDefault();
+        element.style.borderTop = "";
+        const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
+        const toIndex = index;
+
+        if (fromIndex !== toIndex && !isNaN(fromIndex)) {
+            // Reorder Array
+            const blocks = state.pagePlans[pageName].grid;
+            const item = blocks.splice(fromIndex, 1)[0];
+            blocks.splice(toIndex, 0, item);
+            
             saveState();
-            container.innerHTML = renderGridItems(pageName);
+            refreshPageBuilderUI(pageName, gridId, mobileId);
         }
-    };
+    });
 
-    container.addEventListener('mousedown', startInteraction);
-    window.addEventListener('mousemove', moveInteraction);
-    window.addEventListener('mouseup', endInteraction);
-    container.addEventListener('touchstart', startInteraction, {passive: false});
-    window.addEventListener('touchmove', moveInteraction, {passive: false});
-    window.addEventListener('touchend', endInteraction);
+    // RESIZE (WIDTH) LOGIC
+    const resizeHandle = element.querySelector('.grid-resize-handle');
+    let startX, startW;
+
+    resizeHandle.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        startX = e.clientX;
+        startW = state.pagePlans[pageName].grid[index].w;
+        
+        const doResize = (moveEvent) => {
+            const currentX = moveEvent.clientX;
+            const diff = currentX - startX;
+            // Approximate grid column width ~60px
+            const colsChanged = Math.round(diff / 60); 
+            
+            let newW = startW + colsChanged;
+            if(newW < 2) newW = 2; // Min width
+            if(newW > 12) newW = 12; // Max width
+
+            // Visual update immediately
+            element.style.gridColumnEnd = `span ${newW}`;
+        };
+
+        const stopResize = (upEvent) => {
+            const currentX = upEvent.clientX;
+            const diff = currentX - startX;
+            const colsChanged = Math.round(diff / 60); 
+            let newW = startW + colsChanged;
+            if(newW < 2) newW = 2; if(newW > 12) newW = 12;
+
+            // Save final state
+            state.pagePlans[pageName].grid[index].w = newW;
+            saveState();
+            refreshPageBuilderUI(pageName, gridId, mobileId); 
+
+            window.removeEventListener('mousemove', doResize);
+            window.removeEventListener('mouseup', stopResize);
+        };
+
+        window.addEventListener('mousemove', doResize);
+        window.addEventListener('mouseup', stopResize);
+    });
 }
 
 function removeGridBlock(pageName, blockId) {
     state.pagePlans[pageName].grid = state.pagePlans[pageName].grid.filter(b => b.id !== blockId);
-    const container = document.getElementById(`grid-${state.pages.indexOf(pageName)}`);
-    if(container) container.innerHTML = renderGridItems(pageName);
+    const index = state.pages.indexOf(pageName);
+    refreshPageBuilderUI(pageName, `grid-canvas-${index}`, `mobile-preview-${index}`);
     saveState();
 }
 
 function openBlockLibrary(pageName, containerId) {
+  // Extract index from containerId (grid-canvas-0 -> 0)
+  const pageIndex = containerId.split('-')[2];
+  
   const existingOverlay = document.getElementById('block-library-overlay');
   if(existingOverlay) existingOverlay.remove();
 
@@ -833,7 +835,8 @@ function openBlockLibrary(pageName, containerId) {
   
   let optionsHtml = '';
   BLOCK_LIBRARY.forEach(block => {
-      optionsHtml += `<div class="library-option" onclick="addBlockToGrid('${pageName}', '${block}', '${containerId}')">${block}</div>`;
+      // Pass the mobile ID as well
+      optionsHtml += `<div class="library-option" onclick="addBlockToGrid('${pageName}', '${block}', '${pageIndex}')">${block}</div>`;
   });
 
   overlay.innerHTML = `
@@ -847,16 +850,13 @@ function openBlockLibrary(pageName, containerId) {
   document.body.appendChild(overlay);
 }
 
-function addBlockToGrid(pageName, blockName, containerId) {
-    const currentBlocks = state.pagePlans[pageName].grid || [];
-    const maxY = currentBlocks.length > 0 ? Math.max(...currentBlocks.map(b => b.y + b.h)) : 1;
+function addBlockToGrid(pageName, blockName, pageIndex) {
     state.pagePlans[pageName].grid.push({
         id: `block-${Date.now()}`,
         name: blockName,
-        x: 1, y: maxY, w: 12, h: 2
+        w: 12, h: 2
     });
-    const container = document.getElementById(containerId);
-    if(container) container.innerHTML = renderGridItems(pageName);
+    refreshPageBuilderUI(pageName, `grid-canvas-${pageIndex}`, `mobile-preview-${pageIndex}`);
     saveState();
     document.getElementById('block-library-overlay').remove();
 }
@@ -871,8 +871,8 @@ function downloadProjectOutline() {
         content += `PAGE: ${page}\n`;
         const blocks = state.pagePlans[page]?.grid || [];
         if(blocks.length > 0) {
-            blocks.sort((a,b) => a.y - b.y).forEach(b => {
-                 content += ` - ${b.name} (Row: ${b.y}, Width: ${b.w}/12)\n`;
+            blocks.forEach((b, i) => {
+                 content += ` ${i+1}. ${b.name} (Width: ${b.w}/12)\n`;
             });
         } else {
              content += ` (No layout defined)\n`;
@@ -889,7 +889,6 @@ function downloadProjectOutline() {
     a.click();
     document.body.removeChild(a);
     
-    // Also trigger file downloads
     downloadAllFiles();
 }
 
@@ -991,81 +990,3 @@ document.addEventListener('DOMContentLoaded', () => {
   calculateTotal();
   updateBrandKitDisplay();
 });
-
-// --- CSS STYLES FOR GRID SYSTEM ---
-const style = document.createElement('style');
-style.innerHTML = `
-  /* Autocomplete */
-  .autocomplete-list { position: absolute; top: 100%; left: 0; right: 0; background: #0f1322; border: 1px solid var(--border-light); max-height: 200px; overflow-y: auto; list-style: none; padding: 0; z-index:1000; }
-  .autocomplete-list li { padding: 10px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); }
-  .autocomplete-list li:hover { background: var(--surface-hover); color: var(--accent-blue); }
-
-  /* Grid Canvas */
-  .grid-canvas {
-    display: grid;
-    grid-template-columns: repeat(12, 1fr);
-    grid-auto-rows: 50px;
-    gap: 10px;
-    /* Fainter Lines */
-    background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
-                      linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
-    background-size: 100% 50px, 8.33% 100%;
-    background-color: rgba(0,0,0,0.1); /* Lighter background */
-    border: 1px solid var(--border-light);
-    border-radius: 8px;
-    padding: 10px;
-    min-height: 300px;
-    position: relative;
-    user-select: none;
-  }
-  
-  .grid-item {
-    background: var(--surface-base);
-    border: 1px solid var(--border-light);
-    border-radius: 4px;
-    position: relative;
-    overflow: hidden;
-    touch-action: none; 
-    transition: box-shadow 0.2s, opacity 0.2s;
-  }
-  
-  .grid-item.interacting {
-    z-index: 100;
-    box-shadow: 0 0 15px rgba(44,166,224,0.5);
-    border-color: var(--accent-blue);
-    opacity: 0.9;
-  }
-
-  .grid-item-content {
-    width: 100%; height: 100%;
-    display: flex; align-items: center; padding: 0 10px;
-  }
-
-  .grid-drag-handle { cursor: grab; margin-right: 8px; color: var(--text-muted); padding: 10px 5px; }
-  .grid-label { flex-grow: 1; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none;}
-  .grid-remove { cursor: pointer; color: #ff6b6b; padding: 5px; z-index: 10; }
-  
-  .grid-resize-handle {
-    position: absolute; bottom: 0; right: 0;
-    width: 15px; height: 15px;
-    background: linear-gradient(135deg, transparent 50%, var(--text-muted) 50%);
-    cursor: se-resize;
-    z-index: 5;
-  }
-
-  /* Layout Selector */
-  .layout-selector-wrapper { margin-left: auto; padding-left: 10px; }
-  .layout-select {
-    background: #050508; color: #fff; border: 1px solid var(--border-light);
-    padding: 5px 10px; border-radius: 4px; font-size: 0.8rem; max-width: 150px;
-  }
-
-  /* Modal */
-  .block-library-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; display: flex; justify-content: center; align-items: center; }
-  .block-library-modal { background: #0f1322; padding: 30px; border-radius: 12px; width: 90%; max-width: 600px; border: 1px solid var(--accent-blue); }
-  .library-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0; max-height: 400px; overflow-y: auto; }
-  .library-option { padding: 15px; background: var(--surface-base); border: 1px solid var(--border-light); border-radius: 6px; cursor: pointer; text-align: center; }
-  .library-option:hover { background: var(--accent-blue); color: white; }
-  .btn-close-modal { background: transparent; border: 1px solid var(--border-light); color: var(--text-muted); padding: 8px 16px; cursor: pointer; float: right; border-radius: 4px; }
-`;
-document.head.appendChild(style);
