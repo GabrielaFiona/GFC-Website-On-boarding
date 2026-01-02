@@ -2,6 +2,7 @@
 // --- 1. DATA & CONFIGURATION ---
 // ======================================================
 const BASE_BRAND_KIT_PRICE = 500;
+
 const BLOCK_TYPES = {
   "Hero Section": { icon: "🖼️", type: "hero" },
   "Text Content": { icon: "📝", type: "text" },
@@ -42,7 +43,7 @@ function loadState() {
 function nextStep(stepNumber) { saveState(); window.location.href = `step${stepNumber}.html`; }
 
 // ======================================================
-// --- 3. CORE CALCULATIONS (GLOBAL) ---
+// --- 3. QUOTE BOX PERSISTENCE (WORKS ON ALL PAGES) ---
 // ======================================================
 function calculateTotal() {
   const fwItems = document.getElementById('fw-items');
@@ -69,7 +70,7 @@ function calculateTotal() {
     total += state.customBranding.price;
   }
   
-  fwItems.innerHTML = html || '<p>Select a package...</p>';
+  fwItems.innerHTML = html || '<p>Select a package to see quote...</p>';
   document.getElementById('fw-header-total').textContent = `$${total.toLocaleString()}`;
   document.getElementById('fw-full-total').textContent = `$${total.toLocaleString()}`;
   document.getElementById('fw-deposit').textContent = `$${(total / 2).toLocaleString()}`;
@@ -84,7 +85,7 @@ function calculateTotal() {
 }
 
 // ======================================================
-// --- 4. STEP 3: VISUAL BUILDER & SWAP LOGIC ---
+// --- 4. STEP 3: VISUAL BUILDER (EDITABLE DESKTOP + SWAP) ---
 // ======================================================
 function initStep3() {
     if (!document.body.classList.contains('step3')) return;
@@ -139,14 +140,17 @@ function refreshPageBuilderUI(page, index) {
         gridEl.appendChild(el);
     });
 
-    // Render Preview
+    // Render Preview based on the OPPOSITE mode
     if (mode === 'desktop') {
         let html = `<div class="mobile-frame"><div class="mobile-screen">`;
-        blocks.sort((a,b) => a.y - b.y).forEach(b => html += `<div class="mobile-block"><span>${b.name}</span></div>`);
+        [...blocks].sort((a,b) => a.y - b.y).forEach(b => html += `<div class="mobile-block"><span>${b.name}</span></div>`);
         prevEl.innerHTML = html + `</div></div>`;
     } else {
         let html = `<div class="desktop-frame"><div class="desktop-screen">`;
-        blocks.sort((a,b) => a.y - b.y).forEach(b => html += `<div class="mini-desktop-block" style="width: calc(${(b.w/12)*100}% - 5px)">${b.name}</div>`);
+        [...blocks].sort((a,b) => a.y - b.y).forEach(b => {
+            const w = (b.w/12)*100;
+            html += `<div class="mini-desktop-block" style="width: calc(${w}% - 5px)">${b.name}</div>`;
+        });
         prevEl.innerHTML = html + `</div></div>`;
     }
 }
@@ -175,13 +179,19 @@ function setupSwapInteraction(element, page, blockIdx, pageIdx) {
             const newX = parseInt(element.style.gridColumnStart);
             const newY = parseInt(element.style.gridRowStart);
             
-            // SWAP LOGIC: Find if dropped on another block
-            const targetIdx = state.pagePlans[page].grid.findIndex((b, i) => i !== blockIdx && newX < b.x + b.w && newX + block.w > b.x && newY < b.y + b.h && newY + block.h > b.y);
+            // SWAP LOGIC: Check if we dropped on top of another block
+            const targetIdx = state.pagePlans[page].grid.findIndex((b, i) => 
+                i !== blockIdx && 
+                newX < b.x + b.w && newX + block.w > b.x && 
+                newY < b.y + b.h && newY + block.h > b.y
+            );
             
             if (targetIdx !== -1) {
+                // Perform the swap
                 state.pagePlans[page].grid[targetIdx].x = originalX;
                 state.pagePlans[page].grid[targetIdx].y = originalY;
             }
+            
             state.pagePlans[page].grid[blockIdx].x = newX;
             state.pagePlans[page].grid[blockIdx].y = newY;
             
@@ -198,17 +208,58 @@ function toggleViewMode(page, index) {
 }
 
 // ======================================================
-// --- 5. INITIALIZATION ---
+// --- 5. STEP 4: FINALIZATION & EMAIL SUMMARY ---
+// ======================================================
+function handleFinalize(e) {
+    e.preventDefault();
+    if (!confirm("Submit deposit and finalize project configuration?")) return;
+    
+    const summary = {
+        client: document.getElementById('fullName').value,
+        business: document.getElementById('businessName').value,
+        details: state
+    };
+
+    const blob = new Blob([JSON.stringify(summary, null, 2)], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `Project-Summary-${summary.business}.txt`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+
+    alert("Project finalized! A complete summary file has been prepared and the project details have been sent to our team.");
+}
+
+// ======================================================
+// --- 6. INITIALIZATION ---
 // ======================================================
 document.addEventListener('DOMContentLoaded', () => {
     loadState();
+    
+    // Save info from Step 1
+    const inputs = document.querySelectorAll('.save-me');
+    inputs.forEach(input => {
+      input.value = localStorage.getItem(input.id) || '';
+      input.addEventListener('input', (e) => localStorage.setItem(e.target.id, e.target.value));
+    });
+
     if (window.location.pathname.includes('step3')) initStep3();
+    
     if (window.location.pathname.includes('step4')) {
         document.getElementById('fullName').value = localStorage.getItem('clientName') || '';
         document.getElementById('businessName').value = localStorage.getItem('businessName') || '';
         document.getElementById('email').value = localStorage.getItem('clientEmail') || '';
     }
+
     calculateTotal();
 });
 
 function toggleWidget() { document.getElementById('floating-widget').classList.toggle('collapsed'); }
+function selectPackage(id, name, price, limit, bkPrice, extraCost, element) {
+    state.package = { id, name, price, limit, brandKitBundlePrice: bkPrice, extraPageCost: extraCost };
+    if (!state.pages.length) state.pages = ['Home', 'Contact'];
+    document.querySelectorAll('.package-card').forEach(c => c.classList.remove('selected'));
+    element.classList.add('selected');
+    calculateTotal(); saveState();
+}
+function toggleBrandKit() { state.brandKit = !state.brandKit; calculateTotal(); saveState(); }
+function nextStep(n) { saveState(); window.location.href = (n === 1) ? 'index.html' : `step${n}.html`; }
