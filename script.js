@@ -4,7 +4,7 @@
 
 const BASE_BRAND_KIT_PRICE = 500;
 
-// VISUAL ICONS MAPPING
+// VISUAL ICONS MAPPING (Keeping structure, but icons will be replaced by CSS art)
 const BLOCK_TYPES = {
   "Hero Section": { icon: "🖼️", type: "hero" },
   "Hero: Full Screen Visual": { icon: "🖼️", type: "hero" },
@@ -27,7 +27,6 @@ const BLOCK_TYPES = {
 };
 
 // --- UPDATED LAYOUT DEFINITIONS (With Pre-defined Coordinates) ---
-// Structure: { name: "Block Name", x: Column(1-12), y: Row, w: Width(1-12), h: Height }
 const LAYOUT_DEFINITIONS = {
   "L-01": [ // Visual Heavy / Home
     { name: "Hero: Full Screen Visual", x: 1, y: 1, w: 12, h: 5 },
@@ -96,10 +95,9 @@ const state = {
   pagePlans: {}, 
   brandingProvided: null,
   customBranding: { active: false, name: "", price: 0 },
-  advancedNotes: ""
+  viewMode: {} // Stores 'desktop' or 'mobile' per page
 };
 
-// Store files in memory
 const pageAttachments = {}; 
 
 function saveState() {
@@ -201,7 +199,7 @@ function downloadAllFiles() {
     link.click();
     document.body.removeChild(link);
   });
-
+  
   const notesArea = document.getElementById('brandingProvidedNotes');
   if (notesArea && notesArea.value.trim() !== "") {
     const blob = new Blob([notesArea.value], { type: "text/plain" });
@@ -308,7 +306,6 @@ function handleIndustrySearch(query) {
   } else { list.classList.add('hidden'); }
 }
 
-// Added alias to ensure button click works
 window.generateSuggestions = handleIndustrySearch;
 
 function selectIndustry(industryName) {
@@ -477,7 +474,7 @@ function initStep3() {
 }
 
 function renderVisualLayoutBuilder(container) {
-  const intro = `<div style="text-align:center; margin-bottom:30px;"><p>Drag & Drop Wireframe Tool. Move elements freely. They will snap back if they overlap.</p></div>`;
+  const intro = `<div style="text-align:center; margin-bottom:30px;"><p>Drag & Drop Wireframe Tool. Drag elements to swap positions. Click Mobile to toggle views.</p></div>`;
   container.insertAdjacentHTML('beforebegin', intro);
 
   state.pages.forEach((page, index) => {
@@ -486,9 +483,13 @@ function renderVisualLayoutBuilder(container) {
       state.pagePlans[page].grid = convertListToGrid(getDefaultLayoutForPage(page));
     }
     
+    // Set default view mode to desktop
+    if(!state.viewMode[page]) state.viewMode[page] = 'desktop';
+
     const gridId = `grid-canvas-${index}`;
-    const mobileId = `mobile-preview-${index}`;
+    const previewId = `preview-area-${index}`;
     const fileListId = `file-list-${index}`;
+    const titleId = `editor-title-${index}`;
     const layoutSelectorHtml = generateLayoutSelector(page);
 
     const html = `
@@ -510,16 +511,15 @@ function renderVisualLayoutBuilder(container) {
           <div class="builder-layout-container">
             <div class="editor-pane">
                <div class="editor-header">
-                 <span>Desktop Wireframe</span>
+                 <span id="${titleId}">Desktop Wireframe</span>
                  <button class="btn-dashed" style="width:auto; margin:0; padding:5px 10px;" onclick="openBlockLibrary('${page}', '${gridId}')">+ Add Element</button>
                </div>
                <div class="grid-canvas" id="${gridId}"></div>
             </div>
-            <div class="preview-pane">
-              <div class="mobile-frame">
-                 <div class="mobile-screen" id="${mobileId}"><div class="mobile-notch"></div></div>
-              </div>
-            </div>
+            
+            <div class="preview-pane" id="${previewId}" onclick="toggleViewMode('${page}', ${index})">
+               </div>
+
           </div>
           <div style="margin-top:30px; border-top:1px solid var(--border-light); padding-top:20px;">
               <label>Content Notes</label>
@@ -538,10 +538,18 @@ function renderVisualLayoutBuilder(container) {
     `;
     container.insertAdjacentHTML('beforeend', html);
     setTimeout(() => {
-        refreshPageBuilderUI(page, gridId, mobileId);
+        refreshPageBuilderUI(page, index);
         renderPageFileList(page, fileListId);
     }, 100);
   });
+}
+
+// --- NEW FUNCTION: Toggle View Mode ---
+function toggleViewMode(page, index) {
+    const current = state.viewMode[page] || 'desktop';
+    state.viewMode[page] = (current === 'desktop') ? 'mobile' : 'desktop';
+    refreshPageBuilderUI(page, index);
+    saveState();
 }
 
 function getDefaultLayoutForPage(pageName) {
@@ -556,7 +564,7 @@ function getDefaultLayoutForPage(pageName) {
 function convertListToGrid(listItems) {
     return listItems.map((item, index) => ({
         id: `block-${Date.now()}-${index}`,
-        name: item.name || item, // Support both string and object
+        name: item.name || item, 
         x: item.x || 1, 
         y: item.y || (1 + (index * 2)), 
         w: item.w || 12, 
@@ -602,19 +610,29 @@ function switchPageLayout(pageName, layoutId) {
     }
     
     const index = state.pages.indexOf(pageName);
-    refreshPageBuilderUI(pageName, `grid-canvas-${index}`, `mobile-preview-${index}`);
+    refreshPageBuilderUI(pageName, index);
     saveState();
 }
 
-// --- RENDER FUNCTIONS ---
-function refreshPageBuilderUI(pageName, gridId, mobileId) {
+// --- RENDER FUNCTIONS (UPDATED FOR TOGGLE & CARTOON BLOCKS) ---
+function refreshPageBuilderUI(pageName, index) {
+    const gridId = `grid-canvas-${index}`;
+    const previewId = `preview-area-${index}`;
+    const titleId = `editor-title-${index}`;
+    
     const gridContainer = document.getElementById(gridId);
-    const mobileContainer = document.getElementById(mobileId);
-    if(!gridContainer) return;
+    const previewContainer = document.getElementById(previewId);
+    const titleEl = document.getElementById(titleId);
+    
+    if(!gridContainer || !previewContainer) return;
 
     gridContainer.innerHTML = '';
-    mobileContainer.innerHTML = '<div class="mobile-notch"></div>';
+    const mode = state.viewMode[pageName] || 'desktop';
+    
+    // Update Title Label
+    if(titleEl) titleEl.textContent = mode === 'desktop' ? "Desktop Wireframe" : "Mobile Wireframe";
 
+    // --- Render Grid (Main Editor) ---
     const blocks = state.pagePlans[pageName].grid || [];
     const sortedBlocks = [...blocks].sort((a,b) => a.y - b.y);
 
@@ -636,34 +654,59 @@ function refreshPageBuilderUI(pageName, gridId, mobileId) {
           </div>
           <div class="grid-resize-handle"></div>
         `;
-        setupFreeInteraction(el, pageName, idx, gridId, mobileId);
+        setupFreeInteraction(el, pageName, idx, index);
         gridContainer.appendChild(el);
     });
 
-    sortedBlocks.forEach(block => {
-        const info = BLOCK_TYPES[block.name] || { icon: "📦" };
-        const div = document.createElement('div');
-        div.className = `mobile-block ${info.type === 'button' ? 'mobile-block-button' : ''}`;
-        div.innerHTML = `<span class="mobile-block-icon">${info.icon}</span> <span>${block.name}</span>`;
-        mobileContainer.appendChild(div);
-    });
+    // --- Render Preview (Based on Opposite of Mode) ---
+    if(mode === 'desktop') {
+        // Render Mobile Preview
+        let previewHtml = `
+          <div class="mobile-frame">
+             <div class="mobile-notch"></div>
+             <div class="mobile-screen">`;
+        
+        sortedBlocks.forEach(block => {
+            const info = BLOCK_TYPES[block.name] || { icon: "📦" };
+            previewHtml += `<div class="mobile-block ${info.type === 'button' ? 'mobile-block-button' : ''}">
+               <span>${block.name}</span>
+            </div>`;
+        });
+        
+        previewHtml += `</div><div class="mobile-overlay-hint">Switch to Mobile Edit</div></div>`;
+        previewContainer.innerHTML = previewHtml;
+    } else {
+        // Render Desktop Preview
+        previewContainer.innerHTML = `
+          <div class="desktop-frame">
+              <div class="desktop-screen" style="display:flex; align-items:center; justify-content:center; background:#111; color:#555;">
+                  <span style="font-size:0.8rem; text-transform:uppercase;">Desktop Preview Active</span>
+              </div>
+              <div class="desktop-stand"></div>
+              <div class="mobile-overlay-hint">Switch to Desktop Edit</div>
+          </div>
+        `;
+    }
 }
 
-// --- INTERACTION: FREE FLOATING DRAG WITH COLLISION CHECK ---
-function checkCollision(pageName, id, x, y, w, h) {
+// --- INTERACTION: IMPROVED DRAG & SWAP ---
+function findOverlappingBlock(pageName, movingId, x, y, w, h) {
     const blocks = state.pagePlans[pageName].grid;
+    // Simple center-point collision or broad area intersection
     for (let i = 0; i < blocks.length; i++) {
         const b = blocks[i];
-        if (b.id === id) continue; 
+        if (b.id === movingId) continue; 
+        
+        // Check intersection
         if (x < b.x + b.w && x + w > b.x && y < b.y + b.h && y + h > b.y) {
-            return true; 
+            return i; // Return index of overlapped block
         }
     }
-    return false;
+    return -1;
 }
 
-function setupFreeInteraction(element, pageName, index, gridId, mobileId) {
-    const container = document.getElementById(gridId);
+function setupFreeInteraction(element, pageName, index, pageIndex) {
+    const container = element.parentElement;
     let startX, startY, startGridX, startGridY;
     let originalGridX, originalGridY; 
     
@@ -710,16 +753,25 @@ function setupFreeInteraction(element, pageName, index, gridId, mobileId) {
             const potentialX = parseInt(finalStyle.gridColumnStart);
             const potentialY = parseInt(finalStyle.gridRowStart);
             
-            if (checkCollision(pageName, blockData.id, potentialX, potentialY, blockData.w, blockData.h)) {
-                state.pagePlans[pageName].grid[index].x = originalGridX;
-                state.pagePlans[pageName].grid[index].y = originalGridY;
-                alert("Blocks cannot overlap! Snapping back.");
+            // Check Collision for SWAP Logic
+            const overlappedIdx = findOverlappingBlock(pageName, blockData.id, potentialX, potentialY, blockData.w, blockData.h);
+            
+            if (overlappedIdx !== -1) {
+                // Perform Swap: The overlapped block moves to the dragger's original position
+                state.pagePlans[pageName].grid[overlappedIdx].x = originalGridX;
+                state.pagePlans[pageName].grid[overlappedIdx].y = originalGridY;
+                
+                // Dragger takes new position
+                state.pagePlans[pageName].grid[index].x = potentialX;
+                state.pagePlans[pageName].grid[index].y = potentialY;
             } else {
+                // No collision, just move
                 state.pagePlans[pageName].grid[index].x = potentialX;
                 state.pagePlans[pageName].grid[index].y = potentialY;
             }
+            
             saveState();
-            refreshPageBuilderUI(pageName, gridId, mobileId);
+            refreshPageBuilderUI(pageName, pageIndex);
         };
 
         window.addEventListener('mousemove', onMove);
@@ -760,7 +812,7 @@ function setupFreeInteraction(element, pageName, index, gridId, mobileId) {
              state.pagePlans[pageName].grid[index].w = spanW;
              state.pagePlans[pageName].grid[index].h = spanH;
              saveState();
-             refreshPageBuilderUI(pageName, gridId, mobileId);
+             refreshPageBuilderUI(pageName, pageIndex);
              window.removeEventListener('mousemove', onResize);
              window.removeEventListener('mouseup', onEndResize);
         };
@@ -801,14 +853,14 @@ function addBlock(pageName, blockName, pageIndex) {
     });
     
     document.getElementById('lib-modal').remove();
-    refreshPageBuilderUI(pageName, `grid-canvas-${pageIndex}`, `mobile-preview-${pageIndex}`);
+    refreshPageBuilderUI(pageName, pageIndex);
     saveState();
 }
 
 function removeBlock(pageName, id) {
     state.pagePlans[pageName].grid = state.pagePlans[pageName].grid.filter(b => b.id !== id);
     const idx = state.pages.indexOf(pageName);
-    refreshPageBuilderUI(pageName, `grid-canvas-${idx}`, `mobile-preview-${idx}`);
+    refreshPageBuilderUI(pageName, idx);
     saveState();
 }
 
@@ -962,80 +1014,3 @@ document.addEventListener('DOMContentLoaded', () => {
   calculateTotal();
   updateBrandKitDisplay();
 });
-
-// --- CSS STYLES FOR GRID SYSTEM ---
-const style = document.createElement('style');
-style.innerHTML = `
-  /* Autocomplete */
-  .autocomplete-list { position: absolute; top: 100%; left: 0; right: 0; background: #0f1322; border: 1px solid var(--border-light); max-height: 200px; overflow-y: auto; list-style: none; padding: 0; z-index:1000; }
-  .autocomplete-list li { padding: 10px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); }
-  .autocomplete-list li:hover { background: var(--surface-hover); color: var(--accent-blue); }
-
-  /* Grid Canvas */
-  .grid-canvas {
-    display: grid;
-    grid-template-columns: repeat(12, 1fr);
-    grid-auto-rows: 50px;
-    gap: 10px;
-    background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
-                      linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
-    background-size: 100% 50px, 8.33% 100%;
-    background-color: rgba(0,0,0,0.1); 
-    border: 1px solid var(--border-light);
-    border-radius: 8px;
-    padding: 10px;
-    min-height: 300px;
-    position: relative;
-    user-select: none;
-  }
-  
-  .grid-item {
-    background: var(--surface-base);
-    border: 1px solid var(--border-light);
-    border-radius: 4px;
-    position: relative;
-    overflow: hidden;
-    touch-action: none; 
-    transition: box-shadow 0.2s, opacity 0.2s;
-  }
-  
-  .grid-item.interacting {
-    z-index: 100;
-    box-shadow: 0 0 15px rgba(44,166,224,0.5);
-    border-color: var(--accent-blue);
-    opacity: 0.9;
-  }
-
-  .grid-item-content {
-    width: 100%; height: 100%;
-    display: flex; align-items: center; padding: 0 10px;
-  }
-
-  .grid-drag-handle { cursor: grab; margin-right: 8px; color: var(--text-muted); padding: 10px 5px; }
-  .grid-label { flex-grow: 1; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none;}
-  .grid-remove { cursor: pointer; color: #ff6b6b; padding: 5px; z-index: 10; }
-  
-  .grid-resize-handle {
-    position: absolute; bottom: 0; right: 0;
-    width: 15px; height: 15px;
-    background: linear-gradient(135deg, transparent 50%, var(--text-muted) 50%);
-    cursor: se-resize;
-    z-index: 5;
-  }
-
-  /* Layout Selector */
-  .layout-selector-wrapper { margin-left: auto; padding-left: 10px; }
-  .layout-select {
-    background: #050508; color: #fff; border: 1px solid var(--border-light);
-    padding: 5px 10px; border-radius: 4px; font-size: 0.8rem; max-width: 150px;
-  }
-
-  /* Modal */
-  .block-library-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; display: flex; justify-content: center; align-items: center; }
-  .block-library-modal { background: #0f1322; padding: 30px; border-radius: 12px; width: 90%; max-width: 600px; border: 1px solid var(--accent-blue); }
-  .library-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0; max-height: 400px; overflow-y: auto; }
-  .library-option { padding: 15px; background: var(--surface-base); border: 1px solid var(--border-light); border-radius: 6px; cursor: pointer; text-align: center; }
-  .library-option:hover { background: var(--accent-blue); color: white; }
-  .btn-close-modal { background: transparent; border: 1px solid var(--border-light); color: var(--text-muted); padding: 8px 16px; cursor: pointer; float: right; border-radius: 4px; }
-`;
-document.head.appendChild(style);
