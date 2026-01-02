@@ -26,8 +26,7 @@ const BLOCK_TYPES = {
   "Service C": { icon: "⚙️", type: "generic" }
 };
 
-// --- UPDATED LAYOUT DEFINITIONS (With Pre-defined Coordinates) ---
-// Structure: { name: "Block Name", x: Column(1-12), y: Row, w: Width(1-12), h: Height }
+// --- LAYOUT DEFINITIONS ---
 const LAYOUT_DEFINITIONS = {
   "L-01": [ // Visual Heavy / Home
     { name: "Hero: Full Screen Visual", x: 1, y: 1, w: 12, h: 5 },
@@ -51,7 +50,7 @@ const LAYOUT_DEFINITIONS = {
     { name: "Testimonials", x: 1, y: 8, w: 12, h: 2 },
     { name: "Footer", x: 1, y: 10, w: 12, h: 2 }
   ],
-  "L-04": [ // Process / Steps (Zig Zag)
+  "L-04": [ // Process / Steps
     { name: "Service Overview", x: 1, y: 1, w: 12, h: 3 },
     { name: "Step 1: Consult", x: 1, y: 4, w: 6, h: 2 },
     { name: "Step 1 Image", x: 7, y: 4, w: 6, h: 2 },
@@ -75,7 +74,16 @@ const LAYOUT_DEFINITIONS = {
   ]
 };
 
-// --- INDUSTRY DATABASE ---
+// Friendly Names for Dropdown
+const LAYOUT_NAMES = {
+  "L-01": "Visual Hero / Gallery",
+  "L-02": "Brand Story / Text",
+  "L-03": "Service Tiers / Pricing",
+  "L-04": "Zig-Zag Process",
+  "L-05": "Location & Contact",
+  "default": "Basic Starter"
+};
+
 const INDUSTRY_DB = {
   "Restaurant": { pages: ["Home", "Menu", "Reservations"], layouts: { "Home": "L-01", "Menu": "L-03", "Reservations": "L-05" } },
   "Portfolio/Creative": { pages: ["Home", "Work", "About"], layouts: { "Home": "L-01", "Work": "L-01", "About": "L-02" } },
@@ -96,11 +104,9 @@ const state = {
   pagePlans: {}, 
   brandingProvided: null,
   customBranding: { active: false, name: "", price: 0 },
-  advancedNotes: "",
   viewMode: {} // Stores 'desktop' or 'mobile' per page
 };
 
-// Store files in memory
 const pageAttachments = {}; 
 
 function saveState() {
@@ -549,7 +555,6 @@ function renderVisualLayoutBuilder(container) {
   });
 }
 
-// --- NEW TOGGLE FUNCTION ---
 function toggleViewMode(page, index) {
     if(!state.viewMode) state.viewMode = {};
     const current = state.viewMode[page] || 'desktop';
@@ -566,11 +571,10 @@ function getDefaultLayoutForPage(pageName) {
   return [...LAYOUT_DEFINITIONS["default"]];
 }
 
-// Convert Layout Data (with coordinates) to Grid Objects
 function convertListToGrid(listItems) {
     return listItems.map((item, index) => ({
         id: `block-${Date.now()}-${index}`,
-        name: item.name || item, // Support both string and object
+        name: item.name || item, 
         x: item.x || 1, 
         y: item.y || (1 + (index * 2)), 
         w: item.w || 12, 
@@ -578,24 +582,33 @@ function convertListToGrid(listItems) {
     }));
 }
 
+// Updated Layout Selector with Friendly Names and Dividers
 function generateLayoutSelector(currentPageName) {
-    let options = `<optgroup label="Generic"><option value="default">Default Basic</option></optgroup>`;
+    let options = `<option value="default" disabled>-- Suggestions --</option>`;
+    
+    // Suggest based on industry
     const matches = [];
     Object.entries(INDUSTRY_DB).forEach(([indName, data]) => {
         if (data.pages.includes(currentPageName)) {
             matches.push({ industry: indName, layoutId: data.layouts[currentPageName] });
         }
     });
+    
     if (matches.length > 0) {
-        options += `<optgroup label="Industry Suggestions">`;
-        matches.forEach(m => { options += `<option value="${m.layoutId}">${m.industry} / ${currentPageName}</option>`; });
-        options += `</optgroup>`;
+        matches.forEach(m => { 
+             const name = LAYOUT_NAMES[m.layoutId] || m.layoutId;
+             options += `<option value="${m.layoutId}">${m.industry} / ${currentPageName}</option>`; 
+        });
     }
-    options += `<optgroup label="All Layouts">`;
+
+    options += `<option disabled>──────────</option>`;
+    
+    // List all others
     Object.entries(LAYOUT_DEFINITIONS).forEach(([lid, blocks]) => {
-        options += `<option value="${lid}">${lid} (${blocks.length} blocks)</option>`;
+        const friendlyName = LAYOUT_NAMES[lid] || lid;
+        options += `<option value="${lid}">${friendlyName}</option>`;
     });
-    options += `</optgroup>`;
+    
     return options;
 }
 
@@ -609,7 +622,6 @@ function switchPageLayout(pageName, layoutId) {
         state.pagePlans[pageName].grid = newGridBlocks;
     } else {
         const currentBlocks = state.pagePlans[pageName].grid;
-        // Find bottom most block to append after
         const maxY = currentBlocks.length > 0 ? Math.max(...currentBlocks.map(b => b.y + b.h)) : 1;
         newGridBlocks = newGridBlocks.map(b => ({ ...b, y: b.y + maxY })); 
         state.pagePlans[pageName].grid = [...currentBlocks, ...newGridBlocks];
@@ -620,7 +632,6 @@ function switchPageLayout(pageName, layoutId) {
     saveState();
 }
 
-// --- RENDER FUNCTIONS (Updated to support Toggle & View Modes) ---
 function refreshPageBuilderUI(pageName, index) {
     const gridId = `grid-canvas-${index}`;
     const previewId = `preview-area-${index}`;
@@ -641,7 +652,7 @@ function refreshPageBuilderUI(pageName, index) {
     const blocks = state.pagePlans[pageName].grid || [];
     const sortedBlocks = [...blocks].sort((a,b) => a.y - b.y);
 
-    // --- Render Grid Items (Cartoon Style via CSS classes) ---
+    // --- Render Grid Items (Main Editor) ---
     blocks.forEach((block, idx) => {
         const info = BLOCK_TYPES[block.name] || { icon: "📦", type: "generic" };
         const el = document.createElement('div');
@@ -666,7 +677,7 @@ function refreshPageBuilderUI(pageName, index) {
 
     // --- Render Preview (Opposite of Current Mode) ---
     if(mode === 'desktop') {
-        // Render Mobile Preview
+        // Main is Desktop -> Show Mobile Preview
         let previewHtml = `
           <div class="mobile-frame">
              <div class="mobile-notch"></div>
@@ -682,16 +693,25 @@ function refreshPageBuilderUI(pageName, index) {
         previewHtml += `</div><div class="mobile-overlay-hint">Switch to Mobile Edit</div></div>`;
         previewContainer.innerHTML = previewHtml;
     } else {
-        // Render Desktop Preview
-        previewContainer.innerHTML = `
+        // Main is Mobile -> Show Desktop Preview (Now rendering content!)
+        let previewHtml = `
           <div class="desktop-frame">
-              <div class="desktop-screen" style="display:flex; align-items:center; justify-content:center; background:#111; color:#555;">
-                  <span style="font-size:0.8rem; text-transform:uppercase;">Desktop Preview Active</span>
-              </div>
-              <div class="desktop-stand"></div>
+              <div class="desktop-screen">`;
+        
+        sortedBlocks.forEach(block => {
+             // Simple representation for desktop preview
+             const info = BLOCK_TYPES[block.name] || { icon: "📦" };
+             const widthPercent = (block.w / 12) * 100;
+             previewHtml += `<div class="mini-desktop-block" style="width: calc(${widthPercent}% - 5px);">
+               ${block.name}
+             </div>`;
+        });
+
+        previewHtml += `</div><div class="desktop-stand"></div>
               <div class="mobile-overlay-hint">Switch to Desktop Edit</div>
           </div>
         `;
+        previewContainer.innerHTML = previewHtml;
     }
 }
 
@@ -1079,7 +1099,7 @@ style.innerHTML = `
   .layout-selector-wrapper { margin-left: auto; padding-left: 10px; }
   .layout-select {
     background: #050508; color: #fff; border: 1px solid var(--border-light);
-    padding: 5px 10px; border-radius: 4px; font-size: 0.8rem; max-width: 150px;
+    padding: 5px 10px; border-radius: 4px; font-size: 0.8rem; max-width: 180px;
   }
 
   /* Modal */
