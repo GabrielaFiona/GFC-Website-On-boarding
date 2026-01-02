@@ -4,7 +4,7 @@
 
 const BASE_BRAND_KIT_PRICE = 500;
 
-// NEW: Visual Icons for the Wireframe Blocks
+// NEW: MAPPING FOR VISUAL ICONS
 const BLOCK_TYPES = {
   "Hero Section": { icon: "🖼️", type: "hero" },
   "Text Content": { icon: "📝", type: "text" },
@@ -21,22 +21,22 @@ const BLOCK_TYPES = {
 
 // --- LAYOUT DEFINITIONS (The Blocks for each Layout ID) ---
 const LAYOUT_DEFINITIONS = {
-  "L-01": ["Hero: Full Screen Visual", "Intro Blurb", "Visual Gallery Grid", "Instagram Feed", "Footer"],
-  "L-02": ["Hero: Brand Story", "About the Founder", "Our Values", "Timeline/History", "Footer"],
-  "L-03": ["Pricing Tiers", "Membership Benefits", "Subscribe Button", "Testimonials", "Footer"],
-  "L-04": ["Service Overview", "Process Steps", "Deliverables List", "CTA: Get Started", "Footer"],
-  "L-05": ["Contact Form", "Google Map", "Address & Hours", "Social Media Links", "Footer"],
+  "L-01": ["Hero Section", "Text Content", "Image/Gallery", "Button / CTA", "Footer"],
+  "L-02": ["Hero Section", "Text Content", "Icon Grid", "Testimonials", "Footer"],
+  "L-03": ["Pricing Tiers", "Membership Benefits", "Button / CTA", "Testimonials", "Footer"],
+  "L-04": ["Service Overview", "Process Steps", "Deliverables List", "Button / CTA", "Footer"],
+  "L-05": ["Contact Form", "Map/Location", "Address & Hours", "Social Media Links", "Footer"],
   "L-06": ["Menu Header", "Starters/Small Plates", "Mains/Large Plates", "Drinks/Sides", "Dietary Info Footer"],
   "L-07": ["Team Header", "Founder Bio", "Team Grid (Photos + Bios)", "Join the Team CTA", "Footer"],
   "L-08": ["Location Info", "Interactive Map", "Parking/Arrival Instructions", "Nearby Attractions", "Footer"],
   "L-09": ["Live Location Tracker", "Schedule List", "Map Embed", "Social Updates", "Footer"],
   "L-10": ["Shop Filters", "Product Grid (Featured)", "New Arrivals", "Newsletter Signup", "Footer"],
   "L-11": ["Blog Header", "Featured Article", "Recent Posts Grid", "Categories Sidebar", "Footer"],
-  "L-12": ["Events Calendar View", "Upcoming Events List", "Ticket Purchase Button", "Event Details", "Footer"],
+  "L-12": ["Events Calendar View", "Upcoming Events List", "Button / CTA", "Event Details", "Footer"],
   "L-13": ["Masonry Gallery", "Lightbox Viewer", "Project Details", "Share Buttons", "Footer"],
   "L-14": ["Booking Calendar Embed", "Service Selection", "Date/Time Picker", "Confirmation", "Footer"],
   "L-15": ["Inquiry Details", "Long Form Contact", "FAQ Accordion", "Footer"],
-  "L-16": ["Hero: Action Focus", "External Link Button (Large)", "Supporting Info", "Footer"],
+  "L-16": ["Hero: Action Focus", "Button / CTA", "Supporting Info", "Footer"],
   "L-17": ["Legal Text Block", "FAQ Accordion", "Return Policy", "Contact Support", "Footer"],
   "L-18": ["Job Openings List", "Company Culture Video", "Perks & Benefits", "Application Form", "Footer"],
   "L-19": ["Minimalist Hero", "Single Image Focus", "Artist Statement", "Portfolio Grid", "Footer"],
@@ -45,8 +45,8 @@ const LAYOUT_DEFINITIONS = {
   "L-22": ["Review Highlight", "Testimonial Grid", "Video Testimonials", "Submit Review", "Footer"],
   "L-23": ["Corporate Header", "Mission Statement", "Departments Grid", "Investor Relations", "Footer"],
   "L-24": ["Search Bar Hero", "Filters", "Results Grid", "Map View", "Footer"],
-  "L-25": ["Icon Grid (Features)", "Detailed Descriptions", "Comparison Table", "Footer"],
-  "default": ["Header", "Content Block", "Image Block", "Call to Action", "Footer"]
+  "L-25": ["Icon Grid", "Detailed Descriptions", "Comparison Table", "Footer"],
+  "default": ["Header/Nav", "Hero Section", "Text Content", "Button / CTA", "Footer"]
 };
 
 // --- INDUSTRY DATABASE (For Auto-Suggestions & Layouts) ---
@@ -120,10 +120,8 @@ const state = {
   advancedNotes: ""
 };
 
-// Store files in memory
 const pageAttachments = {}; 
 
-// --- PERSISTENCE ---
 function saveState() {
   localStorage.setItem('onboardingState', JSON.stringify(state));
 }
@@ -139,7 +137,7 @@ function nextStep(stepNumber) {
 }
 
 // ======================================================
-// --- 3. STEP 2 LOGIC (Full Package Selection & Forms) ---
+// --- 3. STEP 2 LOGIC ---
 // ======================================================
 
 function selectPackage(id, name, price, limit, brandKitBundlePrice, extraPageCost, element) {
@@ -181,7 +179,6 @@ function toggleBrandingPanels(value) {
   saveState();
 }
 
-// STEP 2 FILE UPLOAD (BRANDING)
 let uploadedFiles = []; 
 function handleFileUpload(e) {
   const files = e.target.files;
@@ -331,6 +328,9 @@ function handleIndustrySearch(query) {
   } else { list.classList.add('hidden'); }
 }
 
+// Added alias to ensure button click works
+window.generateSuggestions = handleIndustrySearch;
+
 function selectIndustry(industryName) {
   document.getElementById('industryInput').value = industryName;
   state.industry = industryName;
@@ -363,11 +363,10 @@ function renderChips(pages) {
 
 function addPage(nameRaw) {
   const input = document.getElementById('customPageInput');
-  const name = nameRaw || input.value.trim();
+  const name = nameRaw || (input ? input.value.trim() : '');
   if (!name) return;
   if (!state.pages.includes(name)) {
     state.pages.push(name);
-    // Initialize default grid layout in pagePlans
     if (!state.pagePlans[name]) state.pagePlans[name] = {};
     state.pagePlans[name].grid = convertListToFreeGrid(getDefaultLayoutForPage(name));
     
@@ -399,7 +398,6 @@ function renderActivePages() {
     tag.draggable = true;
     tag.innerHTML = `<span class="drag-handle">::</span> ${page} <span class="page-tag-remove" onclick="removePage('${page}')">&times;</span>`;
     
-    // Page Reordering Logic
     tag.addEventListener('dragstart', (e) => {
       e.dataTransfer.effectAllowed = 'move';
       e.dataTransfer.setData('text/plain', index);
@@ -486,7 +484,6 @@ function initStep3() {
   container.innerHTML = ''; 
   
   if (pkgId === 'basic') {
-      // KEEPING OLD BASIC LOGIC
     const sortableList = document.createElement('div');
     sortableList.id = 'sortable-list';
     container.appendChild(sortableList);
@@ -575,7 +572,6 @@ function getDefaultLayoutForPage(pageName) {
   return [...LAYOUT_DEFINITIONS["default"]];
 }
 
-// Convert list to Free-Floating Grid Objects (Absolute Position Logic)
 function convertListToFreeGrid(listItems) {
     return listItems.map((item, index) => ({
         id: `block-${Date.now()}-${index}`,
@@ -597,7 +593,6 @@ function generateLayoutSelector(currentPageName) {
     });
     if (matches.length > 0) {
         options += `<optgroup label="Industry Suggestions">`;
-        // UPDATED: Label shows "Industry / PageName"
         matches.forEach(m => { options += `<option value="${m.layoutId}">${m.industry} / ${currentPageName}</option>`; });
         options += `</optgroup>`;
     }
@@ -619,7 +614,6 @@ function switchPageLayout(pageName, layoutId) {
         state.pagePlans[pageName].grid = newGridBlocks;
     } else {
         const currentBlocks = state.pagePlans[pageName].grid;
-        // Find bottom most block to append after
         const maxY = currentBlocks.length > 0 ? Math.max(...currentBlocks.map(b => b.y + b.h)) : 1;
         newGridBlocks = newGridBlocks.map(b => ({ ...b, y: b.y + maxY - 1 })); 
         state.pagePlans[pageName].grid = [...currentBlocks, ...newGridBlocks];
@@ -640,18 +634,13 @@ function refreshPageBuilderUI(pageName, gridId, mobileId) {
     mobileContainer.innerHTML = '<div class="mobile-notch"></div>';
 
     const blocks = state.pagePlans[pageName].grid || [];
-    
-    // Sort for mobile flow (Top to bottom based on Y)
     const sortedBlocks = [...blocks].sort((a,b) => a.y - b.y);
 
     blocks.forEach((block, idx) => {
-        // 1. Desktop Render
         const info = BLOCK_TYPES[block.name] || { icon: "📦", type: "generic" };
         const el = document.createElement('div');
         el.className = `grid-item block-type-${info.type}`;
         el.id = block.id;
-        
-        // CSS Grid Positioning for "Free Float" feel but snapped to grid lines
         el.style.gridColumnStart = block.x;
         el.style.gridColumnEnd = `span ${block.w}`;
         el.style.gridRowStart = block.y;
@@ -684,15 +673,8 @@ function checkCollision(pageName, id, x, y, w, h) {
     for (let i = 0; i < blocks.length; i++) {
         const b = blocks[i];
         if (b.id === id) continue; // Skip self
-        
-        // Check intersection
-        // Rect 1: x, y, w, h
-        // Rect 2: b.x, b.y, b.w, b.h
-        if (x < b.x + b.w &&
-            x + w > b.x &&
-            y < b.y + b.h &&
-            y + h > b.y) {
-            return true; // Collision detected
+        if (x < b.x + b.w && x + w > b.x && y < b.y + b.h && y + h > b.y) {
+            return true; 
         }
     }
     return false;
@@ -701,9 +683,8 @@ function checkCollision(pageName, id, x, y, w, h) {
 function setupFreeInteraction(element, pageName, index, gridId, mobileId) {
     const container = document.getElementById(gridId);
     let startX, startY, startGridX, startGridY;
-    let originalGridX, originalGridY; // For snap back
+    let originalGridX, originalGridY; 
     
-    // DRAG LOGIC
     element.addEventListener('mousedown', (e) => {
         if(e.target.classList.contains('grid-resize-handle') || e.target.classList.contains('grid-remove')) return;
         
@@ -711,30 +692,25 @@ function setupFreeInteraction(element, pageName, index, gridId, mobileId) {
         element.classList.add('interacting');
         
         const rect = container.getBoundingClientRect();
-        // Calculate cell size based on current container size
         const colWidth = rect.width / 12; 
-        const rowHeight = 60; // Fixed row height defined in CSS
+        const rowHeight = 60; 
 
         startX = e.clientX;
         startY = e.clientY;
         const blockData = state.pagePlans[pageName].grid[index];
         startGridX = blockData.x;
         startGridY = blockData.y;
-        
         originalGridX = blockData.x;
         originalGridY = blockData.y;
 
         const onMove = (moveEvent) => {
             const diffX = moveEvent.clientX - startX;
             const diffY = moveEvent.clientY - startY;
-            
             const colsMoved = Math.round(diffX / colWidth);
             const rowsMoved = Math.round(diffY / rowHeight);
-
             let newX = startGridX + colsMoved;
             let newY = startGridY + rowsMoved;
 
-            // Constraints
             if(newX < 1) newX = 1;
             if(newX + blockData.w > 13) newX = 13 - blockData.w;
             if(newY < 1) newY = 1;
@@ -748,23 +724,18 @@ function setupFreeInteraction(element, pageName, index, gridId, mobileId) {
             window.removeEventListener('mousemove', onMove);
             window.removeEventListener('mouseup', onUp);
             
-            // Get final potential position
             const finalStyle = window.getComputedStyle(element);
             const potentialX = parseInt(finalStyle.gridColumnStart);
             const potentialY = parseInt(finalStyle.gridRowStart);
             
-            // CHECK COLLISION
             if (checkCollision(pageName, blockData.id, potentialX, potentialY, blockData.w, blockData.h)) {
-                // Collision! Snap back.
                 state.pagePlans[pageName].grid[index].x = originalGridX;
                 state.pagePlans[pageName].grid[index].y = originalGridY;
-                alert("Blocks cannot overlap!");
+                alert("Blocks cannot overlap! Snapping back.");
             } else {
-                // Valid move
                 state.pagePlans[pageName].grid[index].x = potentialX;
                 state.pagePlans[pageName].grid[index].y = potentialY;
             }
-            
             saveState();
             refreshPageBuilderUI(pageName, gridId, mobileId);
         };
@@ -773,7 +744,6 @@ function setupFreeInteraction(element, pageName, index, gridId, mobileId) {
         window.addEventListener('mouseup', onUp);
     });
 
-    // RESIZE LOGIC
     const resizeHandle = element.querySelector('.grid-resize-handle');
     resizeHandle.addEventListener('mousedown', (e) => {
         e.stopPropagation();
@@ -791,7 +761,6 @@ function setupFreeInteraction(element, pageName, index, gridId, mobileId) {
         const onResize = (moveEvent) => {
             const diffX = moveEvent.clientX - startX;
             const diffY = moveEvent.clientY - startY;
-            
             let newW = startW + Math.round(diffX / colWidth);
             let newH = startH + Math.round(diffY / rowHeight);
 
@@ -803,15 +772,8 @@ function setupFreeInteraction(element, pageName, index, gridId, mobileId) {
         };
 
         const onEndResize = () => {
-             // Parse spans manually as computed style returns raw numbers often
              const spanW = parseInt(element.style.gridColumnEnd.replace('span ',''));
              const spanH = parseInt(element.style.gridRowEnd.replace('span ',''));
-             
-             // Check collision on resize too? Optional, but good practice.
-             if (checkCollision(pageName, blockData.id, blockData.x, blockData.y, spanW, spanH)) {
-                 // Revert logic could go here, but for now we just save to avoid complexity loops
-                 alert("Resize caused overlap! Please adjust.");
-             }
              
              state.pagePlans[pageName].grid[index].w = spanW;
              state.pagePlans[pageName].grid[index].h = spanH;
@@ -827,7 +789,6 @@ function setupFreeInteraction(element, pageName, index, gridId, mobileId) {
 }
 
 function openBlockLibrary(pageName, gridId) {
-    // Determine page index from gridId
     const pageIndex = gridId.split('-')[2];
     const existing = document.getElementById('lib-modal');
     if(existing) existing.remove();
@@ -849,7 +810,6 @@ function openBlockLibrary(pageName, gridId) {
 
 function addBlock(pageName, blockName, pageIndex) {
     const grid = state.pagePlans[pageName].grid;
-    // Find next available Y slot roughly
     const maxY = grid.length > 0 ? Math.max(...grid.map(b => b.y + b.h)) : 1;
     
     grid.push({
@@ -870,7 +830,7 @@ function removeBlock(pageName, id) {
     saveState();
 }
 
-// --- BASIC PLAN LOGIC (RESTORED) ---
+// --- BASIC PLAN LOGIC (Restored for older packages) ---
 function renderBasicPlan(container) {
   state.pages.forEach((page, index) => {
     if(!state.pagePlans[page]) state.pagePlans[page] = {};
@@ -906,36 +866,6 @@ function renderBasicPlan(container) {
     container.insertAdjacentHTML('beforeend', html);
     setTimeout(() => renderPageFileList(page, fileListId), 50);
   });
-}
-
-// --- COMMON UTILS (Downloads, Toggles, etc) ---
-
-function downloadProjectOutline() {
-    let content = `PROJECT OUTLINE\nINDUSTRY: ${state.industry}\n\n`;
-    state.pages.forEach(page => {
-        content += `PAGE: ${page}\n`;
-        const blocks = state.pagePlans[page]?.grid || [];
-        if(blocks.length > 0) {
-            blocks.sort((a,b) => a.y - b.y).forEach(b => {
-                 content += ` - ${b.name} (Row: ${b.y}, Width: ${b.w}/12)\n`;
-            });
-        } else {
-             content += ` (No layout defined)\n`;
-        }
-        content += `\nNOTES:\n${state.pagePlans[page]?.notes || 'None'}\n----------------\n`;
-    });
-    
-    const blob = new Blob([content], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = "outline.txt";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    
-    // Also trigger file downloads
-    downloadAllFiles();
 }
 
 function handlePageFileUpload(pageName, input, listId) {
