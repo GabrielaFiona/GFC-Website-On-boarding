@@ -4,7 +4,7 @@
 
 const BASE_BRAND_KIT_PRICE = 500;
 
-// VISUAL ICONS MAPPING (Keeping structure, but icons will be replaced by CSS art)
+// VISUAL ICONS MAPPING (Keys map to CSS "Cartoon" styles in style.css)
 const BLOCK_TYPES = {
   "Hero Section": { icon: "🖼️", type: "hero" },
   "Hero: Full Screen Visual": { icon: "🖼️", type: "hero" },
@@ -26,7 +26,7 @@ const BLOCK_TYPES = {
   "Service C": { icon: "⚙️", type: "generic" }
 };
 
-// --- UPDATED LAYOUT DEFINITIONS (With Pre-defined Coordinates) ---
+// --- LAYOUT DEFINITIONS ---
 const LAYOUT_DEFINITIONS = {
   "L-01": [ // Visual Heavy / Home
     { name: "Hero: Full Screen Visual", x: 1, y: 1, w: 12, h: 5 },
@@ -106,7 +106,16 @@ function saveState() {
 
 function loadState() {
   const raw = localStorage.getItem('onboardingState');
-  if (raw) Object.assign(state, JSON.parse(raw));
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw);
+      Object.assign(state, parsed);
+      // Safety check: ensure viewMode exists even if loading old state
+      if (!state.viewMode) state.viewMode = {};
+    } catch (e) {
+      console.error("Error loading state", e);
+    }
+  }
 }
 
 function nextStep(stepNumber) {
@@ -119,13 +128,21 @@ function nextStep(stepNumber) {
 // ======================================================
 
 function selectPackage(id, name, price, limit, brandKitBundlePrice, extraPageCost, element) {
+  console.log("Package selected:", name);
+  
+  // Update Visuals
   document.querySelectorAll('.package-card').forEach(el => el.classList.remove('selected'));
   if (element) element.classList.add('selected');
 
+  // Update State
   state.package = { id, name, price, limit, brandKitBundlePrice, extraPageCost };
   
-  if (state.pages.length === 0) state.pages = ['Home', 'Contact'];
+  // Default pages if empty
+  if (!state.pages || state.pages.length === 0) {
+    state.pages = ['Home', 'Contact'];
+  }
   
+  // Trigger UI updates
   handlePackageSelected();
   calculateTotal();
   updateBrandKitDisplay();
@@ -143,9 +160,14 @@ function handlePackageSelected(isRestore) {
   if (pageBuilder) pageBuilder.classList.remove('hidden');
 
   const branding = document.getElementById('brandingSection');
-  if (branding && !isRestore) branding.classList.remove('collapsed'); 
+  if (branding && !isRestore) {
+    branding.classList.remove('collapsed');
+  }
   
-  if (window.initCollapsibles) window.initCollapsibles(); 
+  // Safe call to initCollapsibles
+  if (typeof initCollapsibles === 'function') {
+    initCollapsibles();
+  }
 }
 
 function toggleBrandingPanels(value) {
@@ -199,7 +221,7 @@ function downloadAllFiles() {
     link.click();
     document.body.removeChild(link);
   });
-  
+
   const notesArea = document.getElementById('brandingProvidedNotes');
   if (notesArea && notesArea.value.trim() !== "") {
     const blob = new Blob([notesArea.value], { type: "text/plain" });
@@ -210,8 +232,6 @@ function downloadAllFiles() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  } else if (uploadedFiles.length === 0) {
-    alert("No files or notes to download.");
   }
 }
 
@@ -451,7 +471,7 @@ function calculateTotal() {
 }
 
 // ======================================================
-// --- 4. STEP 3: VISUAL LAYOUT BUILDER (UPDATED) ---
+// --- 4. STEP 3: VISUAL LAYOUT BUILDER ---
 // ======================================================
 
 function initStep3() {
@@ -484,6 +504,7 @@ function renderVisualLayoutBuilder(container) {
     }
     
     // Set default view mode to desktop
+    if(!state.viewMode) state.viewMode = {};
     if(!state.viewMode[page]) state.viewMode[page] = 'desktop';
 
     const gridId = `grid-canvas-${index}`;
@@ -544,8 +565,8 @@ function renderVisualLayoutBuilder(container) {
   });
 }
 
-// --- NEW FUNCTION: Toggle View Mode ---
 function toggleViewMode(page, index) {
+    if(!state.viewMode) state.viewMode = {};
     const current = state.viewMode[page] || 'desktop';
     state.viewMode[page] = (current === 'desktop') ? 'mobile' : 'desktop';
     refreshPageBuilderUI(page, index);
@@ -560,7 +581,6 @@ function getDefaultLayoutForPage(pageName) {
   return [...LAYOUT_DEFINITIONS["default"]];
 }
 
-// Convert Layout Data (with coordinates) to Grid Objects
 function convertListToGrid(listItems) {
     return listItems.map((item, index) => ({
         id: `block-${Date.now()}-${index}`,
@@ -603,7 +623,6 @@ function switchPageLayout(pageName, layoutId) {
         state.pagePlans[pageName].grid = newGridBlocks;
     } else {
         const currentBlocks = state.pagePlans[pageName].grid;
-        // Find bottom most block to append after
         const maxY = currentBlocks.length > 0 ? Math.max(...currentBlocks.map(b => b.y + b.h)) : 1;
         newGridBlocks = newGridBlocks.map(b => ({ ...b, y: b.y + maxY })); 
         state.pagePlans[pageName].grid = [...currentBlocks, ...newGridBlocks];
@@ -614,7 +633,6 @@ function switchPageLayout(pageName, layoutId) {
     saveState();
 }
 
-// --- RENDER FUNCTIONS (UPDATED FOR TOGGLE & CARTOON BLOCKS) ---
 function refreshPageBuilderUI(pageName, index) {
     const gridId = `grid-canvas-${index}`;
     const previewId = `preview-area-${index}`;
@@ -627,7 +645,7 @@ function refreshPageBuilderUI(pageName, index) {
     if(!gridContainer || !previewContainer) return;
 
     gridContainer.innerHTML = '';
-    const mode = state.viewMode[pageName] || 'desktop';
+    const mode = (state.viewMode && state.viewMode[pageName]) ? state.viewMode[pageName] : 'desktop';
     
     // Update Title Label
     if(titleEl) titleEl.textContent = mode === 'desktop' ? "Desktop Wireframe" : "Mobile Wireframe";
@@ -689,15 +707,12 @@ function refreshPageBuilderUI(pageName, index) {
     }
 }
 
-// --- INTERACTION: IMPROVED DRAG & SWAP ---
 function findOverlappingBlock(pageName, movingId, x, y, w, h) {
     const blocks = state.pagePlans[pageName].grid;
-    // Simple center-point collision or broad area intersection
     for (let i = 0; i < blocks.length; i++) {
         const b = blocks[i];
         if (b.id === movingId) continue; 
         
-        // Check intersection
         if (x < b.x + b.w && x + w > b.x && y < b.y + b.h && y + h > b.y) {
             return i; // Return index of overlapped block
         }
@@ -757,15 +772,13 @@ function setupFreeInteraction(element, pageName, index, pageIndex) {
             const overlappedIdx = findOverlappingBlock(pageName, blockData.id, potentialX, potentialY, blockData.w, blockData.h);
             
             if (overlappedIdx !== -1) {
-                // Perform Swap: The overlapped block moves to the dragger's original position
+                // Perform Swap
                 state.pagePlans[pageName].grid[overlappedIdx].x = originalGridX;
                 state.pagePlans[pageName].grid[overlappedIdx].y = originalGridY;
                 
-                // Dragger takes new position
                 state.pagePlans[pageName].grid[index].x = potentialX;
                 state.pagePlans[pageName].grid[index].y = potentialY;
             } else {
-                // No collision, just move
                 state.pagePlans[pageName].grid[index].x = potentialX;
                 state.pagePlans[pageName].grid[index].y = potentialY;
             }
@@ -864,7 +877,6 @@ function removeBlock(pageName, id) {
     saveState();
 }
 
-// --- BASIC PLAN LOGIC (Restored) ---
 function renderBasicPlan(container) {
   state.pages.forEach((page, index) => {
     if(!state.pagePlans[page]) state.pagePlans[page] = {};
