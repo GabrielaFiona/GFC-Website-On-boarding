@@ -40,21 +40,18 @@
 
   <div class="container">
     <div class="step-section active">
-
       <div style="text-align: center; margin-bottom: 50px;">
         <h1>Finalize & Kickoff</h1>
         <p>Review your project scope and secure your timeline.</p>
       </div>
 
       <div class="form-grid">
-        
         <div class="full-width">
             <div class="invoice-box">
                 <h3 style="border-bottom:1px solid var(--border-light); padding-bottom:15px; margin-bottom:20px;">Project Summary</h3>
                 <div id="final-invoice-items">
                     <div class="line-item"><span>Loading project details...</span><span>...</span></div>
                 </div>
-                
                 <div class="line-item total-row">
                     <span>Total Project Estimate</span>
                     <span id="final-invoice-total">$0.00</span>
@@ -72,18 +69,9 @@
                     <div class="plan-card-header">Billing Information</div>
                     <div class="plan-card-body">
                         <div class="form-grid">
-                            <div>
-                                <label for="fullName">Full Name</label>
-                                <input type="text" id="fullName" name="fullName" required placeholder="Jane Doe">
-                            </div>
-                            <div>
-                                <label for="businessName">Business Name (Optional)</label>
-                                <input type="text" id="businessName" name="businessName" placeholder="JD Bakery">
-                            </div>
-                            <div class="full-width">
-                                <label for="email">Email Address for Invoice</label>
-                                <input type="email" id="email" name="email" required placeholder="jane@example.com">
-                            </div>
+                            <div><label for="fullName">Full Name</label><input type="text" id="fullName" name="fullName" required placeholder="Jane Doe"></div>
+                            <div><label for="businessName">Business Name (Optional)</label><input type="text" id="businessName" name="businessName" placeholder="JD Bakery"></div>
+                            <div class="full-width"><label for="email">Email Address for Invoice</label><input type="email" id="email" name="email" required placeholder="jane@example.com"></div>
                         </div>
                     </div>
                 </div>
@@ -94,12 +82,9 @@
                         <div style="border: 1px solid var(--border-light); padding: 15px; border-radius: 4px; background: rgba(255,255,255,0.05); color: var(--text-muted);">
                             <p style="margin: 0;">🔒 Secure Credit Card payment via Stripe (Integration Placeholder)</p>
                         </div>
-                        
                         <div class="terms-box" style="margin-top: 20px; display: flex; gap: 10px; align-items: flex-start;">
                             <input type="checkbox" id="terms" name="terms" required style="width: auto; margin-top: 5px;">
-                            <label for="terms" style="font-size: 0.9rem; text-transform: none; letter-spacing: 0;">
-                                I agree to the project scope above. I understand that the 50% deposit is non-refundable to secure my timeline.
-                            </label>
+                            <label for="terms" style="font-size: 0.9rem; text-transform: none; letter-spacing: 0;">I agree to the project scope above. I understand that the 50% deposit is non-refundable to secure my timeline.</label>
                         </div>
                     </div>
                 </div>
@@ -110,9 +95,7 @@
                 </div>
             </form>
         </div>
-
       </div>
-
     </div>
   </div>
 
