@@ -4,7 +4,7 @@
 
 const BASE_BRAND_KIT_PRICE = 500;
 
-// VISUAL ICONS MAPPING (Keys map to CSS "Cartoon" styles in style.css)
+// VISUAL ICONS MAPPING
 const BLOCK_TYPES = {
   "Hero Section": { icon: "🖼️", type: "hero" },
   "Hero: Full Screen Visual": { icon: "🖼️", type: "hero" },
@@ -26,7 +26,8 @@ const BLOCK_TYPES = {
   "Service C": { icon: "⚙️", type: "generic" }
 };
 
-// --- LAYOUT DEFINITIONS ---
+// --- UPDATED LAYOUT DEFINITIONS (With Pre-defined Coordinates) ---
+// Structure: { name: "Block Name", x: Column(1-12), y: Row, w: Width(1-12), h: Height }
 const LAYOUT_DEFINITIONS = {
   "L-01": [ // Visual Heavy / Home
     { name: "Hero: Full Screen Visual", x: 1, y: 1, w: 12, h: 5 },
@@ -95,9 +96,11 @@ const state = {
   pagePlans: {}, 
   brandingProvided: null,
   customBranding: { active: false, name: "", price: 0 },
+  advancedNotes: "",
   viewMode: {} // Stores 'desktop' or 'mobile' per page
 };
 
+// Store files in memory
 const pageAttachments = {}; 
 
 function saveState() {
@@ -106,16 +109,7 @@ function saveState() {
 
 function loadState() {
   const raw = localStorage.getItem('onboardingState');
-  if (raw) {
-    try {
-      const parsed = JSON.parse(raw);
-      Object.assign(state, parsed);
-      // Safety check: ensure viewMode exists even if loading old state
-      if (!state.viewMode) state.viewMode = {};
-    } catch (e) {
-      console.error("Error loading state", e);
-    }
-  }
+  if (raw) Object.assign(state, JSON.parse(raw));
 }
 
 function nextStep(stepNumber) {
@@ -128,21 +122,13 @@ function nextStep(stepNumber) {
 // ======================================================
 
 function selectPackage(id, name, price, limit, brandKitBundlePrice, extraPageCost, element) {
-  console.log("Package selected:", name);
-  
-  // Update Visuals
   document.querySelectorAll('.package-card').forEach(el => el.classList.remove('selected'));
   if (element) element.classList.add('selected');
 
-  // Update State
   state.package = { id, name, price, limit, brandKitBundlePrice, extraPageCost };
   
-  // Default pages if empty
-  if (!state.pages || state.pages.length === 0) {
-    state.pages = ['Home', 'Contact'];
-  }
+  if (state.pages.length === 0) state.pages = ['Home', 'Contact'];
   
-  // Trigger UI updates
   handlePackageSelected();
   calculateTotal();
   updateBrandKitDisplay();
@@ -160,14 +146,9 @@ function handlePackageSelected(isRestore) {
   if (pageBuilder) pageBuilder.classList.remove('hidden');
 
   const branding = document.getElementById('brandingSection');
-  if (branding && !isRestore) {
-    branding.classList.remove('collapsed');
-  }
+  if (branding && !isRestore) branding.classList.remove('collapsed'); 
   
-  // Safe call to initCollapsibles
-  if (typeof initCollapsibles === 'function') {
-    initCollapsibles();
-  }
+  if (window.initCollapsibles) window.initCollapsibles(); 
 }
 
 function toggleBrandingPanels(value) {
@@ -232,6 +213,8 @@ function downloadAllFiles() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  } else if (uploadedFiles.length === 0) {
+    alert("No files or notes to download.");
   }
 }
 
@@ -326,6 +309,7 @@ function handleIndustrySearch(query) {
   } else { list.classList.add('hidden'); }
 }
 
+// Added alias to ensure button click works
 window.generateSuggestions = handleIndustrySearch;
 
 function selectIndustry(industryName) {
@@ -471,7 +455,7 @@ function calculateTotal() {
 }
 
 // ======================================================
-// --- 4. STEP 3: VISUAL LAYOUT BUILDER ---
+// --- 4. STEP 3: VISUAL LAYOUT BUILDER (UPDATED) ---
 // ======================================================
 
 function initStep3() {
@@ -539,7 +523,7 @@ function renderVisualLayoutBuilder(container) {
             </div>
             
             <div class="preview-pane" id="${previewId}" onclick="toggleViewMode('${page}', ${index})">
-               </div>
+              </div>
 
           </div>
           <div style="margin-top:30px; border-top:1px solid var(--border-light); padding-top:20px;">
@@ -565,6 +549,7 @@ function renderVisualLayoutBuilder(container) {
   });
 }
 
+// --- NEW TOGGLE FUNCTION ---
 function toggleViewMode(page, index) {
     if(!state.viewMode) state.viewMode = {};
     const current = state.viewMode[page] || 'desktop';
@@ -581,10 +566,11 @@ function getDefaultLayoutForPage(pageName) {
   return [...LAYOUT_DEFINITIONS["default"]];
 }
 
+// Convert Layout Data (with coordinates) to Grid Objects
 function convertListToGrid(listItems) {
     return listItems.map((item, index) => ({
         id: `block-${Date.now()}-${index}`,
-        name: item.name || item, 
+        name: item.name || item, // Support both string and object
         x: item.x || 1, 
         y: item.y || (1 + (index * 2)), 
         w: item.w || 12, 
@@ -623,6 +609,7 @@ function switchPageLayout(pageName, layoutId) {
         state.pagePlans[pageName].grid = newGridBlocks;
     } else {
         const currentBlocks = state.pagePlans[pageName].grid;
+        // Find bottom most block to append after
         const maxY = currentBlocks.length > 0 ? Math.max(...currentBlocks.map(b => b.y + b.h)) : 1;
         newGridBlocks = newGridBlocks.map(b => ({ ...b, y: b.y + maxY })); 
         state.pagePlans[pageName].grid = [...currentBlocks, ...newGridBlocks];
@@ -633,6 +620,7 @@ function switchPageLayout(pageName, layoutId) {
     saveState();
 }
 
+// --- RENDER FUNCTIONS (Updated to support Toggle & View Modes) ---
 function refreshPageBuilderUI(pageName, index) {
     const gridId = `grid-canvas-${index}`;
     const previewId = `preview-area-${index}`;
@@ -646,14 +634,14 @@ function refreshPageBuilderUI(pageName, index) {
 
     gridContainer.innerHTML = '';
     const mode = (state.viewMode && state.viewMode[pageName]) ? state.viewMode[pageName] : 'desktop';
-    
+
     // Update Title Label
     if(titleEl) titleEl.textContent = mode === 'desktop' ? "Desktop Wireframe" : "Mobile Wireframe";
 
-    // --- Render Grid (Main Editor) ---
     const blocks = state.pagePlans[pageName].grid || [];
     const sortedBlocks = [...blocks].sort((a,b) => a.y - b.y);
 
+    // --- Render Grid Items (Cartoon Style via CSS classes) ---
     blocks.forEach((block, idx) => {
         const info = BLOCK_TYPES[block.name] || { icon: "📦", type: "generic" };
         const el = document.createElement('div');
@@ -676,7 +664,7 @@ function refreshPageBuilderUI(pageName, index) {
         gridContainer.appendChild(el);
     });
 
-    // --- Render Preview (Based on Opposite of Mode) ---
+    // --- Render Preview (Opposite of Current Mode) ---
     if(mode === 'desktop') {
         // Render Mobile Preview
         let previewHtml = `
@@ -687,7 +675,7 @@ function refreshPageBuilderUI(pageName, index) {
         sortedBlocks.forEach(block => {
             const info = BLOCK_TYPES[block.name] || { icon: "📦" };
             previewHtml += `<div class="mobile-block ${info.type === 'button' ? 'mobile-block-button' : ''}">
-               <span>${block.name}</span>
+               <span class="mobile-block-icon">${info.icon}</span> <span>${block.name}</span>
             </div>`;
         });
         
@@ -707,21 +695,21 @@ function refreshPageBuilderUI(pageName, index) {
     }
 }
 
+// --- INTERACTION: DRAG & SWAP ---
 function findOverlappingBlock(pageName, movingId, x, y, w, h) {
     const blocks = state.pagePlans[pageName].grid;
     for (let i = 0; i < blocks.length; i++) {
         const b = blocks[i];
         if (b.id === movingId) continue; 
-        
         if (x < b.x + b.w && x + w > b.x && y < b.y + b.h && y + h > b.y) {
-            return i; // Return index of overlapped block
+            return i; 
         }
     }
     return -1;
 }
 
 function setupFreeInteraction(element, pageName, index, pageIndex) {
-    const container = element.parentElement;
+    const container = document.getElementById(`grid-canvas-${pageIndex}`);
     let startX, startY, startGridX, startGridY;
     let originalGridX, originalGridY; 
     
@@ -782,7 +770,6 @@ function setupFreeInteraction(element, pageName, index, pageIndex) {
                 state.pagePlans[pageName].grid[index].x = potentialX;
                 state.pagePlans[pageName].grid[index].y = potentialY;
             }
-            
             saveState();
             refreshPageBuilderUI(pageName, pageIndex);
         };
@@ -877,6 +864,7 @@ function removeBlock(pageName, id) {
     saveState();
 }
 
+// --- BASIC PLAN LOGIC (Restored) ---
 function renderBasicPlan(container) {
   state.pages.forEach((page, index) => {
     if(!state.pagePlans[page]) state.pagePlans[page] = {};
@@ -1026,3 +1014,80 @@ document.addEventListener('DOMContentLoaded', () => {
   calculateTotal();
   updateBrandKitDisplay();
 });
+
+// --- CSS STYLES FOR GRID SYSTEM ---
+const style = document.createElement('style');
+style.innerHTML = `
+  /* Autocomplete */
+  .autocomplete-list { position: absolute; top: 100%; left: 0; right: 0; background: #0f1322; border: 1px solid var(--border-light); max-height: 200px; overflow-y: auto; list-style: none; padding: 0; z-index:1000; }
+  .autocomplete-list li { padding: 10px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .autocomplete-list li:hover { background: var(--surface-hover); color: var(--accent-blue); }
+
+  /* Grid Canvas */
+  .grid-canvas {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    grid-auto-rows: 50px;
+    gap: 10px;
+    background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 100% 50px, 8.33% 100%;
+    background-color: rgba(0,0,0,0.1); 
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    padding: 10px;
+    min-height: 300px;
+    position: relative;
+    user-select: none;
+  }
+  
+  .grid-item {
+    background: var(--surface-base);
+    border: 1px solid var(--border-light);
+    border-radius: 4px;
+    position: relative;
+    overflow: hidden;
+    touch-action: none; 
+    transition: box-shadow 0.2s, opacity 0.2s;
+  }
+  
+  .grid-item.interacting {
+    z-index: 100;
+    box-shadow: 0 0 15px rgba(44,166,224,0.5);
+    border-color: var(--accent-blue);
+    opacity: 0.9;
+  }
+
+  .grid-item-content {
+    width: 100%; height: 100%;
+    display: flex; align-items: center; padding: 0 10px;
+  }
+
+  .grid-drag-handle { cursor: grab; margin-right: 8px; color: var(--text-muted); padding: 10px 5px; }
+  .grid-label { flex-grow: 1; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none;}
+  .grid-remove { cursor: pointer; color: #ff6b6b; padding: 5px; z-index: 10; }
+  
+  .grid-resize-handle {
+    position: absolute; bottom: 0; right: 0;
+    width: 15px; height: 15px;
+    background: linear-gradient(135deg, transparent 50%, var(--text-muted) 50%);
+    cursor: se-resize;
+    z-index: 5;
+  }
+
+  /* Layout Selector */
+  .layout-selector-wrapper { margin-left: auto; padding-left: 10px; }
+  .layout-select {
+    background: #050508; color: #fff; border: 1px solid var(--border-light);
+    padding: 5px 10px; border-radius: 4px; font-size: 0.8rem; max-width: 150px;
+  }
+
+  /* Modal */
+  .block-library-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; display: flex; justify-content: center; align-items: center; }
+  .block-library-modal { background: #0f1322; padding: 30px; border-radius: 12px; width: 90%; max-width: 600px; border: 1px solid var(--accent-blue); }
+  .library-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0; max-height: 400px; overflow-y: auto; }
+  .library-option { padding: 15px; background: var(--surface-base); border: 1px solid var(--border-light); border-radius: 6px; cursor: pointer; text-align: center; }
+  .library-option:hover { background: var(--accent-blue); color: white; }
+  .btn-close-modal { background: transparent; border: 1px solid var(--border-light); color: var(--text-muted); padding: 8px 16px; cursor: pointer; float: right; border-radius: 4px; }
+`;
+document.head.appendChild(style);
