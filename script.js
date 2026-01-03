@@ -27,23 +27,22 @@ const BLOCK_TYPES = {
 };
 
 // --- UPDATED LAYOUT DEFINITIONS (Friendly Names) ---
-// Structure: { name: "Block Name", x: Column(1-12), y: Row, w: Width(1-12), h: Height }
 const LAYOUT_DEFINITIONS = {
-  "Visual/Home": [ // Was L-01
+  "Visual/Home": [ 
     { name: "Hero: Full Screen Visual", x: 1, y: 1, w: 12, h: 5 },
     { name: "Intro Blurb", x: 2, y: 6, w: 10, h: 2 },
     { name: "Visual Gallery Grid", x: 1, y: 8, w: 12, h: 4 },
     { name: "Button / CTA", x: 4, y: 12, w: 6, h: 1 },
     { name: "Footer", x: 1, y: 13, w: 12, h: 2 }
   ],
-  "Brand Story/About": [ // Was L-02
+  "Brand Story/About": [ 
     { name: "Hero: Brand Story", x: 1, y: 1, w: 12, h: 4 },
     { name: "About the Founder", x: 1, y: 5, w: 6, h: 4 },
     { name: "Our Values", x: 7, y: 5, w: 6, h: 4 },
     { name: "Timeline/History", x: 1, y: 9, w: 12, h: 3 },
     { name: "Footer", x: 1, y: 12, w: 12, h: 2 }
   ],
-  "Services/Pricing": [ // Was L-03
+  "Services/Pricing": [ 
     { name: "Hero Section", x: 1, y: 1, w: 12, h: 3 },
     { name: "Pricing Tier 1", x: 1, y: 4, w: 4, h: 4 },
     { name: "Pricing Tier 2", x: 5, y: 4, w: 4, h: 4 },
@@ -51,7 +50,7 @@ const LAYOUT_DEFINITIONS = {
     { name: "Testimonials", x: 1, y: 8, w: 12, h: 2 },
     { name: "Footer", x: 1, y: 10, w: 12, h: 2 }
   ],
-  "Process/ZigZag": [ // Was L-04
+  "Process/ZigZag": [ 
     { name: "Service Overview", x: 1, y: 1, w: 12, h: 3 },
     { name: "Step 1: Consult", x: 1, y: 4, w: 6, h: 2 },
     { name: "Step 1 Image", x: 7, y: 4, w: 6, h: 2 },
@@ -59,14 +58,14 @@ const LAYOUT_DEFINITIONS = {
     { name: "Step 2 Image", x: 1, y: 6, w: 6, h: 2 },
     { name: "Footer", x: 1, y: 8, w: 12, h: 2 }
   ],
-  "Contact/Location": [ // Was L-05
+  "Contact/Location": [ 
     { name: "Map/Location", x: 1, y: 1, w: 8, h: 6 },
     { name: "Address & Hours", x: 9, y: 1, w: 4, h: 3 },
     { name: "Social Media Links", x: 9, y: 4, w: 4, h: 3 },
     { name: "Contact Form", x: 1, y: 7, w: 12, h: 4 },
     { name: "Footer", x: 1, y: 11, w: 12, h: 2 }
   ],
-  "default": [ // Basic Fallback
+  "default": [ 
     { name: "Header/Nav", x: 1, y: 1, w: 12, h: 1 },
     { name: "Hero Section", x: 1, y: 2, w: 12, h: 4 },
     { name: "Text Content", x: 1, y: 6, w: 8, h: 3 },
@@ -75,7 +74,7 @@ const LAYOUT_DEFINITIONS = {
   ]
 };
 
-// --- INDUSTRY DATABASE (Updated references) ---
+// --- INDUSTRY DATABASE ---
 const INDUSTRY_DB = {
   "Restaurant": { pages: ["Home", "Menu", "Reservations"], layouts: { "Home": "Visual/Home", "Menu": "Services/Pricing", "Reservations": "Contact/Location" } },
   "Portfolio/Creative": { pages: ["Home", "Work", "About"], layouts: { "Home": "Visual/Home", "Work": "Visual/Home", "About": "Brand Story/About" } },
@@ -97,18 +96,16 @@ const state = {
   brandingProvided: null,
   customBranding: { active: false, name: "", price: 0 },
   advancedNotes: "",
-  viewMode: {}, // Stores 'desktop' or 'mobile' per page
+  viewMode: {}, 
   clientName: "",
   businessName: "",
   clientEmail: "",
   clientPhone: ""
 };
 
-// Store files in memory
 const pageAttachments = {}; 
 
 function saveState() {
-  // Also save inputs from Step 1 if they exist on page
   const cName = document.getElementById('clientName');
   if(cName) state.clientName = cName.value;
   const bName = document.getElementById('businessName');
@@ -121,7 +118,6 @@ function loadState() {
   const raw = localStorage.getItem('onboardingState');
   if (raw) Object.assign(state, JSON.parse(raw));
   
-  // Restore Step 1 inputs if on Step 1
   if(document.getElementById('clientName')) document.getElementById('clientName').value = state.clientName || "";
   if(document.getElementById('businessName')) document.getElementById('businessName').value = state.businessName || "";
 }
@@ -140,7 +136,6 @@ function selectPackage(id, name, price, limit, brandKitBundlePrice, extraPageCos
   if (element) element.classList.add('selected');
 
   state.package = { id, name, price, limit, brandKitBundlePrice, extraPageCost };
-  
   if (state.pages.length === 0) state.pages = ['Home', 'Contact'];
   
   handlePackageSelected();
@@ -216,7 +211,7 @@ function downloadAllFiles() {
     link.click();
     document.body.removeChild(link);
   });
-
+  
   const notesArea = document.getElementById('brandingProvidedNotes');
   if (notesArea && notesArea.value.trim() !== "") {
     const blob = new Blob([notesArea.value], { type: "text/plain" });
@@ -323,7 +318,6 @@ function handleIndustrySearch(query) {
   } else { list.classList.add('hidden'); }
 }
 
-// Added alias to ensure button click works
 window.generateSuggestions = handleIndustrySearch;
 
 function selectIndustry(industryName) {
@@ -429,13 +423,16 @@ function renderActivePages() {
 function updatePageBuilderUI() { renderActivePages(); }
 
 function calculateTotal() {
-  // Try finding elements on current page (works for step 2, 3, 4)
-  const fwItems = document.getElementById('fw-items') || document.getElementById('final-invoice-items');
-  const fwTotal = document.getElementById('fw-full-total') || document.getElementById('final-invoice-total');
-  const fwDeposit = document.getElementById('fw-deposit') || document.getElementById('final-invoice-deposit');
-  const headerTotalEl = document.getElementById('fw-header-total');
+  // Select Widget Elements
+  const widgetItems = document.getElementById('fw-items');
+  const widgetTotal = document.getElementById('fw-full-total');
+  const widgetDeposit = document.getElementById('fw-deposit');
+  const widgetHeader = document.getElementById('fw-header-total');
 
-  if (!fwItems) return;
+  // Select Step 4 Invoice Elements
+  const invoiceItems = document.getElementById('final-invoice-items');
+  const invoiceTotal = document.getElementById('final-invoice-total');
+  const invoiceDeposit = document.getElementById('final-invoice-deposit');
   
   let html = '';
   let total = 0;
@@ -468,14 +465,20 @@ function calculateTotal() {
 
   if (!html) html = '<p class="empty-state">Select a package to start...</p>';
   
-  fwItems.innerHTML = html;
-  if (headerTotalEl) headerTotalEl.textContent = `$${total.toLocaleString()}`;
-  if (fwTotal) fwTotal.textContent = `$${total.toLocaleString()}`;
-  if (fwDeposit) fwDeposit.textContent = `$${(total / 2).toLocaleString()}`;
+  // Update Widget (if exists)
+  if (widgetItems) widgetItems.innerHTML = html;
+  if (widgetTotal) widgetTotal.textContent = `$${total.toLocaleString()}`;
+  if (widgetDeposit) widgetDeposit.textContent = `$${(total / 2).toLocaleString()}`;
+  if (widgetHeader) widgetHeader.textContent = `$${total.toLocaleString()}`;
+
+  // Update Invoice Box (Step 4)
+  if (invoiceItems) invoiceItems.innerHTML = html;
+  if (invoiceTotal) invoiceTotal.textContent = `$${total.toLocaleString()}`;
+  if (invoiceDeposit) invoiceDeposit.textContent = `$${(total / 2).toLocaleString()}`;
 }
 
 // ======================================================
-// --- 4. STEP 3: VISUAL LAYOUT BUILDER (UPDATED) ---
+// --- 4. STEP 3: VISUAL LAYOUT BUILDER ---
 // ======================================================
 
 function initStep3() {
@@ -585,11 +588,10 @@ function getDefaultLayoutForPage(pageName) {
   return [...LAYOUT_DEFINITIONS["default"]];
 }
 
-// Convert Layout Data (with coordinates) to Grid Objects
 function convertListToGrid(listItems) {
     return listItems.map((item, index) => ({
         id: `block-${Date.now()}-${index}`,
-        name: item.name || item, // Support both string and object
+        name: item.name || item, 
         x: item.x || 1, 
         y: item.y || (1 + (index * 2)), 
         w: item.w || 12, 
@@ -597,7 +599,6 @@ function convertListToGrid(listItems) {
     }));
 }
 
-// Updated Generator with Separators and Category Names
 function generateLayoutSelector(currentPageName) {
     let options = `<optgroup label="Generic"><option value="default">Default Basic</option></optgroup>`;
     
@@ -636,7 +637,6 @@ function switchPageLayout(pageName, layoutId) {
         state.pagePlans[pageName].grid = newGridBlocks;
     } else {
         const currentBlocks = state.pagePlans[pageName].grid;
-        // Find bottom most block to append after
         const maxY = currentBlocks.length > 0 ? Math.max(...currentBlocks.map(b => b.y + b.h)) : 1;
         newGridBlocks = newGridBlocks.map(b => ({ ...b, y: b.y + maxY })); 
         state.pagePlans[pageName].grid = [...currentBlocks, ...newGridBlocks];
@@ -647,7 +647,7 @@ function switchPageLayout(pageName, layoutId) {
     saveState();
 }
 
-// --- RENDER FUNCTIONS (Removed Hover Text, Fixed Interaction) ---
+// --- RENDER FUNCTIONS ---
 function refreshPageBuilderUI(pageName, index) {
     const gridId = `grid-canvas-${index}`;
     const previewId = `preview-area-${index}`;
@@ -662,7 +662,6 @@ function refreshPageBuilderUI(pageName, index) {
     gridContainer.innerHTML = '';
     const mode = (state.viewMode && state.viewMode[pageName]) ? state.viewMode[pageName] : 'desktop';
 
-    // Update Title Label
     if(titleEl) titleEl.textContent = mode === 'desktop' ? "Desktop Wireframe" : "Mobile Wireframe";
 
     const blocks = state.pagePlans[pageName].grid || [];
@@ -691,8 +690,7 @@ function refreshPageBuilderUI(pageName, index) {
         gridContainer.appendChild(el);
     });
 
-    // --- Render Preview (Opposite of Current Mode) ---
-    // Note: REMOVED the "Switch to..." overlay hint text as requested
+    // --- Render Preview ---
     if(mode === 'desktop') {
         // Render Mobile Preview
         let previewHtml = `
@@ -707,18 +705,29 @@ function refreshPageBuilderUI(pageName, index) {
             </div>`;
         });
         
-        previewHtml += `</div></div>`; // Removed overlay text
+        previewHtml += `</div></div>`;
         previewContainer.innerHTML = previewHtml;
     } else {
-        // Render Desktop Preview
+        // Render Desktop Preview (VISUAL BLOCKS)
+        let desktopContent = '';
+        sortedBlocks.forEach(block => {
+            const info = BLOCK_TYPES[block.name] || { icon: "📦" };
+            // Simple visual representation scaled down
+            const widthPct = (block.w / 12) * 100;
+            desktopContent += `<div style="width:${widthPct}%; float:left; font-size:0.5rem; padding:2px; height:20px; overflow:hidden; border:1px solid #ddd; background:#f9f9f9; color:#333; box-sizing:border-box; text-align:center;">
+                ${info.icon}
+            </div>`;
+        });
+
         previewContainer.innerHTML = `
           <div class="desktop-frame">
-              <div class="desktop-screen" style="display:flex; align-items:center; justify-content:center; background:#111; color:#555;">
-                  <span style="font-size:0.8rem; text-transform:uppercase;">Desktop Preview Active</span>
+              <div class="desktop-screen" style="padding:5px; overflow:hidden; background:#fff; display:block;">
+                  ${desktopContent}
+                  <div style="clear:both;"></div>
               </div>
               <div class="desktop-stand"></div>
           </div>
-        `; // Removed overlay text
+        `;
     }
 }
 
@@ -729,7 +738,6 @@ function findOverlappingBlock(pageName, movingId, x, y, w, h) {
         const b = blocks[i];
         if (b.id === movingId) continue; 
         
-        // Strict overlap detection
         if (x < b.x + b.w && x + w > b.x && y < b.y + b.h && y + h > b.y) {
             return i; 
         }
@@ -785,30 +793,20 @@ function setupFreeInteraction(element, pageName, index, pageIndex) {
             const potentialX = parseInt(finalStyle.gridColumnStart);
             const potentialY = parseInt(finalStyle.gridRowStart);
             
-            // Check Collision for SWAP Logic or Snap prevention
+            // Check Collision for SWAP Logic
             let overlappedIdx = findOverlappingBlock(pageName, blockData.id, potentialX, potentialY, blockData.w, blockData.h);
             
             if (overlappedIdx !== -1) {
-                // Perform Swap if clean overlap, otherwise standard swap strategy
-                const targetBlock = state.pagePlans[pageName].grid[overlappedIdx];
-                
-                // Swap coordinates
+                // Perform Swap
                 state.pagePlans[pageName].grid[overlappedIdx].x = originalGridX;
                 state.pagePlans[pageName].grid[overlappedIdx].y = originalGridY;
                 
                 state.pagePlans[pageName].grid[index].x = potentialX;
                 state.pagePlans[pageName].grid[index].y = potentialY;
-
-                // Double check if the swapped items now overlap something else (recursive safety)
-                // For simplicity, we assume swap resolves it. 
             } else {
                 state.pagePlans[pageName].grid[index].x = potentialX;
                 state.pagePlans[pageName].grid[index].y = potentialY;
             }
-
-            // Final safety pass to ensure no stacking (Prevent piling on top)
-            // If the drop resulted in an overlap we didn't catch (e.g. multi-block), push down
-            // For now, the swap logic usually handles the primary interaction.
 
             saveState();
             refreshPageBuilderUI(pageName, pageIndex);
@@ -904,7 +902,7 @@ function removeBlock(pageName, id) {
     saveState();
 }
 
-// --- BASIC PLAN LOGIC (Restored) ---
+// --- BASIC PLAN LOGIC ---
 function renderBasicPlan(container) {
   state.pages.forEach((page, index) => {
     if(!state.pagePlans[page]) state.pagePlans[page] = {};
@@ -1044,13 +1042,13 @@ function injectDownloadButton() {
 }
 
 // ======================================================
-// --- 5. FINALIZATION & STEP 4 LOGIC (New) ---
+// --- 5. FINALIZATION & STEP 4 LOGIC ---
 // ======================================================
 
 function initStep4() {
   if (!document.body.classList.contains('step4')) return;
 
-  // 1. Inject Steps Header if missing (Restores navigation)
+  // 1. Inject Steps Header if missing
   const headerContainer = document.querySelector('.progress-header');
   if (headerContainer && !headerContainer.innerHTML.trim().includes('step-indicator')) {
       headerContainer.innerHTML = `
@@ -1077,12 +1075,11 @@ function initStep4() {
   }
   
   // 3. Render Invoice Data
-  calculateTotal(); // This will populate #final-invoice-items if IDs match
+  calculateTotal(); 
 
   // 4. Inject & Auto-Fill Billing Form
   const form = document.getElementById('finalizeForm');
   if (form) {
-      // Create inputs if they don't exist in HTML
       if (!document.getElementById('billingName')) {
           const billingHtml = `
             <div class="form-grid" style="margin-bottom:30px;">
@@ -1104,7 +1101,6 @@ function initStep4() {
           form.insertAdjacentHTML('afterbegin', billingHtml);
       }
 
-      // Auto-Fill Logic
       document.getElementById('billingName').value = state.clientName || "";
       document.getElementById('billingBusiness').value = state.businessName || "";
       document.getElementById('billingEmail').value = state.clientEmail || "";
@@ -1114,7 +1110,6 @@ function initStep4() {
 function handleFinalize(event) {
     event.preventDefault();
     
-    // Save Billing Info
     state.billing = {
         name: document.getElementById('billingName').value,
         business: document.getElementById('billingBusiness').value,
@@ -1130,19 +1125,20 @@ function handleFinalize(event) {
     // Trigger Download
     const a = document.createElement('a');
     a.href = url;
-    a.download = `Project_Summary_${state.clientName.replace(/ /g,'_')}.json`;
+    a.download = `Project_Summary_${(state.clientName || 'Client').replace(/ /g,'_')}.json`;
     document.body.appendChild(a);
     a.click();
     
-    // Mailto Link (Simulated Email)
+    // Mailto Link 
+    const totalDisplay = document.getElementById('final-invoice-total') ? document.getElementById('final-invoice-total').innerText : '0';
     const subject = `Project Kickoff: ${state.businessName}`;
-    const body = `Hi! I'm ready to start. Please find my project summary attached (check your downloads folder).\n\nTotal Estimated: $${document.getElementById('final-invoice-total').innerText}\n\nClient: ${state.clientName}`;
-    window.location.href = `mailto:youremail@example.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    const body = `Hi! I'm ready to start. Please find my project summary attached (check your downloads folder).\n\nTotal Estimated: ${totalDisplay}\n\nClient: ${state.clientName}`;
     
-    alert("Project Finalized! A summary file has been downloaded for your records. Please attach this file to the email that just opened.");
+    setTimeout(() => {
+        window.location.href = `mailto:youremail@example.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    }, 500); // Slight delay to allow download to start
 }
 
-// Global Download Function (Helper)
 function downloadProjectOutline() {
     const text = `
     PROJECT OUTLINE
@@ -1166,7 +1162,6 @@ function downloadProjectOutline() {
     a.click();
 }
 
-
 document.addEventListener('DOMContentLoaded', () => {
   loadState();
   initCollapsibles();
@@ -1175,8 +1170,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if(state.package) handlePackageSelected(true);
   }
   if (window.location.pathname.includes('step3')) initStep3();
-  
-  // New Step 4 Init
   if (window.location.pathname.includes('step4')) initStep4();
 
   calculateTotal();
