@@ -1,53 +1,80 @@
-/* REQUIREMENT 1: Remove Hover Labels */
-.mobile-overlay-hint, .preview-mode-tag {
-    display: none !important;
+/* ======================================================
+   --- 1. CORE VARIABLES & GLOBAL STYLES ---
+   ====================================================== */
+:root {
+  --bg-dark: #050508;
+  --bg-gradient: radial-gradient(circle at 50% 0%, #0f1322 0%, #050508 80%);
+  --accent-blue: #2CA6E0;
+  --accent-glow: rgba(44, 166, 224, 0.4);
+  --text-main: #FFFFFF;
+  --text-muted: #A0A5B0;
+  --surface-base: rgba(255, 255, 255, 0.03);
+  --surface-hover: rgba(255, 255, 255, 0.06);
+  --surface-active: rgba(44, 166, 224, 0.1);
+  --border-light: rgba(255, 255, 255, 0.1);
+  --font-heading: 'Cormorant Garamond', serif;
+  --font-body: 'Montserrat', sans-serif;
 }
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg-dark);
+  background-image: var(--bg-gradient);
+  background-attachment: fixed;
+  color: var(--text-main);
+  font-family: var(--font-body);
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+/* Typography */
+h1, h2, h3, h4 { font-family: var(--font-heading); color: var(--text-main); font-weight: 300; }
+h1 { font-size: 3.5rem; letter-spacing: -0.02em; line-height: 1.1; margin-bottom: 15px; }
+p { margin-bottom: 24px; font-weight: 300; font-size: 1.05rem; color: var(--text-muted); }
+
+/* Layout Structure */
+.container { max-width: 960px; margin: 60px auto; padding: 0 25px; position: relative; z-index: 1; }
+
+/* REQUIREMENT 6 & 7: Progress Header & Finalize Container */
+.progress-header { position: sticky; top: 0; background: rgba(5, 5, 8, 0.95); backdrop-filter: blur(12px); z-index: 100; height: 70px; border-bottom: 1px solid var(--border-light); display: flex; align-items: center; justify-content: center; }
+.progress-bar { display: flex; width: 90%; max-width: 800px; position: relative; justify-content: space-between; align-items: center; }
+.progress-line-bg { position: absolute; top: 50%; left: 0; width: 100%; height: 1px; background: var(--border-light); z-index: 1; transform: translateY(-50%); }
+.progress-line-fill { position: absolute; top: 50%; left: 0; height: 1px; background: var(--accent-blue); box-shadow: 0 0 10px var(--accent-glow); z-index: 2; transform: translateY(-50%); transition: width 0.6s ease; }
+.step-indicator { background: var(--bg-dark); border: 1px solid var(--border-light); color: var(--text-muted); width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; position: relative; z-index: 3; }
+.step-indicator.active { border-color: var(--accent-blue); color: var(--accent-blue); box-shadow: 0 0 15px rgba(44, 166, 224, 0.2); }
+.step-indicator.completed { background: var(--accent-blue); border-color: var(--accent-blue); color: #fff; }
+
+/* REQUIREMENT 1: Remove Hover Text */
+.mobile-overlay-hint, .preview-mode-tag { display: none !important; }
+
+/* REQUIREMENT 2: Grid Canvas (Editable Desktop/Mobile) */
+.grid-canvas { 
+  display: grid; grid-template-columns: repeat(12, 1fr); grid-auto-rows: 60px; gap: 10px; 
+  background: rgba(255,255,255,0.02); border: 1px dashed var(--border-light); border-radius: 8px; padding: 10px; position: relative; 
+}
+.grid-canvas.desktop-mode-active { width: 100%; }
+.grid-canvas.mobile-mode-active { max-width: 400px; margin: 0 auto; }
+
+.grid-item { background: var(--surface-base); border: 1px solid var(--border-light); border-radius: 6px; position: relative; cursor: grab; }
+.grid-item.interacting { z-index: 100; border-color: var(--accent-blue); box-shadow: 0 0 20px var(--accent-glow); }
+.grid-label { padding: 10px; font-size: 0.8rem; pointer-events: none; text-transform: uppercase; letter-spacing: 1px; }
+.grid-remove { position: absolute; top: 5px; right: 5px; color: #ff6b6b; cursor: pointer; font-weight: bold; }
 
 /* REQUIREMENT 7: Finalize Page Styling */
-.step4 .container {
-    background: var(--bg-dark);
-    padding: 50px;
-    border-radius: 20px;
-    border: 1px solid var(--border-light);
-}
+.invoice-box { background: var(--surface-base); border: 1px solid var(--border-light); border-radius: 16px; padding: 40px; margin-bottom: 30px; }
+.line-item { display: flex; justify-content: space-between; padding: 15px 0; border-bottom: 1px dashed var(--border-light); }
+.total-row { font-size: 1.5rem; color: var(--accent-blue); border-top: 1px solid var(--accent-blue); border-bottom: none; margin-top: 20px; font-family: var(--font-heading); }
 
-.invoice-box {
-    background: var(--surface-base);
-    padding: 30px;
-    border-radius: 12px;
-    margin-top: 30px;
-}
+/* Buttons & Inputs */
+.btn { padding: 18px 40px; border-radius: 6px; border: none; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; cursor: pointer; transition: 0.3s; }
+.btn-primary { background: var(--accent-blue); color: #fff; }
+.btn-secondary { background: transparent; border: 1px solid var(--border-light); color: var(--text-muted); }
+input { width: 100%; padding: 16px; background: var(--surface-base); border: 1px solid var(--border-light); border-radius: 8px; color: #fff; }
 
-.line-item {
-    display: flex;
-    justify-content: space-between;
-    padding: 15px 0;
-    border-bottom: 1px solid var(--border-light);
-}
-
-.total-row {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--accent-blue);
-    border-bottom: 2px solid var(--accent-blue);
-}
-
-/* REQUIREMENT 4: Clean Dropdown Dividers */
-select optgroup {
-    border-top: 1px solid var(--border-light);
-    padding-top: 10px;
-    font-weight: 600;
-    color: var(--accent-blue);
-    background: #0f1322;
-}
-
-/* REQUIREMENT 2: Grid Layouts */
-.grid-canvas.desktop-mode-active {
-    width: 100%;
-    min-height: 500px;
-}
-.grid-canvas.mobile-mode-active {
-    max-width: 400px;
-    margin: 0 auto;
-    min-height: 600px;
-}
+/* Floating Widget */
+#floating-widget { position: fixed; bottom: 0; right: 40px; width: 320px; background: #0f1322; border: 1px solid var(--border-light); border-radius: 12px 12px 0 0; z-index: 1000; transition: transform 0.4s; }
+#floating-widget.collapsed { transform: translateY(calc(100% - 60px)); }
+.fw-header { height: 60px; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-size: 0.8rem; font-weight: 700; }
+.fw-content { padding: 25px; }
