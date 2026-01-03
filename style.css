@@ -32,10 +32,7 @@ body {
 }
 
 /* REQUIREMENT 7: Step 4 Dark Mode Enforcement */
-.step4 {
-    background: var(--bg-dark);
-    color: var(--text-main);
-}
+.step4 { background: var(--bg-dark); color: var(--text-main); }
 .step4 h1 { color: var(--text-main); }
 .step4 p { color: var(--text-muted); }
 
@@ -101,15 +98,9 @@ input:focus, select:focus, textarea:focus {
   box-shadow: 0 0 0 4px rgba(44, 166, 224, 0.1);
 }
 select option { background: #0f1322; color: var(--text-main); }
-
-/* REQUIREMENT 4: Thin line separator for Dropdowns */
 select optgroup {
-    background: #0f1322;
-    color: var(--accent-blue);
-    font-style: normal;
-    font-weight: 700;
-    border-bottom: 1px solid rgba(255,255,255,0.1); /* Thin line */
-    padding: 10px 0;
+    background: #0f1322; color: var(--accent-blue); font-style: normal; font-weight: 700;
+    border-bottom: 1px solid rgba(255,255,255,0.1); padding: 10px 0;
 }
 
 /* --- Radio Cards --- */
@@ -241,7 +232,7 @@ select optgroup {
 .brand-kit-ref.selected { background: var(--surface-active); border-color: var(--accent-blue); box-shadow: 0 0 0 2px var(--accent-blue); }
 
 /* --- PAGE BUILDER CHIPS --- */
-.page-builder-search { display: flex; gap: 10px; margin-bottom: 20px; }
+.page-builder-search { display: flex; gap: 10px; margin-bottom: 20px; position:relative; }
 .industry-chips { display: flex; flex-wrap: wrap; gap: 10px; margin: 15px 0 25px 0; }
 .suggestion-chip {
   padding: 8px 16px; border: 1px solid var(--border-light); border-radius: 20px; font-size: 0.8rem;
@@ -257,6 +248,11 @@ select optgroup {
 .page-tag-remove { cursor: pointer; opacity: 0.6; font-size: 1.1rem; line-height: 1; }
 .page-limit-warning { color: #ff6b6b; font-size: 0.8rem; margin-top: 10px; display: none; }
 .page-limit-warning.visible { display: block; }
+
+/* FIX 1: Search Autocomplete */
+.autocomplete-list { position: absolute; top: 100%; left: 0; right: 0; background: #0f1322; border: 1px solid var(--border-light); max-height: 200px; overflow-y: auto; list-style: none; padding: 0; z-index:1000; }
+.autocomplete-list li { padding: 10px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.autocomplete-list li:hover { background: var(--surface-hover); color: var(--accent-blue); }
 
 /* --- STEP 3 LAYOUT BUILDER --- */
 .planning-grid { display: grid; gap: 30px; }
@@ -275,7 +271,7 @@ select optgroup {
 .plan-card-chevron { transition: transform 0.3s; font-size: 0.9rem; opacity: 0.5; }
 .plan-card.collapsed .plan-card-chevron { transform: rotate(-90deg); }
 
-/* REQUIREMENT 2 & 7: Grid Editor Styles */
+/* GRID EDITOR */
 .builder-layout-container { display: flex; gap: 30px; align-items: flex-start; }
 .editor-pane { flex: 1; background: #0f1322; border: 1px solid var(--border-light); border-radius: 12px; padding: 20px; min-height: 600px; position: relative; transition: all 0.3s; }
 .editor-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid var(--border-light); }
@@ -296,15 +292,42 @@ select optgroup {
   transition: max-width 0.3s ease;
 }
 
-/* Toggle Views */
 .grid-canvas.desktop-mode-active { width: 100%; }
 .grid-canvas.mobile-mode-active { max-width: 400px; margin: 0 auto; }
 
+/* FIX 2: DISTINCT VISUAL STYLES FOR BLOCKS */
 .grid-item { 
   background-color: #151820; border: 2px solid #3a4055; border-radius: 8px; position: absolute; 
   transition: box-shadow 0.2s, border-color 0.2s, transform 0.2s; 
   display: flex; flex-direction: column; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 10; overflow: hidden;
 }
+
+/* Specific Block Colors */
+.block-type-hero { background: #1a1e2e; border-color:#555; }
+.block-type-hero .grid-item-content::after {
+  content: ''; width: 60px; height: 40px; border: 2px solid rgba(255,255,255,0.3);
+  background: linear-gradient(135deg, transparent 50%, rgba(255,255,255,0.1) 50%);
+  margin-top: 10px; border-radius: 4px; display:block;
+}
+
+.block-type-text { background: #181a25; }
+.block-type-text .grid-item-content::after {
+  content: ''; width: 80%; height: 40px;
+  background-image: linear-gradient(rgba(255,255,255,0.2) 2px, transparent 2px);
+  background-size: 100% 10px; margin-top: 10px; display:block;
+}
+
+.block-type-image { background: #12141a; }
+.block-type-image .grid-item-content::after {
+  content: ''; width: 40px; height: 40px; position: absolute;
+  background: linear-gradient(45deg, transparent 48%, rgba(255,255,255,0.2) 48%, rgba(255,255,255,0.2) 52%, transparent 52%),
+              linear-gradient(-45deg, transparent 48%, rgba(255,255,255,0.2) 48%, rgba(255,255,255,0.2) 52%, transparent 52%);
+  border: 2px solid rgba(255,255,255,0.2); display:block;
+}
+
+.block-type-button { background-color: var(--accent-blue); border-color: var(--accent-blue); border-radius: 50px; justify-content: center; }
+.block-type-button .grid-item-content { color: #fff; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+
 .grid-item:hover { border-color: var(--accent-blue); z-index: 20; box-shadow: 0 8px 20px rgba(0,0,0,0.5); }
 .grid-item.interacting { z-index: 100; border: 2px dashed var(--accent-blue); opacity: 0.9; transform: scale(1.02); box-shadow: 0 15px 30px rgba(0,0,0,0.5); }
 
@@ -315,7 +338,6 @@ select optgroup {
 .grid-resize-handle { position: absolute; bottom: 0; right: 0; width: 20px; height: 20px; background: linear-gradient(135deg, transparent 50%, var(--accent-blue) 50%); cursor: se-resize; opacity: 0; pointer-events: auto; z-index: 30; }
 .grid-item:hover .grid-resize-handle { opacity: 1; }
 
-/* REQUIREMENT 1: Remove Hover Hint Text */
 .mobile-overlay-hint, .preview-mode-tag { display: none !important; }
 
 /* REQUIREMENT 7: Invoice Box Styling (Finalize) */
@@ -346,3 +368,11 @@ select optgroup {
 .mini-file-list { margin-top: 10px; background: rgba(255,255,255,0.05); border-radius: 6px; padding: 5px; min-height: 10px; }
 .page-file-item { font-size: 0.8rem; padding: 6px 10px; border-bottom: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; justify-content: space-between; align-items: center; }
 .delete-file-btn { color: #ff6b6b; cursor: pointer; font-weight: bold; font-size: 1.2rem; margin-left: 10px; line-height: 1; }
+
+/* Modal */
+.block-library-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; display: flex; justify-content: center; align-items: center; }
+.block-library-modal { background: #0f1322; padding: 30px; border-radius: 12px; width: 90%; max-width: 600px; border: 1px solid var(--accent-blue); }
+.library-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0; max-height: 400px; overflow-y: auto; }
+.library-option { padding: 15px; background: var(--surface-base); border: 1px solid var(--border-light); border-radius: 6px; cursor: pointer; text-align: center; }
+.library-option:hover { background: var(--accent-blue); color: white; }
+.btn-close-modal { background: transparent; border: 1px solid var(--border-light); color: var(--text-muted); padding: 8px 16px; cursor: pointer; float: right; border-radius: 4px; }
