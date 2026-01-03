@@ -1,59 +1,86 @@
-/* ... Keep all original styles ... */
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Finalize Project - Gabriela Fiona</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="step4">
 
-/* REQUIREMENT 1: Remove Hover Hints */
-.mobile-overlay-hint, .preview-mode-tag {
-    display: none !important;
-}
+  <div id="floating-widget" class="collapsed">
+    <div class="fw-header" onclick="toggleWidget()">
+      <span>Estimated Investment</span>
+      <span id="fw-header-total">$0</span>
+    </div>
+    <div class="fw-content">
+      <div id="fw-items"></div>
+      <div class="fw-total">
+        <span>Total</span>
+        <span id="fw-full-total">$0</span>
+      </div>
+      <div class="fw-deposit">50% Deposit: <span id="fw-deposit">$0</span></div>
+    </div>
+  </div>
 
-/* REQUIREMENT 7: Step 4 (Finalize) Styling */
-.step4 {
-    background: var(--bg-dark);
-    color: var(--text-main);
-}
+  <div class="progress-header">
+    <div class="progress-bar">
+      <div class="progress-line-bg"></div>
+      <div class="progress-line-fill" style="width:100%;"></div>
+      <div class="step-indicator completed">1 <div class="step-label">Goals</div></div>
+      <div class="step-indicator completed">2 <div class="step-label">Structure</div></div>
+      <div class="step-indicator completed">3 <div class="step-label">Plan</div></div>
+      <div class="step-indicator active">4 <div class="step-label">Finalize</div></div>
+    </div>
+  </div>
 
-.step4 h1 { color: var(--text-main); }
-.step4 p { color: var(--text-muted); }
+  <div class="container">
+    <div style="text-align: center; margin-bottom: 50px;">
+        <h1>Finalize & Kickoff</h1>
+        <p>Review your project summary and secure your spot on the calendar.</p>
+    </div>
 
-.invoice-box {
-    background: var(--surface-base);
-    border: 1px solid var(--border-light);
-    border-radius: 16px;
-    padding: 40px;
-    margin-top: 30px;
-}
+    <div class="invoice-box">
+      <h3 style="margin-bottom: 20px; color: var(--accent-blue);">Project Blueprint</h3>
+      
+      <div id="final-invoice-items"></div>
 
-.line-item {
-    display: flex;
-    justify-content: space-between;
-    padding: 15px 0;
-    border-bottom: 1px dashed var(--border-light);
-}
+      <div class="line-item total-row">
+        <span>Total Investment</span>
+        <span id="final-invoice-total">$0</span>
+      </div>
+      <div class="line-item" style="border:none; padding-top:5px;">
+        <span class="deposit-highlight">50% Deposit Due Now</span>
+        <span id="final-invoice-deposit" style="font-weight:700; color:var(--accent-blue); font-size:1.2rem;">$0</span>
+      </div>
+    </div>
 
-.total-row {
-    font-size: 1.8rem;
-    color: var(--accent-blue);
-    border-top: 1px solid var(--accent-blue);
-    border-bottom: none;
-    margin-top: 20px;
-    font-family: var(--font-heading);
-}
+    <div class="billing-card" style="margin-top:40px;">
+        <label>Billing Information</label>
+        <p style="font-size:0.8rem; margin-bottom:10px;">Auto-filled from Step 1</p>
+        <input type="text" id="billingName" placeholder="Client Name or Business Entity" />
+    </div>
 
-/* REQUIREMENT 4: Thin Dropdown Lines */
-select optgroup {
-    background: #0f1322;
-    color: var(--accent-blue);
-    border-top: 1px solid var(--border-light);
-    padding: 10px 0;
-}
+    <div class="step-nav-buttons">
+       <button class="btn btn-secondary" onclick="window.location.href='step3.html'">&larr; Back to Plan</button>
+       <button class="btn btn-primary" onclick="handleFinalize(event)">Pay Deposit & Start Project &rarr;</button>
+    </div>
+  </div>
 
-/* REQUIREMENT 2: Editable Grid mode classes */
-.grid-canvas.desktop-mode-active {
-    width: 100%;
-    min-height: 500px;
-}
-
-.grid-canvas.mobile-mode-active {
-    max-width: 400px;
-    margin: 0 auto;
-    min-height: 600px;
-}
+  <script src="script.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Requirement 8: Auto-fill billing name
+        const name = localStorage.getItem('businessName') || localStorage.getItem('clientName');
+        if(name) document.getElementById('billingName').value = name;
+        
+        // Populate the specific invoice list for Step 4
+        if(window.renderFinalInvoice) window.renderFinalInvoice();
+        if(window.calculateTotal) window.calculateTotal();
+    });
+  </script>
+</body>
+</html>
