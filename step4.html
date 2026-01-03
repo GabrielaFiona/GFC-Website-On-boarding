@@ -3,31 +3,43 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Finalize Project - Gabriela Fiona</title>
+  <title>Finalize - Gabriela Fiona</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body class="step4">
+
+  <div id="floating-widget" class="collapsed">
+    <div class="fw-header" onclick="toggleWidget()">
+      <span>Estimated Investment</span>
+      <span id="fw-header-total">$0</span>
+    </div>
+    <div class="fw-content">
+      <div id="fw-items"></div>
+      <div class="fw-total"><span>Total</span><span id="fw-full-total">$0</span></div>
+      <div class="fw-deposit">50% Deposit: <span id="fw-deposit">$0</span></div>
+    </div>
+  </div>
 
   <div class="progress-header">
     <div class="progress-bar">
       <div class="progress-line-bg"></div>
       <div class="progress-line-fill" style="width:100%;"></div>
-      <div class="step-indicator completed">1</div>
-      <div class="step-indicator completed">2</div>
-      <div class="step-indicator completed">3</div>
-      <div class="step-indicator active">4</div>
+      <div class="step-indicator completed">1 <div class="step-label">Goals</div></div>
+      <div class="step-indicator completed">2 <div class="step-label">Structure</div></div>
+      <div class="step-indicator completed">3 <div class="step-label">Plan</div></div>
+      <div class="step-indicator active">4 <div class="step-label">Finalize</div></div>
     </div>
   </div>
 
   <div class="container">
     <div style="text-align: center; margin-bottom: 40px;">
         <h1>Finalize & Kickoff</h1>
-        <p>Review your project summary and investment details.</p>
+        <p>Review your project summary and investment details below.</p>
     </div>
 
     <div class="invoice-box">
       <h3 style="margin-bottom: 20px; color: var(--accent-blue);">Project Blueprint</h3>
-      <div id="final-invoice-items">
+      <div id="final-items-list">
           </div>
       <div class="line-item total-row">
         <span>Total Investment</span>
@@ -39,12 +51,12 @@
       </div>
     </div>
 
-    <div class="billing-card" style="margin-top:40px;">
-        <label style="display:block; margin-bottom:10px; font-size:0.8rem; color:var(--accent-blue); letter-spacing:1px;">BILLING NAME / ENTITY</label>
-        <input type="text" id="billingName" placeholder="Business Name" />
+    <div class="billing-section" style="margin-top:40px;">
+        <label>Billing Information (Auto-populated)</label>
+        <input type="text" id="billingName" placeholder="Client Name" />
     </div>
 
-    <div class="step-nav-buttons" style="display:flex; justify-content:space-between; margin-top:50px;">
+    <div class="step-nav-buttons">
        <button class="btn btn-secondary" onclick="window.location.href='step3.html'">&larr; Back</button>
        <button class="btn btn-primary" onclick="handleFinalize(event)">Pay Deposit & Start Project &rarr;</button>
     </div>
@@ -52,24 +64,17 @@
 
   <script src="script.js"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        // REQUIREMENT 8: Auto-fill billing name
-        const name = localStorage.getItem('businessName') || localStorage.getItem('clientName') || "";
-        document.getElementById('billingName').value = name;
-        
-        // REQUIREMENT 5: Carry over estimate
-        if(window.calculateTotal) window.calculateTotal();
-        
-        // Populate the itemized list on the finalize page
-        const itemBox = document.getElementById('final-invoice-items');
-        const state = JSON.parse(localStorage.getItem('onboardingState') || '{}');
-        if(state.package && itemBox) {
-            itemBox.innerHTML = `
-                <div class="line-item"><span>${state.package.name} Package</span><span>$${state.package.price.toLocaleString()}</span></div>
-                ${state.brandKit ? `<div class="line-item"><span>Full Brand Kit</span><span>$${(state.package.brandKitBundlePrice || 500).toLocaleString()}</span></div>` : ''}
-            `;
-        }
-    });
+      // Populate itemized receipt on load
+      document.addEventListener('DOMContentLoaded', () => {
+          const list = document.getElementById('final-items-list');
+          const state = JSON.parse(localStorage.getItem('onboardingState') || '{}');
+          if(state.package) {
+              list.innerHTML += `<div class="line-item"><span>${state.package.name} Package</span><span>$${state.package.price.toLocaleString()}</span></div>`;
+          }
+          if(state.brandKit) {
+              list.innerHTML += `<div class="line-item"><span>Brand Identity Kit</span><span>Included</span></div>`;
+          }
+      });
   </script>
 </body>
 </html>
