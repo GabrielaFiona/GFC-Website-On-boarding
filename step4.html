@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Finalize - Gabriela Fiona</title>
+  <title>Finalize Project - Gabriela Fiona</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body class="step4">
@@ -20,39 +20,55 @@
   </div>
 
   <div class="container">
-    <h1>Finalize & Kickoff</h1>
-    <p>Please review your project scope below.</p>
+    <div style="text-align: center; margin-bottom: 40px;">
+        <h1>Finalize & Kickoff</h1>
+        <p>Review your project summary and investment details.</p>
+    </div>
 
     <div class="invoice-box">
-      <h3>Project Summary</h3>
-      <div id="final-invoice-items"></div>
+      <h3 style="margin-bottom: 20px; color: var(--accent-blue);">Project Blueprint</h3>
+      <div id="final-invoice-items">
+          </div>
       <div class="line-item total-row">
         <span>Total Investment</span>
         <span id="final-invoice-total">$0</span>
       </div>
-      <div class="line-item">
-        <span class="deposit-highlight">50% Deposit Due</span>
+      <div class="line-item" style="border:none;">
+        <span style="color: var(--accent-blue); font-weight: 700;">50% DEPOSIT DUE</span>
         <span id="final-invoice-deposit">$0</span>
       </div>
     </div>
 
     <div class="billing-card" style="margin-top:40px;">
-        <label>Billing Entity</label>
-        <input type="text" id="billingName" class="save-me" />
+        <label style="display:block; margin-bottom:10px; font-size:0.8rem; color:var(--accent-blue); letter-spacing:1px;">BILLING NAME / ENTITY</label>
+        <input type="text" id="billingName" placeholder="Business Name" />
     </div>
 
-    <div class="step-nav-buttons">
-       <button class="btn btn-primary" onclick="handleFinalize(event)">Pay Deposit & Start Project</button>
+    <div class="step-nav-buttons" style="display:flex; justify-content:space-between; margin-top:50px;">
+       <button class="btn btn-secondary" onclick="window.location.href='step3.html'">&larr; Back</button>
+       <button class="btn btn-primary" onclick="handleFinalize(event)">Pay Deposit & Start Project &rarr;</button>
     </div>
   </div>
 
   <script src="script.js"></script>
   <script>
-    // Requirement 8: Auto-fill logic
     document.addEventListener('DOMContentLoaded', () => {
-        const name = localStorage.getItem('businessName') || localStorage.getItem('clientName');
-        document.getElementById('billingName').value = name || "";
+        // REQUIREMENT 8: Auto-fill billing name
+        const name = localStorage.getItem('businessName') || localStorage.getItem('clientName') || "";
+        document.getElementById('billingName').value = name;
+        
+        // REQUIREMENT 5: Carry over estimate
         if(window.calculateTotal) window.calculateTotal();
+        
+        // Populate the itemized list on the finalize page
+        const itemBox = document.getElementById('final-invoice-items');
+        const state = JSON.parse(localStorage.getItem('onboardingState') || '{}');
+        if(state.package && itemBox) {
+            itemBox.innerHTML = `
+                <div class="line-item"><span>${state.package.name} Package</span><span>$${state.package.price.toLocaleString()}</span></div>
+                ${state.brandKit ? `<div class="line-item"><span>Full Brand Kit</span><span>$${(state.package.brandKitBundlePrice || 500).toLocaleString()}</span></div>` : ''}
+            `;
+        }
     });
   </script>
 </body>
