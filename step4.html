@@ -1,15 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Finalize - Gabriela Fiona</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
 <body class="step4">
-  <div class="progress-header">... (Same as other pages) ...</div>
+
+  <div class="progress-header">
+    <div class="progress-bar">
+      <div class="progress-line-bg"></div>
+      <div class="progress-line-fill" style="width:100%;"></div>
+      <div class="step-indicator completed">1</div>
+      <div class="step-indicator completed">2</div>
+      <div class="step-indicator completed">3</div>
+      <div class="step-indicator active">4</div>
+    </div>
+  </div>
+
   <div class="container">
     <h1>Finalize & Kickoff</h1>
+    <p>Please review your project scope below.</p>
+
     <div class="invoice-box">
       <h3>Project Summary</h3>
       <div id="final-invoice-items"></div>
-      <div class="line-item total-row"><span>Total</span><span id="final-invoice-total">$0</span></div>
-      <div class="line-item"><span class="deposit-highlight">Deposit Due</span><span id="final-invoice-deposit">$0</span></div>
+      <div class="line-item total-row">
+        <span>Total Investment</span>
+        <span id="final-invoice-total">$0</span>
+      </div>
+      <div class="line-item">
+        <span class="deposit-highlight">50% Deposit Due</span>
+        <span id="final-invoice-deposit">$0</span>
+      </div>
     </div>
-    <form id="finalizeForm" onsubmit="handleFinalize(event)">
-       <button type="submit" class="btn btn-primary">Pay Deposit & Start Project</button>
-    </form>
+
+    <div class="billing-card" style="margin-top:40px;">
+        <label>Billing Entity</label>
+        <input type="text" id="billingName" class="save-me" />
+    </div>
+
+    <div class="step-nav-buttons">
+       <button class="btn btn-primary" onclick="handleFinalize(event)">Pay Deposit & Start Project</button>
+    </div>
   </div>
+
+  <script src="script.js"></script>
+  <script>
+    // Requirement 8: Auto-fill logic
+    document.addEventListener('DOMContentLoaded', () => {
+        const name = localStorage.getItem('businessName') || localStorage.getItem('clientName');
+        document.getElementById('billingName').value = name || "";
+        if(window.calculateTotal) window.calculateTotal();
+    });
+  </script>
 </body>
+</html>
