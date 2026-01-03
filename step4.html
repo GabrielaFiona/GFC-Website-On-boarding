@@ -34,11 +34,18 @@
           <label>Business / Brand Name</label>
           <input type="text" id="billingBusiness" class="save-me" placeholder="Company Name" />
         </div>
+        
         <div>
-          <label>Billing Email</label>
-          <input type="email" id="billingEmail" class="save-me" placeholder="billing@example.com" />
+          <label>Your Email (Client)</label>
+          <input type="email" id="billingEmail" class="save-me" placeholder="client@example.com" />
         </div>
         <div>
+          <label>Developer/Admin Email</label>
+          <input type="email" id="adminEmail" class="save-me" placeholder="developer@studio.com" value="" />
+          <p style="font-size:0.7rem; opacity:0.6; margin-top:5px;">Where should the invoice be sent?</p>
+        </div>
+
+        <div class="full-width">
           <label>Phone Number</label>
           <input type="tel" id="billingPhone" class="save-me" placeholder="(555) 123-4567" />
         </div>
@@ -110,7 +117,7 @@
       </div>
 
       <form id="finalizeForm" onsubmit="handleFinalize(event)">
-         <button type="submit" class="btn btn-primary">Pay Deposit & Start Project</button>
+         <button type="submit" class="btn btn-primary">Generate Invoice & Email Details</button>
       </form>
       
       <div style="text-align: center; margin-top: 20px;">
