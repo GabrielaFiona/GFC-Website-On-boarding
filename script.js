@@ -295,7 +295,8 @@ const state = {
   businessName: "",
   clientEmail: "",
   clientPhone: "",
-  billingAddress: ""
+  billingAddress: "",
+  adminEmail: "" // Added for Step 4
 };
 
 const pageAttachments = {}; 
@@ -464,6 +465,15 @@ function initPageBuilder() {
   const fileInput = document.getElementById('brandingUploads');
   if (fileInput) fileInput.addEventListener('change', handleFileUpload);
 
+  // --- RE-APPLY HIGHLIGHT ON LOAD (UPDATE 1) ---
+  if (state.package && state.package.id) {
+     const savedCard = document.querySelector(`.package-card[data-package-id="${state.package.id}"]`);
+     if(savedCard) {
+        document.querySelectorAll('.package-card').forEach(el => el.classList.remove('selected'));
+        savedCard.classList.add('selected');
+     }
+  }
+
   if (state.brandingProvided) {
     const radio = document.querySelector(`input[name="brandingProvided"][value="${state.brandingProvided}"]`);
     if (radio) { radio.checked = true; toggleBrandingPanels(state.brandingProvided); }
@@ -506,7 +516,6 @@ function handleIndustrySearch(query) {
   
   const matches = Object.keys(INDUSTRY_DB).filter(key => {
       const lowerKey = key.toLowerCase();
-      // Match if ANY of the search terms are found in the industry name
       return terms.some(term => lowerKey.includes(term));
   });
 
@@ -720,7 +729,8 @@ function initStep3() {
   else {
     renderVisualLayoutBuilder(container); 
   }
-
+  
+  // Inject the Print-To-PDF Button
   injectDownloadButton();
 }
 
@@ -1249,8 +1259,8 @@ function injectDownloadButton() {
     const btn = document.createElement('button');
     btn.id = 'globalDownloadBtn';
     btn.className = 'btn-download-all';
-    btn.textContent = 'Download Project Outline';
-    btn.onclick = downloadProjectOutline;
+    btn.textContent = 'Printable Project Outline'; // UPDATE 2 (Label)
+    btn.onclick = generatePrintableInvoice; // UPDATE 2 (Action)
     navContainer.insertBefore(btn, navContainer.lastElementChild);
   }
 }
@@ -1294,6 +1304,9 @@ function initStep4() {
   if (document.getElementById('billingEmail')) document.getElementById('billingEmail').value = state.clientEmail || "";
   if (document.getElementById('billingPhone')) document.getElementById('billingPhone').value = state.clientPhone || "";
   if (document.getElementById('billingAddress')) document.getElementById('billingAddress').value = state.billingAddress || "";
+  
+  // UPDATE 3: Admin Email fill
+  if (document.getElementById('adminEmail')) document.getElementById('adminEmail').value = state.adminEmail || "";
 
   // 4. Restore Addons Selection
   if (state.selectedAddons) {
@@ -1344,6 +1357,72 @@ function updateCustomServiceState() {
     saveState();
 }
 
+// --- UPDATE 2: PRINTABLE INVOICE / PDF FUNCTION ---
+function generatePrintableInvoice(event) {
+    if(event) event.preventDefault();
+    
+    // Save current form state
+    const cName = document.getElementById('billingName') ? document.getElementById('billingName').value : state.clientName;
+    const bName = document.getElementById('billingBusiness') ? document.getElementById('billingBusiness').value : state.businessName;
+    
+    const items = [];
+    if (state.package) items.push(`Package: ${state.package.name} ($${state.package.price})`);
+    if (state.brandKit) items.push(`Brand Kit ($${state.package && state.package.brandKitBundlePrice ? state.package.brandKitBundlePrice : BASE_BRAND_KIT_PRICE})`);
+    if (state.customBranding.active) items.push(`${state.customBranding.name} ($${state.customBranding.price})`);
+    state.selectedAddons.forEach(a => items.push(`${a.name} ($${a.price})`));
+    if (state.customService.active) items.push(`${state.customService.name} ($${state.customService.price})`);
+    
+    const pagesHtml = state.pages.map(p => `<li>${p} ${(state.pagePlans[p] && state.pagePlans[p].notes) ? '<br><small>'+state.pagePlans[p].notes+'</small>' : ''}</li>`).join('');
+
+    const invoiceWindow = window.open('', '_blank');
+    invoiceWindow.document.write(`
+      <html>
+      <head>
+        <title>Project Invoice & Plan</title>
+        <style>
+          body { font-family: 'Helvetica Neue', sans-serif; padding: 40px; color: #333; }
+          h1 { border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
+          .meta { display: grid; grid-template-columns: 1fr 1fr; margin-bottom: 30px; }
+          .section { margin-bottom: 30px; }
+          ul { line-height: 1.6; }
+          .total-box { margin-top: 40px; border-top: 1px solid #ccc; padding-top: 10px; font-size: 1.2rem; font-weight: bold; text-align: right; }
+          @media print { .no-print { display: none; } }
+          .btn-print { background: #000; color: #fff; padding: 10px 20px; border: none; cursor: pointer; border-radius: 4px; font-size: 16px; margin-bottom: 20px; }
+        </style>
+      </head>
+      <body>
+        <button class="no-print btn-print" onclick="window.print()">🖨️ Print / Save as PDF</button>
+        <h1>Project Scope</h1>
+        <div class="meta">
+           <div>
+             <strong>Client:</strong> ${cName}<br>
+             <strong>Business:</strong> ${bName}
+           </div>
+           <div style="text-align:right;">
+             <strong>Date:</strong> ${new Date().toLocaleDateString()}
+           </div>
+        </div>
+
+        <div class="section">
+           <h3>Selected Items</h3>
+           <ul>${items.map(i => `<li>${i}</li>`).join('')}</ul>
+        </div>
+
+        <div class="section">
+           <h3>Sitemap & Notes</h3>
+           <ul>${pagesHtml}</ul>
+        </div>
+
+        <div class="total-box">
+           Total Estimated: ${document.getElementById('final-invoice-total') ? document.getElementById('final-invoice-total').innerText : 'Calculating...'}
+        </div>
+      </body>
+      </html>
+    `);
+    invoiceWindow.document.close();
+}
+
+// --- UPDATE 3: EMAIL LOGIC ---
 function handleFinalize(event) {
     event.preventDefault();
     
@@ -1354,51 +1433,38 @@ function handleFinalize(event) {
         phone: document.getElementById('billingPhone').value,
         address: document.getElementById('billingAddress').value
     };
+    state.adminEmail = document.getElementById('adminEmail').value;
+    
     saveState();
 
-    // Generate Summary Content
-    const summary = JSON.stringify(state, null, 2);
-    const blob = new Blob([summary], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    
-    // Trigger Download
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Project_Summary_${(state.clientName || 'Client').replace(/ /g,'_')}.json`;
-    document.body.appendChild(a);
-    a.click();
-    
-    // Mailto Link 
+    // 1. Generate Invoice (Opens in new tab)
+    generatePrintableInvoice();
+
+    // 2. Prepare Mailto Link (Emails YOU + Client)
     const totalDisplay = document.getElementById('final-invoice-total') ? document.getElementById('final-invoice-total').innerText : '0';
     const subject = `Project Kickoff: ${state.businessName}`;
-    const body = `Hi! I'm ready to start. Please find my project summary attached (check your downloads folder).\n\nTotal Estimated: ${totalDisplay}\n\nClient: ${state.clientName}`;
+    const body = `Hi! I'm ready to start.
+    
+CLIENT DETAILS:
+Name: ${state.billing.name}
+Business: ${state.billing.business}
+Phone: ${state.billing.phone}
+
+PROJECT SUMMARY:
+Package: ${state.package ? state.package.name : 'None'}
+Pages: ${state.pages.length} (${state.pages.join(', ')})
+Total Estimate: ${totalDisplay}
+
+(Please see attached PDF if generated)
+`;
+    
+    // Construct Mailto
+    // TO: Admin Email, CC: Client Email
+    const mailtoLink = `mailto:${state.adminEmail}?cc=${state.billing.email}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     
     setTimeout(() => {
-        window.location.href = `mailto:youremail@example.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    }, 500);
-}
-
-function downloadProjectOutline() {
-    const text = `
-    PROJECT OUTLINE
-    ================
-    Client: ${state.clientName}
-    Business: ${state.businessName}
-    
-    PACKAGE: ${state.package ? state.package.name : 'None'}
-    PAGES: ${state.pages.join(', ')}
-    
-    PLANNING NOTES:
-    ${Object.keys(state.pagePlans).map(p => `\n--- ${p} ---\n${state.pagePlans[p].notes || 'No notes'}`).join('')}
-    `;
-    
-    const blob = new Blob([text], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = "Project_Outline.txt";
-    document.body.appendChild(a);
-    a.click();
+        window.location.href = mailtoLink;
+    }, 1000); // Wait 1s so the PDF pop-up isn't blocked by the navigation
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -1406,7 +1472,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initCollapsibles();
   if (window.location.pathname.includes('step2')) {
     initPageBuilder();
-    if(state.package) handlePackageSelected(true);
+    // No extra call needed here, initPageBuilder now handles highlighting
   }
   if (window.location.pathname.includes('step3')) initStep3();
   if (window.location.pathname.includes('step4')) initStep4();
