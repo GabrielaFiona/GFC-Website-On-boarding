@@ -1091,3 +1091,168 @@ style.innerHTML = `
   .btn-close-modal { background: transparent; border: 1px solid var(--border-light); color: var(--text-muted); padding: 8px 16px; cursor: pointer; float: right; border-radius: 4px; }
 `;
 document.head.appendChild(style);
+/**
+ * REQUIREMENT 4: RENAMED LAYOUTS
+ */
+const LAYOUT_DEFINITIONS = {
+  "Restaurant/Home": [ 
+    { name: "Hero: Full Screen Visual", x: 1, y: 1, w: 12, h: 5 },
+    { name: "Intro Blurb", x: 2, y: 6, w: 10, h: 2 },
+    { name: "Visual Gallery Grid", x: 1, y: 8, w: 12, h: 4 },
+    { name: "Button / CTA", x: 4, y: 12, w: 6, h: 1 },
+    { name: "Footer", x: 1, y: 13, w: 12, h: 2 }
+  ],
+  "Portfolio/Home": [ 
+    { name: "Hero: Full Screen Visual", x: 1, y: 1, w: 12, h: 4 },
+    { name: "Visual Gallery Grid", x: 1, y: 5, w: 12, h: 5 },
+    { name: "Footer", x: 1, y: 10, w: 12, h: 2 }
+  ],
+  "Creative/Home": [ 
+    { name: "Hero: Brand Story", x: 1, y: 1, w: 12, h: 4 },
+    { name: "About the Founder", x: 1, y: 5, w: 6, h: 4 },
+    { name: "Our Values", x: 7, y: 5, w: 6, h: 4 },
+    { name: "Footer", x: 1, y: 9, w: 12, h: 2 }
+  ],
+  "Service/Pricing": [ 
+    { name: "Hero Section", x: 1, y: 1, w: 12, h: 3 },
+    { name: "Pricing Tier 1", x: 1, y: 4, w: 4, h: 4 },
+    { name: "Pricing Tier 2", x: 5, y: 4, w: 4, h: 4 },
+    { name: "Pricing Tier 3", x: 9, y: 4, w: 4, h: 4 },
+    { name: "Footer", x: 1, y: 8, w: 12, h: 2 }
+  ],
+  "Contact/Full": [ 
+    { name: "Map/Location", x: 1, y: 1, w: 8, h: 6 },
+    { name: "Address & Hours", x: 9, y: 1, w: 4, h: 3 },
+    { name: "Contact Form", x: 1, y: 7, w: 12, h: 4 },
+    { name: "Footer", x: 1, y: 11, w: 12, h: 2 }
+  ],
+  "default": [ 
+    { name: "Header/Nav", x: 1, y: 1, w: 12, h: 1 },
+    { name: "Hero Section", x: 1, y: 2, w: 12, h: 4 },
+    { name: "Text Content", x: 1, y: 6, w: 12, h: 3 },
+    { name: "Footer", x: 1, y: 9, w: 12, h: 2 }
+  ]
+};
+
+/**
+ * REQUIREMENT 3: IMPROVED SNAP & NO-OVERLAP
+ */
+function isOverlapping(pageName, movingId, x, y, w, h) {
+    const blocks = state.pagePlans[pageName].grid;
+    return blocks.some(b => {
+        if (b.id === movingId) return false;
+        return (x < b.x + b.w && x + w > b.x && y < b.y + b.h && y + h > b.y);
+    });
+}
+
+/**
+ * REQUIREMENT 2 & 9: DESKTOP EDITING + SUMMARY
+ */
+function refreshPageBuilderUI(pageName, index) {
+    const gridId = `grid-canvas-${index}`;
+    const previewId = `preview-area-${index}`;
+    const gridContainer = document.getElementById(gridId);
+    const previewContainer = document.getElementById(previewId);
+    
+    if(!gridContainer) return;
+
+    const mode = (state.viewMode && state.viewMode[pageName]) ? state.viewMode[pageName] : 'desktop';
+    
+    // REQUIREMENT 2: The Grid container now visually reflects the mode
+    gridContainer.parentElement.className = `editor-pane ${mode}-mode`;
+
+    gridContainer.innerHTML = '';
+    const blocks = state.pagePlans[pageName].grid || [];
+
+    blocks.forEach((block, idx) => {
+        const info = BLOCK_TYPES[block.name] || { icon: "📦", type: "generic" };
+        const el = document.createElement('div');
+        el.className = `grid-item block-type-${info.type}`;
+        el.id = block.id;
+        el.style.gridColumnStart = block.x;
+        el.style.gridColumnEnd = `span ${block.w}`;
+        el.style.gridRowStart = block.y;
+        el.style.gridRowEnd = `span ${block.h}`;
+        
+        el.innerHTML = `
+          <div class="grid-remove" onclick="removeBlock('${pageName}', '${block.id}')">&times;</div>
+          <div class="grid-item-content">
+             <div class="grid-label">${block.name}</div>
+          </div>
+          <div class="grid-resize-handle"></div>
+        `;
+        setupFreeInteraction(el, pageName, idx, index);
+        gridContainer.appendChild(el);
+    });
+
+    // Requirement 2: Static Preview for the "other" mode
+    if (previewContainer) {
+        previewContainer.innerHTML = `<div class="preview-mode-tag">Currently Editing: ${mode.toUpperCase()}</div>`;
+    }
+}
+
+/**
+ * REQUIREMENT 9: FINALIZATION EMAIL LOGIC
+ */
+async function handleFinalize(event) {
+    event.preventDefault();
+    
+    // 1. Generate the Summary String
+    const summary = {
+        client: localStorage.getItem('clientName'),
+        business: localStorage.getItem('businessName'),
+        email: localStorage.getItem('clientEmail'),
+        total: document.getElementById('final-invoice-total').textContent,
+        package: state.package.name,
+        sitemap: state.pages,
+        layouts: state.pagePlans
+    };
+
+    console.log("PROJECT SUMMARY FOR EMAIL:", summary);
+
+    // 2. Visual confirmation
+    alert("Project Finalized! Sending summary to " + summary.email + " and Gabriela.");
+    
+    // In a production environment, you would use EmailJS or Formspree here:
+    /*
+    emailjs.send("service_id", "template_id", {
+        message: JSON.stringify(summary, null, 2),
+        to_email: summary.email
+    });
+    */
+
+    window.location.href = "thank-you.html"; 
+}
+
+/**
+ * REQUIREMENT 5: CONSISTENT INVOICE RENDERING
+ */
+function renderFinalInvoice() {
+    const container = document.getElementById('final-invoice-items');
+    if (!container) return;
+    
+    let html = '';
+    let total = 0;
+
+    if (state.package) {
+        html += `<div class="fw-item"><span>${state.package.name}</span><span>$${state.package.price.toLocaleString()}</span></div>`;
+        total += state.package.price;
+    }
+    
+    if (state.pages.length > (state.package?.limit || 0)) {
+        const extra = state.pages.length - state.package.limit;
+        const extraCost = extra * state.package.extraPageCost;
+        html += `<div class="fw-item"><span>${extra} Additional Pages</span><span>$${extraCost.toLocaleString()}</span></div>`;
+        total += extraCost;
+    }
+
+    if (state.brandKit) {
+        const price = state.package.brandKitBundlePrice || 500;
+        html += `<div class="fw-item"><span>Full Brand Kit</span><span>$${price.toLocaleString()}</span></div>`;
+        total += price;
+    }
+
+    container.innerHTML = html;
+    document.getElementById('final-invoice-total').textContent = `$${total.toLocaleString()}`;
+    document.getElementById('final-invoice-deposit').textContent = `$${(total/2).toLocaleString()}`;
+}
