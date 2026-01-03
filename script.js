@@ -51,3 +51,24 @@ select optgroup {
     margin: 0 auto;
     min-height: 600px;
 }
+
+// Add this check inside your setupFreeInteraction "onUp" event
+const potentialX = parseInt(element.style.gridColumnStart);
+const potentialY = parseInt(element.style.gridRowStart);
+
+// Requirement 3: Check for collision
+const overlapped = state.pagePlans[pageName].grid.some(b => {
+    if (b.id === blockData.id) return false;
+    return (potentialX < b.x + b.w && potentialX + blockData.w > b.x && potentialY < b.y + b.h && potentialY + blockData.h > b.y);
+});
+
+if (overlapped) {
+    // If it overlaps, snap it back to original position or the next available row
+    element.style.gridColumnStart = startGridX;
+    element.style.gridRowStart = startGridY;
+    alert("Space already occupied! Elements cannot stack.");
+} else {
+    // Save new position
+    state.pagePlans[pageName].grid[index].x = potentialX;
+    state.pagePlans[pageName].grid[index].y = potentialY;
+}
