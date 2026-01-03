@@ -9,10 +9,13 @@ const BLOCK_TYPES = {
   "Hero Section": { icon: "🖼️", type: "hero" },
   "Hero: Full Screen Visual": { icon: "🖼️", type: "hero" },
   "Hero: Brand Story": { icon: "📖", type: "hero" },
+  "Hero: Retail": { icon: "🛍️", type: "hero" },
+  "Hero: Search": { icon: "🔍", type: "hero" },
   "Text Content": { icon: "📝", type: "text" },
   "Intro Blurb": { icon: "📝", type: "text" },
   "Image/Gallery": { icon: "📷", type: "image" },
   "Visual Gallery Grid": { icon: "📷", type: "image" },
+  "Product Grid": { icon: "🛍️", type: "image" },
   "Button / CTA": { icon: "🖱️", type: "button" },
   "Contact Form": { icon: "✉️", type: "form" },
   "Testimonials": { icon: "💬", type: "quote" },
@@ -21,36 +24,38 @@ const BLOCK_TYPES = {
   "Header/Nav": { icon: "🧭", type: "header" },
   "Video Player": { icon: "▶️", type: "video" },
   "Icon Grid": { icon: "💠", type: "grid" },
-  "Service A": { icon: "⚙️", type: "generic" },
-  "Service B": { icon: "⚙️", type: "generic" },
-  "Service C": { icon: "⚙️", type: "generic" }
+  "Menu List": { icon: "📋", type: "text" },
+  "Calendar/Events": { icon: "📅", type: "text" },
+  "Booking Embed": { icon: "📅", type: "form" },
+  "Team/Bios": { icon: "👥", type: "image" },
+  "FAQ": { icon: "❓", type: "text" }
 };
 
-// --- UPDATED LAYOUT DEFINITIONS (Friendly Names) ---
+// --- LAYOUT DEFINITIONS (Mapped to IDs provided in spreadsheet) ---
 const LAYOUT_DEFINITIONS = {
-  "Visual/Home": [ 
+  "L-01": [ // Visual Heavy / Home
     { name: "Hero: Full Screen Visual", x: 1, y: 1, w: 12, h: 5 },
     { name: "Intro Blurb", x: 2, y: 6, w: 10, h: 2 },
     { name: "Visual Gallery Grid", x: 1, y: 8, w: 12, h: 4 },
     { name: "Button / CTA", x: 4, y: 12, w: 6, h: 1 },
     { name: "Footer", x: 1, y: 13, w: 12, h: 2 }
   ],
-  "Brand Story/About": [ 
+  "L-02": [ // Story / Brand
     { name: "Hero: Brand Story", x: 1, y: 1, w: 12, h: 4 },
     { name: "About the Founder", x: 1, y: 5, w: 6, h: 4 },
     { name: "Our Values", x: 7, y: 5, w: 6, h: 4 },
     { name: "Timeline/History", x: 1, y: 9, w: 12, h: 3 },
     { name: "Footer", x: 1, y: 12, w: 12, h: 2 }
   ],
-  "Services/Pricing": [ 
+  "L-03": [ // Pricing / Service / Sub
     { name: "Hero Section", x: 1, y: 1, w: 12, h: 3 },
-    { name: "Pricing Tier 1", x: 1, y: 4, w: 4, h: 4 },
-    { name: "Pricing Tier 2", x: 5, y: 4, w: 4, h: 4 },
-    { name: "Pricing Tier 3", x: 9, y: 4, w: 4, h: 4 },
+    { name: "Service/Pricing Tier 1", x: 1, y: 4, w: 4, h: 4 },
+    { name: "Service/Pricing Tier 2", x: 5, y: 4, w: 4, h: 4 },
+    { name: "Service/Pricing Tier 3", x: 9, y: 4, w: 4, h: 4 },
     { name: "Testimonials", x: 1, y: 8, w: 12, h: 2 },
     { name: "Footer", x: 1, y: 10, w: 12, h: 2 }
   ],
-  "Process/ZigZag": [ 
+  "L-04": [ // Service Detail
     { name: "Service Overview", x: 1, y: 1, w: 12, h: 3 },
     { name: "Step 1: Consult", x: 1, y: 4, w: 6, h: 2 },
     { name: "Step 1 Image", x: 7, y: 4, w: 6, h: 2 },
@@ -58,14 +63,137 @@ const LAYOUT_DEFINITIONS = {
     { name: "Step 2 Image", x: 1, y: 6, w: 6, h: 2 },
     { name: "Footer", x: 1, y: 8, w: 12, h: 2 }
   ],
-  "Contact/Location": [ 
+  "L-05": [ // Contact / Location
     { name: "Map/Location", x: 1, y: 1, w: 8, h: 6 },
     { name: "Address & Hours", x: 9, y: 1, w: 4, h: 3 },
     { name: "Social Media Links", x: 9, y: 4, w: 4, h: 3 },
     { name: "Contact Form", x: 1, y: 7, w: 12, h: 4 },
     { name: "Footer", x: 1, y: 11, w: 12, h: 2 }
   ],
-  "default": [ 
+  "L-06": [ // Menu List
+    { name: "Hero Section", x: 1, y: 1, w: 12, h: 3 },
+    { name: "Menu Category 1", x: 1, y: 4, w: 6, h: 4 },
+    { name: "Menu Category 2", x: 7, y: 4, w: 6, h: 4 },
+    { name: "Dietary Info", x: 1, y: 8, w: 12, h: 1 },
+    { name: "Footer", x: 1, y: 9, w: 12, h: 2 }
+  ],
+  "L-07": [ // Team / Bios
+    { name: "Hero: Our Team", x: 1, y: 1, w: 12, h: 3 },
+    { name: "Team Member 1", x: 1, y: 4, w: 4, h: 4 },
+    { name: "Team Member 2", x: 5, y: 4, w: 4, h: 4 },
+    { name: "Team Member 3", x: 9, y: 4, w: 4, h: 4 },
+    { name: "Join the Team CTA", x: 1, y: 8, w: 12, h: 2 },
+    { name: "Footer", x: 1, y: 10, w: 12, h: 2 }
+  ],
+  "L-08": [ // Info + Map
+    { name: "Information Hero", x: 1, y: 1, w: 8, h: 4 },
+    { name: "Key Details Box", x: 9, y: 1, w: 4, h: 4 },
+    { name: "Large Map View", x: 1, y: 5, w: 12, h: 5 },
+    { name: "Footer", x: 1, y: 10, w: 12, h: 2 }
+  ],
+  "L-09": [ // Map Focus
+    { name: "Full Screen Map", x: 1, y: 1, w: 12, h: 6 },
+    { name: "Location List", x: 1, y: 7, w: 4, h: 4 },
+    { name: "Selected Location Detail", x: 5, y: 7, w: 8, h: 4 },
+    { name: "Footer", x: 1, y: 11, w: 12, h: 2 }
+  ],
+  "L-10": [ // Product Grid
+    { name: "Hero: Shop", x: 1, y: 1, w: 12, h: 3 },
+    { name: "Filters / Categories", x: 1, y: 4, w: 3, h: 6 },
+    { name: "Product Grid", x: 4, y: 4, w: 9, h: 6 },
+    { name: "Footer", x: 1, y: 10, w: 12, h: 2 }
+  ],
+  "L-11": [ // Blog / Content
+    { name: "Hero: Blog", x: 1, y: 1, w: 12, h: 3 },
+    { name: "Featured Article", x: 1, y: 4, w: 8, h: 4 },
+    { name: "Sidebar / Recent", x: 9, y: 4, w: 4, h: 4 },
+    { name: "Article Grid", x: 1, y: 8, w: 12, h: 4 },
+    { name: "Footer", x: 1, y: 12, w: 12, h: 2 }
+  ],
+  "L-12": [ // Calendar / Events
+    { name: "Hero: Events", x: 1, y: 1, w: 12, h: 3 },
+    { name: "Calendar View", x: 1, y: 4, w: 8, h: 6 },
+    { name: "Upcoming List", x: 9, y: 4, w: 4, h: 6 },
+    { name: "Footer", x: 1, y: 10, w: 12, h: 2 }
+  ],
+  "L-13": [ // Gallery
+    { name: "Hero: Gallery", x: 1, y: 1, w: 12, h: 3 },
+    { name: "Masonry Grid", x: 1, y: 4, w: 12, h: 8 },
+    { name: "Footer", x: 1, y: 12, w: 12, h: 2 }
+  ],
+  "L-14": [ // Booking Embed
+    { name: "Hero: Book Now", x: 1, y: 1, w: 12, h: 3 },
+    { name: "Booking Widget/Calendar", x: 2, y: 4, w: 10, h: 6 },
+    { name: "Footer", x: 1, y: 10, w: 12, h: 2 }
+  ],
+  "L-15": [ // Form + Info
+    { name: "Hero: Contact/Inquiry", x: 1, y: 1, w: 12, h: 3 },
+    { name: "Detailed Form", x: 1, y: 4, w: 7, h: 6 },
+    { name: "Contact Info / FAQ", x: 8, y: 4, w: 5, h: 6 },
+    { name: "Footer", x: 1, y: 10, w: 12, h: 2 }
+  ],
+  "L-16": [ // External Link / CTA
+    { name: "Hero: App/Portal", x: 1, y: 1, w: 12, h: 4 },
+    { name: "Feature Highlights", x: 1, y: 5, w: 12, h: 3 },
+    { name: "Big CTA Button", x: 4, y: 8, w: 6, h: 2 },
+    { name: "Footer", x: 1, y: 10, w: 12, h: 2 }
+  ],
+  "L-17": [ // Legal / FAQ
+    { name: "Hero: Policy/FAQ", x: 1, y: 1, w: 12, h: 2 },
+    { name: "Table of Contents", x: 1, y: 3, w: 4, h: 6 },
+    { name: "Content Area", x: 5, y: 3, w: 8, h: 6 },
+    { name: "Footer", x: 1, y: 9, w: 12, h: 2 }
+  ],
+  "L-18": [ // Job Listing
+    { name: "Hero: Careers", x: 1, y: 1, w: 12, h: 3 },
+    { name: "Culture/Benefits", x: 1, y: 4, w: 12, h: 3 },
+    { name: "Open Positions Grid", x: 1, y: 7, w: 12, h: 5 },
+    { name: "Footer", x: 1, y: 12, w: 12, h: 2 }
+  ],
+  "L-19": [ // Minimal Portfolio
+    { name: "Hero: Artist Name", x: 1, y: 1, w: 12, h: 3 },
+    { name: "Large Single Image", x: 2, y: 4, w: 10, h: 6 },
+    { name: "Gallery Grid", x: 1, y: 10, w: 12, h: 4 },
+    { name: "Footer", x: 1, y: 14, w: 12, h: 2 }
+  ],
+  "L-20": [ // Retail Hero
+    { name: "Hero: Retail", x: 1, y: 1, w: 12, h: 5 },
+    { name: "Featured Categories", x: 1, y: 6, w: 12, h: 3 },
+    { name: "New Arrivals", x: 1, y: 9, w: 12, h: 4 },
+    { name: "Footer", x: 1, y: 13, w: 12, h: 2 }
+  ],
+  "L-21": [ // Trust / Service
+    { name: "Hero: Trust", x: 1, y: 1, w: 12, h: 4 },
+    { name: "Trust Badges/Icons", x: 1, y: 5, w: 12, h: 2 },
+    { name: "Service List", x: 1, y: 7, w: 8, h: 4 },
+    { name: "Testimonial Sidebar", x: 9, y: 7, w: 4, h: 4 },
+    { name: "Footer", x: 1, y: 11, w: 12, h: 2 }
+  ],
+  "L-22": [ // Reviews
+    { name: "Hero: Reviews", x: 1, y: 1, w: 12, h: 3 },
+    { name: "Review Grid", x: 1, y: 4, w: 12, h: 6 },
+    { name: "Submit Review CTA", x: 4, y: 10, w: 6, h: 2 },
+    { name: "Footer", x: 1, y: 12, w: 12, h: 2 }
+  ],
+  "L-23": [ // Corporate
+    { name: "Hero: Corporate", x: 1, y: 1, w: 12, h: 4 },
+    { name: "Mission Statement", x: 2, y: 5, w: 10, h: 2 },
+    { name: "Divisions/Services", x: 1, y: 7, w: 12, h: 4 },
+    { name: "News Ticker", x: 1, y: 11, w: 12, h: 2 },
+    { name: "Footer", x: 1, y: 13, w: 12, h: 2 }
+  ],
+  "L-24": [ // Search Hero
+    { name: "Hero: Search", x: 1, y: 1, w: 12, h: 4 },
+    { name: "Popular Categories", x: 1, y: 5, w: 12, h: 2 },
+    { name: "Recent Listings", x: 1, y: 7, w: 12, h: 4 },
+    { name: "Footer", x: 1, y: 11, w: 12, h: 2 }
+  ],
+  "L-25": [ // Icon Grid
+    { name: "Hero: Features", x: 1, y: 1, w: 12, h: 3 },
+    { name: "Icon Grid 3x3", x: 2, y: 4, w: 10, h: 6 },
+    { name: "Footer", x: 1, y: 10, w: 12, h: 2 }
+  ],
+  "default": [ // Basic Fallback
     { name: "Header/Nav", x: 1, y: 1, w: 12, h: 1 },
     { name: "Hero Section", x: 1, y: 2, w: 12, h: 4 },
     { name: "Text Content", x: 1, y: 6, w: 8, h: 3 },
@@ -74,11 +202,75 @@ const LAYOUT_DEFINITIONS = {
   ]
 };
 
-// --- INDUSTRY DATABASE ---
+// --- MASSIVE INDUSTRY DATABASE (From Spreadsheet) ---
 const INDUSTRY_DB = {
-  "Restaurant": { pages: ["Home", "Menu", "Reservations"], layouts: { "Home": "Visual/Home", "Menu": "Services/Pricing", "Reservations": "Contact/Location" } },
-  "Portfolio/Creative": { pages: ["Home", "Work", "About"], layouts: { "Home": "Visual/Home", "Work": "Visual/Home", "About": "Brand Story/About" } },
-  "Service Business": { pages: ["Home", "Services", "Contact"], layouts: { "Home": "Process/ZigZag", "Services": "Services/Pricing", "Contact": "Contact/Location" } }
+  // Food & Bev
+  "Bakery / Donut Shop": { pages: ["Home", "Menu", "Pre-Order", "About", "Location"], layouts: { "Home": "L-01", "Menu": "L-06", "Pre-Order": "L-15", "About": "L-02", "Location": "L-05" }},
+  "Brewery / Distillery / Winery": { pages: ["Home", "Tap List", "Visit", "Events", "Club", "Shop"], layouts: { "Home": "L-01", "Tap List": "L-06", "Visit": "L-08", "Events": "L-12", "Club": "L-03", "Shop": "L-10" }},
+  "Coffee Shop / Café": { pages: ["Home", "Menu", "Order Online", "Our Source", "Careers"], layouts: { "Home": "L-01", "Menu": "L-06", "Order Online": "L-16", "Our Source": "L-02", "Careers": "L-18" }},
+  "Food Truck": { pages: ["Home (Tracker)", "Menu", "Catering", "Calendar"], layouts: { "Home (Tracker)": "L-09", "Menu": "L-06", "Catering": "L-15", "Calendar": "L-12" }},
+  "Restaurant (Pizza/Seafood)": { pages: ["Home", "Menu", "Reservations", "Private Dining", "Gallery", "Contact"], layouts: { "Home": "L-01", "Menu": "L-06", "Reservations": "L-14", "Private Dining": "L-04", "Gallery": "L-13", "Contact": "L-05" }},
+  "Ice Cream / Candy Shop": { pages: ["Home", "Flavors", "Parties", "Locations", "Gift Cards"], layouts: { "Home": "L-01", "Flavors": "L-06", "Parties": "L-15", "Locations": "L-09", "Gift Cards": "L-03" }},
+  "Specialty Foods Shop": { pages: ["Home", "Shop Online", "Recipes", "Gift Baskets", "Wholesale"], layouts: { "Home": "L-20", "Shop Online": "L-10", "Recipes": "L-11", "Gift Baskets": "L-03", "Wholesale": "L-15" }},
+
+  // Retail
+  "Art Gallery": { pages: ["Home", "Exhibitions", "Artists", "Visit", "Shop"], layouts: { "Home": "L-19", "Exhibitions": "L-12", "Artists": "L-07", "Visit": "L-05", "Shop": "L-10" }},
+  "Bookstore / Toy Store": { pages: ["Home", "Staff Picks", "Events", "Shop", "Membership"], layouts: { "Home": "L-20", "Staff Picks": "L-11", "Events": "L-12", "Shop": "L-10", "Membership": "L-03" }},
+  "Boutique / Jewelry": { pages: ["Home", "Shop All", "New Arrivals", "About", "Returns"], layouts: { "Home": "L-20", "Shop All": "L-10", "New Arrivals": "L-10", "About": "L-02", "Returns": "L-17" }},
+  "Farmers Market Vendor": { pages: ["Home", "Products", "Schedule", "Contact"], layouts: { "Home": "L-02", "Products": "L-13", "Schedule": "L-12", "Contact": "L-05" }},
+  "Florist": { pages: ["Home", "Shop Bouquets", "Weddings", "Care Tips", "Delivery"], layouts: { "Home": "L-01", "Shop Bouquets": "L-10", "Weddings": "L-13", "Care Tips": "L-11", "Delivery": "L-08" }},
+  "Artisan Market / Maker": { pages: ["Home", "Vendors", "Apply", "Markets", "About"], layouts: { "Home": "L-20", "Vendors": "L-10", "Apply": "L-15", "Markets": "L-12", "About": "L-02" }},
+  "Home Décor": { pages: ["Home", "Shop", "Design Services", "Inspiration", "Shipping"], layouts: { "Home": "L-20", "Shop": "L-10", "Design Services": "L-04", "Inspiration": "L-13", "Shipping": "L-17" }},
+  "Wellness Shop": { pages: ["Home", "Shop", "Workshops", "Practitioners", "Sourcing"], layouts: { "Home": "L-19", "Shop": "L-10", "Workshops": "L-12", "Practitioners": "L-07", "Sourcing": "L-02" }},
+
+  // Services
+  "Automotive": { pages: ["Home", "Services", "Schedule", "Inventory", "About"], layouts: { "Home": "L-21", "Services": "L-04", "Schedule": "L-14", "Inventory": "L-10", "About": "L-02" }},
+  "Beauty / Salon / Spa": { pages: ["Home", "Menu", "Book", "Portfolio", "Team"], layouts: { "Home": "L-01", "Menu": "L-06", "Book": "L-14", "Portfolio": "L-13", "Team": "L-07" }},
+  "Construction / Home": { pages: ["Home", "Services", "Portfolio", "Quote", "Reviews"], layouts: { "Home": "L-21", "Services": "L-04", "Portfolio": "L-13", "Quote": "L-15", "Reviews": "L-22" }},
+  "Fitness / Gym / Yoga": { pages: ["Home", "Schedule", "Instructors", "Membership", "New Student"], layouts: { "Home": "L-01", "Schedule": "L-12", "Instructors": "L-07", "Membership": "L-03", "New Student": "L-17" }},
+  "Law / Financial": { pages: ["Home", "Practice Areas", "Team", "Resources", "Contact"], layouts: { "Home": "L-23", "Practice Areas": "L-04", "Team": "L-07", "Resources": "L-11", "Contact": "L-15" }},
+  "Real Estate": { pages: ["Home", "Listings", "Buyers/Sellers", "Agents", "Market Reports"], layouts: { "Home": "L-24", "Listings": "L-10", "Buyers/Sellers": "L-08", "Agents": "L-07", "Market Reports": "L-11" }},
+  "Insurance": { pages: ["Home", "Personal", "Business", "Claims", "Quote"], layouts: { "Home": "L-21", "Personal": "L-04", "Business": "L-04", "Claims": "L-15", "Quote": "L-15" }},
+  "Property Services": { pages: ["Home", "Services", "Pricing", "Service Area", "Request"], layouts: { "Home": "L-21", "Services": "L-04", "Pricing": "L-03", "Service Area": "L-08", "Request": "L-15" }},
+
+  // Hospitality & Events
+  "Hotel / B&B": { pages: ["Home", "Rooms", "Amenities", "Nearby", "Book"], layouts: { "Home": "L-01", "Rooms": "L-04", "Amenities": "L-25", "Nearby": "L-11", "Book": "L-14" }},
+  "Event Venue": { pages: ["Home", "Spaces", "Packages", "Vendors", "Inquiry"], layouts: { "Home": "L-01", "Spaces": "L-13", "Packages": "L-03", "Vendors": "L-25", "Inquiry": "L-15" }},
+  "Tours": { pages: ["Home", "Tours", "FAQ", "Guides", "Book"], layouts: { "Home": "L-01", "Tours": "L-03", "FAQ": "L-17", "Guides": "L-07", "Book": "L-14" }},
+  "Museum": { pages: ["Home", "Exhibits", "Visit", "Membership", "Education"], layouts: { "Home": "L-23", "Exhibits": "L-04", "Visit": "L-08", "Membership": "L-15", "Education": "L-04" }},
+  
+  // Ag / Pets
+  "Agriculture / Farm": { pages: ["Home", "CSA", "Harvest", "Wholesale", "Visit"], layouts: { "Home": "L-01", "CSA": "L-03", "Harvest": "L-12", "Wholesale": "L-15", "Visit": "L-08" }},
+  "Pet Services": { pages: ["Home", "Services", "Requirements", "Gallery", "Book"], layouts: { "Home": "L-01", "Services": "L-06", "Requirements": "L-17", "Gallery": "L-13", "Book": "L-14" }},
+  "Fishing Charter": { pages: ["Home", "Packages", "Crew", "Reports", "Book"], layouts: { "Home": "L-01", "Packages": "L-03", "Crew": "L-07", "Reports": "L-11", "Book": "L-14" }},
+
+  // B2B / Tech
+  "Logistics": { pages: ["Home", "Services", "Track", "Fleet", "Quote"], layouts: { "Home": "L-23", "Services": "L-04", "Track": "L-16", "Fleet": "L-25", "Quote": "L-15" }},
+  "Manufacturing": { pages: ["Home", "Capabilities", "Certifications", "Industries", "RFQ"], layouts: { "Home": "L-23", "Capabilities": "L-25", "Certifications": "L-21", "Industries": "L-04", "RFQ": "L-15" }},
+  "Recruiting": { pages: ["Home", "Jobs", "Employers", "Submit Resume", "Team"], layouts: { "Home": "L-23", "Jobs": "L-18", "Employers": "L-04", "Submit Resume": "L-15", "Team": "L-07" }},
+  "Tech Startup": { pages: ["Home", "Features", "Pricing", "Download", "Docs"], layouts: { "Home": "L-24", "Features": "L-25", "Pricing": "L-03", "Download": "L-16", "Docs": "L-17" }},
+  "SaaS": { pages: ["Home", "Solutions", "Case Studies", "Pricing", "Demo"], layouts: { "Home": "L-24", "Solutions": "L-04", "Case Studies": "L-11", "Pricing": "L-03", "Demo": "L-14" }},
+
+  // Arts & Ent
+  "Tattoo Studio": { pages: ["Home", "Artists", "Aftercare", "Policy", "FAQ"], layouts: { "Home": "L-01", "Artists": "L-13", "Aftercare": "L-17", "Policy": "L-15", "FAQ": "L-17" }},
+  "Gaming / Esports": { pages: ["Home", "Events", "Team", "Discord", "Merch"], layouts: { "Home": "L-01", "Events": "L-12", "Team": "L-07", "Discord": "L-16", "Merch": "L-10" }},
+  "Art Studio / Classes": { pages: ["Home", "Schedule", "Workshops", "Student Gallery", "Events"], layouts: { "Home": "L-01", "Schedule": "L-12", "Workshops": "L-03", "Student Gallery": "L-13", "Events": "L-15" }},
+  "Theater / Music": { pages: ["Home", "Shows", "Tickets", "Info", "Rentals"], layouts: { "Home": "L-01", "Shows": "L-12", "Tickets": "L-16", "Info": "L-08", "Rentals": "L-15" }},
+  "Photography": { pages: ["Home", "Portfolio", "Investment", "About", "Contact"], layouts: { "Home": "L-19", "Portfolio": "L-13", "Investment": "L-03", "About": "L-02", "Contact": "L-05" }},
+  
+  // Travel
+  "Rentals (Bike/Kayak)": { pages: ["Home", "Rates", "Routes", "Waiver", "Reserve"], layouts: { "Home": "L-01", "Rates": "L-03", "Routes": "L-08", "Waiver": "L-17", "Reserve": "L-14" }},
+  "Surf / Lessons": { pages: ["Home", "Packages", "Report", "Instructors", "Book"], layouts: { "Home": "L-01", "Packages": "L-03", "Report": "L-09", "Instructors": "L-07", "Book": "L-14" }},
+  "Attractions": { pages: ["Home", "Courses", "Rules", "Parties", "Book"], layouts: { "Home": "L-01", "Courses": "L-13", "Rules": "L-17", "Parties": "L-15", "Book": "L-14" }},
+  "Vacation Rentals": { pages: ["Home", "Photos", "Amenities", "Local Guide", "Book"], layouts: { "Home": "L-01", "Photos": "L-13", "Amenities": "L-25", "Local Guide": "L-11", "Book": "L-16" }},
+  "Visitor Center": { pages: ["Home", "Things to Do", "Events", "Map", "Guide"], layouts: { "Home": "L-24", "Things to Do": "L-11", "Events": "L-12", "Map": "L-09", "Guide": "L-16" }},
+  "Travel Agency": { pages: ["Home", "Destinations", "Packages", "Blog", "Plan"], layouts: { "Home": "L-01", "Destinations": "L-13", "Packages": "L-03", "Blog": "L-11", "Plan": "L-15" }},
+  "Transportation": { pages: ["Home", "Services", "Rates", "Map", "Book"], layouts: { "Home": "L-24", "Services": "L-25", "Rates": "L-06", "Map": "L-09", "Book": "L-14" }},
+
+  // Public/Edu/Nonprofit
+  "Local Govt": { pages: ["Home", "Departments", "Agendas", "Pay Bills", "Contact"], layouts: { "Home": "L-23", "Departments": "L-25", "Agendas": "L-11", "Pay Bills": "L-16", "Contact": "L-05" }},
+  "Education": { pages: ["Home", "Courses", "Admissions", "Calendar", "Portal"], layouts: { "Home": "L-23", "Courses": "L-06", "Admissions": "L-15", "Calendar": "L-12", "Portal": "L-16" }},
+  "Nonprofit": { pages: ["Home", "Mission", "Programs", "Donate", "Volunteer"], layouts: { "Home": "L-02", "Mission": "L-02", "Programs": "L-04", "Donate": "L-03", "Volunteer": "L-15" }}
 };
 
 const BLOCK_LIBRARY = Object.keys(BLOCK_TYPES);
@@ -95,12 +287,15 @@ const state = {
   pagePlans: {}, 
   brandingProvided: null,
   customBranding: { active: false, name: "", price: 0 },
+  customService: { active: false, name: "", price: 0 }, // Step 4 Custom
+  selectedAddons: [], // Step 4 Addons
   advancedNotes: "",
   viewMode: {}, 
   clientName: "",
   businessName: "",
   clientEmail: "",
-  clientPhone: ""
+  clientPhone: "",
+  billingAddress: ""
 };
 
 const pageAttachments = {}; 
@@ -302,10 +497,19 @@ function initPageBuilder() {
   renderActivePages();
 }
 
+// GENEROUS SEARCH LOGIC
 function handleIndustrySearch(query) {
   const list = document.getElementById('industry-suggestions');
   if (!query) { list.classList.add('hidden'); return; }
-  const matches = Object.keys(INDUSTRY_DB).filter(key => key.toLowerCase().includes(query.toLowerCase()));
+  
+  const terms = query.toLowerCase().split(' ').filter(t => t.length > 0);
+  
+  const matches = Object.keys(INDUSTRY_DB).filter(key => {
+      const lowerKey = key.toLowerCase();
+      // Match if ANY of the search terms are found in the industry name
+      return terms.some(term => lowerKey.includes(term));
+  });
+
   list.innerHTML = '';
   if (matches.length > 0) {
     list.classList.remove('hidden');
@@ -437,6 +641,7 @@ function calculateTotal() {
   let html = '';
   let total = 0;
   
+  // Package
   if (state.package) {
     html += `<div class="fw-item"><span>${state.package.name}</span><span>$${state.package.price.toLocaleString()}</span></div>`;
     total += state.package.price;
@@ -447,6 +652,8 @@ function calculateTotal() {
       total += extraCost;
     }
   }
+  
+  // Brand Kit
   if (state.brandKit) {
     let kitPrice = BASE_BRAND_KIT_PRICE;
     let label = 'Brand Kit';
@@ -454,10 +661,27 @@ function calculateTotal() {
     html += `<div class="fw-item"><span>+ ${label}</span><span>$${kitPrice.toLocaleString()}</span></div>`;
     total += kitPrice;
   }
+  
+  // Step 2 Custom Branding
   if (state.customBranding && state.customBranding.price > 0) {
     html += `<div class="fw-item"><span>+ ${state.customBranding.name}</span><span>$${state.customBranding.price.toLocaleString()}</span></div>`;
     total += state.customBranding.price;
   }
+
+  // Step 4 Addons
+  if (state.selectedAddons && state.selectedAddons.length > 0) {
+    state.selectedAddons.forEach(addon => {
+        html += `<div class="fw-item"><span>+ ${addon.name}</span><span>$${addon.price.toLocaleString()}</span></div>`;
+        total += addon.price;
+    });
+  }
+
+  // Step 4 Custom Service
+  if (state.customService && state.customService.price > 0) {
+    html += `<div class="fw-item"><span>+ ${state.customService.name}</span><span>$${state.customService.price.toLocaleString()}</span></div>`;
+    total += state.customService.price;
+  }
+
   state.addons.forEach(addon => {
     html += `<div class="fw-item"><span>+ ${addon.name}</span><span>$${Number(addon.price).toLocaleString()}</span></div>`;
     total += Number(addon.price) || 0;
@@ -601,8 +825,6 @@ function convertListToGrid(listItems) {
 
 function generateLayoutSelector(currentPageName) {
     let options = `<optgroup label="Generic"><option value="default">Default Basic</option></optgroup>`;
-    
-    // Thin line separator using disabled option
     options += `<option disabled>────────────────</option>`;
 
     const matches = [];
@@ -712,7 +934,6 @@ function refreshPageBuilderUI(pageName, index) {
         let desktopContent = '';
         sortedBlocks.forEach(block => {
             const info = BLOCK_TYPES[block.name] || { icon: "📦" };
-            // Simple visual representation scaled down
             const widthPct = (block.w / 12) * 100;
             desktopContent += `<div style="width:${widthPct}%; float:left; font-size:0.5rem; padding:2px; height:20px; overflow:hidden; border:1px solid #ddd; background:#f9f9f9; color:#333; box-sizing:border-box; text-align:center;">
                 ${info.icon}
@@ -731,13 +952,12 @@ function refreshPageBuilderUI(pageName, index) {
     }
 }
 
-// --- INTERACTION: DRAG & SWAP + NO STACKING ---
+// --- INTERACTION ---
 function findOverlappingBlock(pageName, movingId, x, y, w, h) {
     const blocks = state.pagePlans[pageName].grid;
     for (let i = 0; i < blocks.length; i++) {
         const b = blocks[i];
         if (b.id === movingId) continue; 
-        
         if (x < b.x + b.w && x + w > b.x && y < b.y + b.h && y + h > b.y) {
             return i; 
         }
@@ -752,7 +972,6 @@ function setupFreeInteraction(element, pageName, index, pageIndex) {
     
     element.addEventListener('mousedown', (e) => {
         if(e.target.classList.contains('grid-resize-handle') || e.target.classList.contains('grid-remove')) return;
-        
         e.preventDefault();
         element.classList.add('interacting');
         
@@ -793,14 +1012,11 @@ function setupFreeInteraction(element, pageName, index, pageIndex) {
             const potentialX = parseInt(finalStyle.gridColumnStart);
             const potentialY = parseInt(finalStyle.gridRowStart);
             
-            // Check Collision for SWAP Logic
             let overlappedIdx = findOverlappingBlock(pageName, blockData.id, potentialX, potentialY, blockData.w, blockData.h);
             
             if (overlappedIdx !== -1) {
-                // Perform Swap
                 state.pagePlans[pageName].grid[overlappedIdx].x = originalGridX;
                 state.pagePlans[pageName].grid[overlappedIdx].y = originalGridY;
-                
                 state.pagePlans[pageName].grid[index].x = potentialX;
                 state.pagePlans[pageName].grid[index].y = potentialY;
             } else {
@@ -883,13 +1099,11 @@ function openBlockLibrary(pageName, gridId) {
 function addBlock(pageName, blockName, pageIndex) {
     const grid = state.pagePlans[pageName].grid;
     const maxY = grid.length > 0 ? Math.max(...grid.map(b => b.y + b.h)) : 1;
-    
     grid.push({
         id: `block-${Date.now()}`,
         name: blockName,
         x: 1, y: maxY, w: 12, h: 2
     });
-    
     document.getElementById('lib-modal').remove();
     refreshPageBuilderUI(pageName, pageIndex);
     saveState();
@@ -1063,7 +1277,7 @@ function initStep4() {
       `;
   }
 
-  // 2. Styling Fix: Ensure invoice box has dark mode style to match site
+  // 2. Styling Fix
   const invoiceBox = document.querySelector('.invoice-box');
   if (invoiceBox) {
       invoiceBox.style.background = 'var(--surface-base)';
@@ -1074,37 +1288,60 @@ function initStep4() {
       invoiceBox.style.marginBottom = '30px';
   }
   
-  // 3. Render Invoice Data
-  calculateTotal(); 
+  // 3. Auto-Fill Form from Step 1 State
+  if (document.getElementById('billingName')) document.getElementById('billingName').value = state.clientName || "";
+  if (document.getElementById('billingBusiness')) document.getElementById('billingBusiness').value = state.businessName || "";
+  if (document.getElementById('billingEmail')) document.getElementById('billingEmail').value = state.clientEmail || "";
+  if (document.getElementById('billingPhone')) document.getElementById('billingPhone').value = state.clientPhone || "";
+  if (document.getElementById('billingAddress')) document.getElementById('billingAddress').value = state.billingAddress || "";
 
-  // 4. Inject & Auto-Fill Billing Form
-  const form = document.getElementById('finalizeForm');
-  if (form) {
-      if (!document.getElementById('billingName')) {
-          const billingHtml = `
-            <div class="form-grid" style="margin-bottom:30px;">
-                <h4 class="full-width" style="margin-top:0;">Billing Details</h4>
-                <div>
-                  <label>Full Name</label>
-                  <input type="text" id="billingName" required />
-                </div>
-                <div>
-                  <label>Business Name</label>
-                  <input type="text" id="billingBusiness" />
-                </div>
-                <div class="full-width">
-                  <label>Billing Email</label>
-                  <input type="email" id="billingEmail" required />
-                </div>
-            </div>
-          `;
-          form.insertAdjacentHTML('afterbegin', billingHtml);
-      }
-
-      document.getElementById('billingName').value = state.clientName || "";
-      document.getElementById('billingBusiness').value = state.businessName || "";
-      document.getElementById('billingEmail').value = state.clientEmail || "";
+  // 4. Restore Addons Selection
+  if (state.selectedAddons) {
+    document.querySelectorAll('.addon-card').forEach(card => {
+        const name = card.querySelector('.package-name').innerText;
+        if (state.selectedAddons.find(a => a.name === name)) {
+            card.classList.add('selected');
+        }
+    });
   }
+
+  // 5. Restore Custom Service
+  if (state.customService && state.customService.active) {
+      document.querySelectorAll('.custom-panel').forEach(p => p.classList.remove('hidden'));
+      document.getElementById('customServiceName').value = state.customService.name;
+      document.getElementById('customServicePrice').value = state.customService.price;
+  }
+
+  calculateTotal(); 
+}
+
+// Step 4 Helper Functions
+function toggleAddon(name, price, element) {
+    if (!state.selectedAddons) state.selectedAddons = [];
+    
+    const existingIndex = state.selectedAddons.findIndex(a => a.name === name);
+    if (existingIndex > -1) {
+        state.selectedAddons.splice(existingIndex, 1);
+        element.classList.remove('selected');
+    } else {
+        state.selectedAddons.push({ name, price });
+        element.classList.add('selected');
+    }
+    calculateTotal();
+    saveState();
+}
+
+function updateCustomServiceState() {
+    const name = document.getElementById('customServiceName').value;
+    const price = Number(document.getElementById('customServicePrice').value);
+    
+    state.customService = {
+        active: (price > 0),
+        name: name || "Custom Service",
+        price: price || 0
+    };
+    calculateTotal();
+    saveState();
 }
 
 function handleFinalize(event) {
@@ -1113,7 +1350,9 @@ function handleFinalize(event) {
     state.billing = {
         name: document.getElementById('billingName').value,
         business: document.getElementById('billingBusiness').value,
-        email: document.getElementById('billingEmail').value
+        email: document.getElementById('billingEmail').value,
+        phone: document.getElementById('billingPhone').value,
+        address: document.getElementById('billingAddress').value
     };
     saveState();
 
@@ -1136,7 +1375,7 @@ function handleFinalize(event) {
     
     setTimeout(() => {
         window.location.href = `mailto:youremail@example.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    }, 500); // Slight delay to allow download to start
+    }, 500);
 }
 
 function downloadProjectOutline() {
