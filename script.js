@@ -26,23 +26,24 @@ const BLOCK_TYPES = {
   "Service C": { icon: "⚙️", type: "generic" }
 };
 
-// --- RENAMED LAYOUT DEFINITIONS ---
+// --- UPDATED LAYOUT DEFINITIONS (With Pre-defined Coordinates) ---
+// Structure: { name: "Block Name", x: Column(1-12), y: Row, w: Width(1-12), h: Height }
 const LAYOUT_DEFINITIONS = {
-  "Restaurant/Home": [ 
+  "L-01": [ // Visual Heavy / Home
     { name: "Hero: Full Screen Visual", x: 1, y: 1, w: 12, h: 5 },
     { name: "Intro Blurb", x: 2, y: 6, w: 10, h: 2 },
     { name: "Visual Gallery Grid", x: 1, y: 8, w: 12, h: 4 },
     { name: "Button / CTA", x: 4, y: 12, w: 6, h: 1 },
     { name: "Footer", x: 1, y: 13, w: 12, h: 2 }
   ],
-  "Portfolio/Home": [ 
+  "L-02": [ // Story / Brand
     { name: "Hero: Brand Story", x: 1, y: 1, w: 12, h: 4 },
     { name: "About the Founder", x: 1, y: 5, w: 6, h: 4 },
     { name: "Our Values", x: 7, y: 5, w: 6, h: 4 },
     { name: "Timeline/History", x: 1, y: 9, w: 12, h: 3 },
     { name: "Footer", x: 1, y: 12, w: 12, h: 2 }
   ],
-  "Service/Pricing": [ 
+  "L-03": [ // Pricing / Service
     { name: "Hero Section", x: 1, y: 1, w: 12, h: 3 },
     { name: "Pricing Tier 1", x: 1, y: 4, w: 4, h: 4 },
     { name: "Pricing Tier 2", x: 5, y: 4, w: 4, h: 4 },
@@ -50,7 +51,7 @@ const LAYOUT_DEFINITIONS = {
     { name: "Testimonials", x: 1, y: 8, w: 12, h: 2 },
     { name: "Footer", x: 1, y: 10, w: 12, h: 2 }
   ],
-  "Creative/Process": [ 
+  "L-04": [ // Process / Steps (Zig Zag)
     { name: "Service Overview", x: 1, y: 1, w: 12, h: 3 },
     { name: "Step 1: Consult", x: 1, y: 4, w: 6, h: 2 },
     { name: "Step 1 Image", x: 7, y: 4, w: 6, h: 2 },
@@ -58,14 +59,14 @@ const LAYOUT_DEFINITIONS = {
     { name: "Step 2 Image", x: 1, y: 6, w: 6, h: 2 },
     { name: "Footer", x: 1, y: 8, w: 12, h: 2 }
   ],
-  "Contact/Location": [ 
+  "L-05": [ // Contact / Location
     { name: "Map/Location", x: 1, y: 1, w: 8, h: 6 },
     { name: "Address & Hours", x: 9, y: 1, w: 4, h: 3 },
     { name: "Social Media Links", x: 9, y: 4, w: 4, h: 3 },
     { name: "Contact Form", x: 1, y: 7, w: 12, h: 4 },
     { name: "Footer", x: 1, y: 11, w: 12, h: 2 }
   ],
-  "default": [ 
+  "default": [ // Basic Fallback
     { name: "Header/Nav", x: 1, y: 1, w: 12, h: 1 },
     { name: "Hero Section", x: 1, y: 2, w: 12, h: 4 },
     { name: "Text Content", x: 1, y: 6, w: 8, h: 3 },
@@ -76,9 +77,9 @@ const LAYOUT_DEFINITIONS = {
 
 // --- INDUSTRY DATABASE ---
 const INDUSTRY_DB = {
-  "Restaurant": { pages: ["Home", "Menu", "Reservations"], layouts: { "Home": "Restaurant/Home", "Menu": "Service/Pricing", "Reservations": "Contact/Location" } },
-  "Portfolio/Creative": { pages: ["Home", "Work", "About"], layouts: { "Home": "Portfolio/Home", "Work": "Portfolio/Home", "About": "Creative/Process" } },
-  "Service Business": { pages: ["Home", "Services", "Contact"], layouts: { "Home": "Creative/Process", "Services": "Service/Pricing", "Contact": "Contact/Location" } }
+  "Restaurant": { pages: ["Home", "Menu", "Reservations"], layouts: { "Home": "L-01", "Menu": "L-03", "Reservations": "L-05" } },
+  "Portfolio/Creative": { pages: ["Home", "Work", "About"], layouts: { "Home": "L-01", "Work": "L-01", "About": "L-02" } },
+  "Service Business": { pages: ["Home", "Services", "Contact"], layouts: { "Home": "L-04", "Services": "L-03", "Contact": "L-05" } }
 };
 
 const BLOCK_LIBRARY = Object.keys(BLOCK_TYPES);
@@ -96,9 +97,10 @@ const state = {
   brandingProvided: null,
   customBranding: { active: false, name: "", price: 0 },
   advancedNotes: "",
-  viewMode: {} 
+  viewMode: {} // Stores 'desktop' or 'mobile' per page
 };
 
+// Store files in memory
 const pageAttachments = {}; 
 
 function saveState() {
@@ -115,15 +117,6 @@ function nextStep(stepNumber) {
   window.location.href = `step${stepNumber}.html`;
 }
 
-// --- COLLISION CHECKER ---
-function checkOverlap(pageName, movingId, x, y, w, h) {
-    const blocks = state.pagePlans[pageName].grid;
-    return blocks.some(b => {
-        if (b.id === movingId) return false;
-        return (x < b.x + b.w && x + w > b.x && y < b.y + b.h && y + h > b.y);
-    });
-}
-
 // ======================================================
 // --- 3. STEP 2 LOGIC ---
 // ======================================================
@@ -133,7 +126,9 @@ function selectPackage(id, name, price, limit, brandKitBundlePrice, extraPageCos
   if (element) element.classList.add('selected');
 
   state.package = { id, name, price, limit, brandKitBundlePrice, extraPageCost };
+  
   if (state.pages.length === 0) state.pages = ['Home', 'Contact'];
+  
   handlePackageSelected();
   calculateTotal();
   updateBrandKitDisplay();
@@ -145,11 +140,14 @@ function handlePackageSelected(isRestore) {
   const notice = document.getElementById('brandingLockedNotice');
   const unlocked = document.getElementById('brandingUnlocked');
   const pageBuilder = document.getElementById('pageBuilderSection');
+  
   if (notice) notice.classList.add('hidden');
   if (unlocked) unlocked.classList.remove('hidden');
   if (pageBuilder) pageBuilder.classList.remove('hidden');
+
   const branding = document.getElementById('brandingSection');
   if (branding && !isRestore) branding.classList.remove('collapsed'); 
+  
   if (window.initCollapsibles) window.initCollapsibles(); 
 }
 
@@ -167,10 +165,16 @@ function handleFileUpload(e) {
   const files = e.target.files;
   const box = document.getElementById('file-staging-box');
   const list = document.getElementById('file-list-content');
-  if (!files || !files.length) { box.classList.add('hidden'); return; }
+  
+  if (!files || !files.length) {
+    box.classList.add('hidden');
+    return;
+  }
+  
   box.classList.remove('hidden');
   list.innerHTML = ''; 
   uploadedFiles = Array.from(files); 
+
   uploadedFiles.forEach(file => {
     const row = document.createElement('div');
     row.className = 'file-list-item';
@@ -182,7 +186,8 @@ function handleFileUpload(e) {
     link.download = file.name;
     link.className = 'btn-download-mini';
     link.textContent = 'Download';
-    row.appendChild(nameSpan); row.appendChild(link);
+    row.appendChild(nameSpan);
+    row.appendChild(link);
     list.appendChild(row);
   });
 }
@@ -197,14 +202,19 @@ function downloadAllFiles() {
     link.click();
     document.body.removeChild(link);
   });
-  // Also download notes if present
+
   const notesArea = document.getElementById('brandingProvidedNotes');
   if (notesArea && notesArea.value.trim() !== "") {
     const blob = new Blob([notesArea.value], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.href = url; link.download = "branding-notes.txt";
-    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    link.href = url;
+    link.download = "branding-notes.txt";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } else if (uploadedFiles.length === 0) {
+    alert("No files or notes to download.");
   }
 }
 
@@ -216,21 +226,40 @@ function toggleCustomBrandingUI(panelId) {
 function updateCustomBrandingState() {
   const names = document.querySelectorAll('.custom-brand-name');
   const prices = document.querySelectorAll('.custom-brand-price');
-  let activeName = ""; let activePrice = 0;
-  if (document.activeElement && document.activeElement.classList.contains('custom-brand-name')) { activeName = document.activeElement.value; } 
-  else { names.forEach(input => { if (input.value) activeName = input.value; }); }
-  if (document.activeElement && document.activeElement.classList.contains('custom-brand-price')) { activePrice = Number(document.activeElement.value); } 
-  else { prices.forEach(input => { if (input.value) activePrice = Number(input.value); }); }
+  
+  let activeName = "";
+  let activePrice = 0;
+
+  if (document.activeElement && document.activeElement.classList.contains('custom-brand-name')) {
+    activeName = document.activeElement.value;
+  } else {
+    names.forEach(input => { if (input.value) activeName = input.value; });
+  }
+
+  if (document.activeElement && document.activeElement.classList.contains('custom-brand-price')) {
+    activePrice = Number(document.activeElement.value);
+  } else {
+    prices.forEach(input => { if (input.value) activePrice = Number(input.value); });
+  }
+
   names.forEach(input => { if (input !== document.activeElement) input.value = activeName; });
   prices.forEach(input => { if (input !== document.activeElement) input.value = activePrice || ""; });
-  state.customBranding = { active: (activePrice > 0), name: activeName || "Custom Branding", price: activePrice || 0 };
-  calculateTotal(); saveState();
+
+  state.customBranding = { 
+    active: (activePrice > 0), 
+    name: activeName || "Custom Branding", 
+    price: activePrice || 0
+  };
+
+  calculateTotal();
+  saveState();
 }
 
 function initPageBuilder() {
   const input = document.getElementById('industryInput');
   const fileInput = document.getElementById('brandingUploads');
   if (fileInput) fileInput.addEventListener('change', handleFileUpload);
+
   if (state.brandingProvided) {
     const radio = document.querySelector(`input[name="brandingProvided"][value="${state.brandingProvided}"]`);
     if (radio) { radio.checked = true; toggleBrandingPanels(state.brandingProvided); }
@@ -242,9 +271,20 @@ function initPageBuilder() {
      prices.forEach(i => i.value = state.customBranding.price);
      document.querySelectorAll('.custom-panel').forEach(p => p.classList.remove('hidden'));
   }
-  // FIX: Attach event listener safely
+  
   if(input) {
+      let list = document.getElementById('industry-suggestions');
+      if(!list) {
+          list = document.createElement('ul');
+          list.id = 'industry-suggestions';
+          list.className = 'autocomplete-list hidden';
+          input.parentNode.style.position = 'relative';
+          input.parentNode.appendChild(list);
+      }
       input.addEventListener('input', (e) => handleIndustrySearch(e.target.value));
+      document.addEventListener('click', (e) => {
+          if (e.target !== input && e.target !== list) list.classList.add('hidden');
+      });
   }
   if (state.industry && input) {
     input.value = state.industry;
@@ -253,24 +293,11 @@ function initPageBuilder() {
   renderActivePages();
 }
 
-// FIX: Search Function that creates list if missing
 function handleIndustrySearch(query) {
-  const input = document.getElementById('industryInput');
-  if(!input) return;
-  
-  let list = document.getElementById('industry-suggestions');
-  if(!list) {
-      list = document.createElement('ul');
-      list.id = 'industry-suggestions';
-      list.className = 'autocomplete-list hidden';
-      input.parentNode.appendChild(list);
-  }
-
+  const list = document.getElementById('industry-suggestions');
   if (!query) { list.classList.add('hidden'); return; }
-  
   const matches = Object.keys(INDUSTRY_DB).filter(key => key.toLowerCase().includes(query.toLowerCase()));
   list.innerHTML = '';
-  
   if (matches.length > 0) {
     list.classList.remove('hidden');
     matches.forEach(match => {
@@ -282,21 +309,29 @@ function handleIndustrySearch(query) {
   } else { list.classList.add('hidden'); }
 }
 
+// Added alias to ensure button click works
+window.generateSuggestions = handleIndustrySearch;
+
 function selectIndustry(industryName) {
   document.getElementById('industryInput').value = industryName;
   state.industry = industryName;
-  const list = document.getElementById('industry-suggestions');
-  if(list) list.classList.add('hidden');
+  document.getElementById('industry-suggestions').classList.add('hidden');
   renderChips(getIndustryPages(industryName));
   saveState();
 }
 
-function getIndustryPages(industryName) { return (INDUSTRY_DB[industryName]) ? INDUSTRY_DB[industryName].pages : []; }
+function getIndustryPages(industryName) {
+  return (INDUSTRY_DB[industryName]) ? INDUSTRY_DB[industryName].pages : [];
+}
 
 function renderChips(pages) {
   const container = document.getElementById('suggestionChips');
-  if (!container) return; container.innerHTML = '';
-  if(pages.length === 0) { container.innerHTML = '<span style="opacity:0.5; font-style:italic;">Type an industry...</span>'; return; }
+  if (!container) return;
+  container.innerHTML = '';
+  if(pages.length === 0) {
+      container.innerHTML = '<span style="opacity:0.5; font-style:italic;">Type an industry...</span>';
+      return;
+  }
   pages.forEach(page => {
     const chip = document.createElement('div');
     chip.className = 'suggestion-chip';
@@ -315,6 +350,7 @@ function addPage(nameRaw) {
     state.pages.push(name);
     if (!state.pagePlans[name]) state.pagePlans[name] = {};
     state.pagePlans[name].grid = convertListToGrid(getDefaultLayoutForPage(name));
+    
     if (input) input.value = '';
     renderActivePages();
     if (state.industry) renderChips(getIndustryPages(state.industry));
@@ -340,7 +376,28 @@ function renderActivePages() {
   state.pages.forEach((page, index) => {
     const tag = document.createElement('div');
     tag.className = 'page-tag';
-    tag.innerHTML = `${page} <span class="page-tag-remove" onclick="removePage('${page}')">&times;</span>`;
+    tag.draggable = true;
+    tag.innerHTML = `<span class="drag-handle">::</span> ${page} <span class="page-tag-remove" onclick="removePage('${page}')">&times;</span>`;
+    
+    tag.addEventListener('dragstart', (e) => {
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', index);
+      tag.classList.add('dragging');
+    });
+    tag.addEventListener('dragend', () => tag.classList.remove('dragging'));
+    tag.addEventListener('dragover', (e) => e.preventDefault());
+    tag.addEventListener('drop', (e) => {
+      e.preventDefault();
+      const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
+      const toIndex = index;
+      if (fromIndex !== toIndex) {
+        const item = state.pages.splice(fromIndex, 1)[0];
+        state.pages.splice(toIndex, 0, item);
+        renderActivePages();
+        saveState();
+      }
+    });
+
     list.appendChild(tag);
   });
   
@@ -349,7 +406,8 @@ function renderActivePages() {
   if (countEl) countEl.textContent = `${current}/${limit}`;
   if (current > limit) {
     const extra = current - limit;
-    warning.innerHTML = `You are ${extra} page(s) over your limit. Added cost: <strong>$${extra * state.package.extraPageCost}</strong>`;
+    const cost = extra * state.package.extraPageCost;
+    warning.innerHTML = `You are ${extra} page(s) over your limit. Added cost: <strong>$${cost}</strong>`;
     warning.classList.add('visible');
   } else { warning.classList.remove('visible'); }
 }
@@ -382,33 +440,54 @@ function calculateTotal() {
     html += `<div class="fw-item"><span>+ ${state.customBranding.name}</span><span>$${state.customBranding.price.toLocaleString()}</span></div>`;
     total += state.customBranding.price;
   }
+  state.addons.forEach(addon => {
+    html += `<div class="fw-item"><span>+ ${addon.name}</span><span>$${Number(addon.price).toLocaleString()}</span></div>`;
+    total += Number(addon.price) || 0;
+  });
   if (!html) html = '<p class="empty-state">Select a package to start...</p>';
   fwItems.innerHTML = html;
-  
-  const totalEls = ['fw-header-total', 'fw-full-total', 'final-invoice-total'];
-  totalEls.forEach(id => { const el = document.getElementById(id); if(el) el.textContent = `$${total.toLocaleString()}`; });
-  const depEls = ['fw-deposit', 'final-invoice-deposit'];
-  depEls.forEach(id => { const el = document.getElementById(id); if(el) el.textContent = `$${(total / 2).toLocaleString()}`; });
+  const headerTotalEl = document.getElementById('fw-header-total');
+  if (headerTotalEl) headerTotalEl.textContent = `$${total.toLocaleString()}`;
+  const fullTotalEl = document.getElementById('fw-full-total');
+  if (fullTotalEl) fullTotalEl.textContent = `$${total.toLocaleString()}`;
+  const depositEl = document.getElementById('fw-deposit');
+  if (depositEl) depositEl.textContent = `$${(total / 2).toLocaleString()}`;
 }
 
 // ======================================================
-// --- 4. STEP 3: VISUAL LAYOUT BUILDER ---
+// --- 4. STEP 3: VISUAL LAYOUT BUILDER (UPDATED) ---
 // ======================================================
 
 function initStep3() {
   if (!document.body.classList.contains('step3')) return;
   const container = document.getElementById('planContainer');
+  const pkgId = state.package ? state.package.id : 'basic';
   container.innerHTML = ''; 
-  renderVisualLayoutBuilder(container); 
+  
+  if (pkgId === 'basic') {
+    const sortableList = document.createElement('div');
+    sortableList.id = 'sortable-list';
+    container.appendChild(sortableList);
+    renderBasicPlan(sortableList);
+  } 
+  else {
+    renderVisualLayoutBuilder(container); 
+  }
+
+  injectDownloadButton();
 }
 
 function renderVisualLayoutBuilder(container) {
+  const intro = `<div style="text-align:center; margin-bottom:30px;"><p>Drag & Drop Wireframe Tool. Drag elements to swap positions. Click Mobile to toggle views.</p></div>`;
+  container.insertAdjacentHTML('beforebegin', intro);
+
   state.pages.forEach((page, index) => {
     if(!state.pagePlans[page]) state.pagePlans[page] = {};
     if (!state.pagePlans[page].grid || state.pagePlans[page].grid.length === 0) {
       state.pagePlans[page].grid = convertListToGrid(getDefaultLayoutForPage(page));
     }
     
+    // Set default view mode to desktop
     if(!state.viewMode) state.viewMode = {};
     if(!state.viewMode[page]) state.viewMode[page] = 'desktop';
 
@@ -416,7 +495,6 @@ function renderVisualLayoutBuilder(container) {
     const previewId = `preview-area-${index}`;
     const fileListId = `file-list-${index}`;
     const titleId = `editor-title-${index}`;
-    
     const layoutSelectorHtml = generateLayoutSelector(page);
 
     const html = `
@@ -438,12 +516,15 @@ function renderVisualLayoutBuilder(container) {
           <div class="builder-layout-container">
             <div class="editor-pane">
                <div class="editor-header">
-                 <span id="${titleId}">Wireframe Editor</span>
+                 <span id="${titleId}">Desktop Wireframe</span>
                  <button class="btn-dashed" style="width:auto; margin:0; padding:5px 10px;" onclick="openBlockLibrary('${page}', '${gridId}')">+ Add Element</button>
                </div>
                <div class="grid-canvas" id="${gridId}"></div>
             </div>
-            <div class="preview-pane" id="${previewId}" onclick="toggleViewMode('${page}', ${index})"></div>
+            
+            <div class="preview-pane" id="${previewId}" onclick="toggleViewMode('${page}', ${index})">
+              </div>
+
           </div>
           <div style="margin-top:30px; border-top:1px solid var(--border-light); padding-top:20px;">
               <label>Content Notes</label>
@@ -468,6 +549,7 @@ function renderVisualLayoutBuilder(container) {
   });
 }
 
+// --- NEW TOGGLE FUNCTION ---
 function toggleViewMode(page, index) {
     if(!state.viewMode) state.viewMode = {};
     const current = state.viewMode[page] || 'desktop';
@@ -484,26 +566,34 @@ function getDefaultLayoutForPage(pageName) {
   return [...LAYOUT_DEFINITIONS["default"]];
 }
 
+// Convert Layout Data (with coordinates) to Grid Objects
 function convertListToGrid(listItems) {
     return listItems.map((item, index) => ({
         id: `block-${Date.now()}-${index}`,
-        name: item.name || item, 
-        x: item.x || 1, y: item.y || (1 + (index * 2)), w: item.w || 12, h: item.h || 2
+        name: item.name || item, // Support both string and object
+        x: item.x || 1, 
+        y: item.y || (1 + (index * 2)), 
+        w: item.w || 12, 
+        h: item.h || 2
     }));
 }
 
 function generateLayoutSelector(currentPageName) {
-    let options = `<optgroup label="Industry Recommended">`;
+    let options = `<optgroup label="Generic"><option value="default">Default Basic</option></optgroup>`;
     const matches = [];
     Object.entries(INDUSTRY_DB).forEach(([indName, data]) => {
         if (data.pages.includes(currentPageName)) {
             matches.push({ industry: indName, layoutId: data.layouts[currentPageName] });
         }
     });
-    matches.forEach(m => { options += `<option value="${m.layoutId}">${m.layoutId}</option>`; });
-    options += `</optgroup><optgroup label="All Templates">`;
-    Object.keys(LAYOUT_DEFINITIONS).forEach(key => {
-        options += `<option value="${key}">${key}</option>`;
+    if (matches.length > 0) {
+        options += `<optgroup label="Industry Suggestions">`;
+        matches.forEach(m => { options += `<option value="${m.layoutId}">${m.industry} / ${currentPageName}</option>`; });
+        options += `</optgroup>`;
+    }
+    options += `<optgroup label="All Layouts">`;
+    Object.entries(LAYOUT_DEFINITIONS).forEach(([lid, blocks]) => {
+        options += `<option value="${lid}">${lid} (${blocks.length} blocks)</option>`;
     });
     options += `</optgroup>`;
     return options;
@@ -511,16 +601,31 @@ function generateLayoutSelector(currentPageName) {
 
 function switchPageLayout(pageName, layoutId) {
     if(!layoutId) return;
-    state.pagePlans[pageName].grid = convertListToGrid(LAYOUT_DEFINITIONS[layoutId]);
+    const choice = confirm("Replace current layout?");
+    let newBlocksRaw = LAYOUT_DEFINITIONS[layoutId] || LAYOUT_DEFINITIONS['default'];
+    let newGridBlocks = convertListToGrid(newBlocksRaw);
+
+    if (choice) {
+        state.pagePlans[pageName].grid = newGridBlocks;
+    } else {
+        const currentBlocks = state.pagePlans[pageName].grid;
+        // Find bottom most block to append after
+        const maxY = currentBlocks.length > 0 ? Math.max(...currentBlocks.map(b => b.y + b.h)) : 1;
+        newGridBlocks = newGridBlocks.map(b => ({ ...b, y: b.y + maxY })); 
+        state.pagePlans[pageName].grid = [...currentBlocks, ...newGridBlocks];
+    }
+    
     const index = state.pages.indexOf(pageName);
     refreshPageBuilderUI(pageName, index);
     saveState();
 }
 
+// --- RENDER FUNCTIONS (Updated to support Toggle & View Modes) ---
 function refreshPageBuilderUI(pageName, index) {
     const gridId = `grid-canvas-${index}`;
     const previewId = `preview-area-${index}`;
     const titleId = `editor-title-${index}`;
+    
     const gridContainer = document.getElementById(gridId);
     const previewContainer = document.getElementById(previewId);
     const titleEl = document.getElementById(titleId);
@@ -529,23 +634,24 @@ function refreshPageBuilderUI(pageName, index) {
 
     gridContainer.innerHTML = '';
     const mode = (state.viewMode && state.viewMode[pageName]) ? state.viewMode[pageName] : 'desktop';
-    gridContainer.className = `grid-canvas ${mode}-mode-active`;
 
-    if(titleEl) titleEl.textContent = mode === 'desktop' ? "Desktop Wireframe (Editable)" : "Mobile Wireframe (Editable)";
+    // Update Title Label
+    if(titleEl) titleEl.textContent = mode === 'desktop' ? "Desktop Wireframe" : "Mobile Wireframe";
 
     const blocks = state.pagePlans[pageName].grid || [];
+    const sortedBlocks = [...blocks].sort((a,b) => a.y - b.y);
 
-    // RENDER BLOCKS
+    // --- Render Grid Items (Cartoon Style via CSS classes) ---
     blocks.forEach((block, idx) => {
         const info = BLOCK_TYPES[block.name] || { icon: "📦", type: "generic" };
         const el = document.createElement('div');
-        // FIX: Ensure correct class name is applied
         el.className = `grid-item block-type-${info.type}`;
         el.id = block.id;
         el.style.gridColumnStart = block.x;
         el.style.gridColumnEnd = `span ${block.w}`;
         el.style.gridRowStart = block.y;
         el.style.gridRowEnd = `span ${block.h}`;
+        
         el.innerHTML = `
           <div class="grid-remove" onclick="removeBlock('${pageName}', '${block.id}')">&times;</div>
           <div class="grid-item-content">
@@ -558,95 +664,180 @@ function refreshPageBuilderUI(pageName, index) {
         gridContainer.appendChild(el);
     });
 
+    // --- Render Preview (Opposite of Current Mode) ---
     if(mode === 'desktop') {
-        let previewHtml = `<div class="mobile-frame"><div class="mobile-screen"><h5 style="text-align:center;">Mobile Preview</h5>`;
-        blocks.forEach(b => previewHtml += `<div style="background:#eee; margin:5px 0; padding:5px; font-size:0.7rem; text-align:center;">${b.name}</div>`);
-        previewHtml += `</div></div>`;
+        // Render Mobile Preview
+        let previewHtml = `
+          <div class="mobile-frame">
+             <div class="mobile-notch"></div>
+             <div class="mobile-screen">`;
+        
+        sortedBlocks.forEach(block => {
+            const info = BLOCK_TYPES[block.name] || { icon: "📦" };
+            previewHtml += `<div class="mobile-block ${info.type === 'button' ? 'mobile-block-button' : ''}">
+               <span class="mobile-block-icon">${info.icon}</span> <span>${block.name}</span>
+            </div>`;
+        });
+        
+        previewHtml += `</div><div class="mobile-overlay-hint">Switch to Mobile Edit</div></div>`;
         previewContainer.innerHTML = previewHtml;
     } else {
-        previewContainer.innerHTML = `<div class="desktop-frame"><div class="desktop-screen"><span>Desktop Preview Mode</span></div><div class="desktop-stand"></div></div>`;
+        // Render Desktop Preview
+        previewContainer.innerHTML = `
+          <div class="desktop-frame">
+              <div class="desktop-screen" style="display:flex; align-items:center; justify-content:center; background:#111; color:#555;">
+                  <span style="font-size:0.8rem; text-transform:uppercase;">Desktop Preview Active</span>
+              </div>
+              <div class="desktop-stand"></div>
+              <div class="mobile-overlay-hint">Switch to Desktop Edit</div>
+          </div>
+        `;
     }
+}
+
+// --- INTERACTION: DRAG & SWAP ---
+function findOverlappingBlock(pageName, movingId, x, y, w, h) {
+    const blocks = state.pagePlans[pageName].grid;
+    for (let i = 0; i < blocks.length; i++) {
+        const b = blocks[i];
+        if (b.id === movingId) continue; 
+        if (x < b.x + b.w && x + w > b.x && y < b.y + b.h && y + h > b.y) {
+            return i; 
+        }
+    }
+    return -1;
 }
 
 function setupFreeInteraction(element, pageName, index, pageIndex) {
     const container = document.getElementById(`grid-canvas-${pageIndex}`);
     let startX, startY, startGridX, startGridY;
+    let originalGridX, originalGridY; 
     
     element.addEventListener('mousedown', (e) => {
         if(e.target.classList.contains('grid-resize-handle') || e.target.classList.contains('grid-remove')) return;
+        
         e.preventDefault();
         element.classList.add('interacting');
+        
         const rect = container.getBoundingClientRect();
         const colWidth = rect.width / 12; 
         const rowHeight = 60; 
 
-        startX = e.clientX; startY = e.clientY;
+        startX = e.clientX;
+        startY = e.clientY;
         const blockData = state.pagePlans[pageName].grid[index];
-        startGridX = blockData.x; startGridY = blockData.y;
+        startGridX = blockData.x;
+        startGridY = blockData.y;
+        originalGridX = blockData.x;
+        originalGridY = blockData.y;
 
         const onMove = (moveEvent) => {
-            const diffX = moveEvent.clientX - startX; const diffY = moveEvent.clientY - startY;
-            const colsMoved = Math.round(diffX / colWidth); const rowsMoved = Math.round(diffY / rowHeight);
-            let newX = startGridX + colsMoved; let newY = startGridY + rowsMoved;
-            if(newX < 1) newX = 1; if(newX + blockData.w > 13) newX = 13 - blockData.w; if(newY < 1) newY = 1;
-            element.style.gridColumnStart = newX; element.style.gridRowStart = newY;
+            const diffX = moveEvent.clientX - startX;
+            const diffY = moveEvent.clientY - startY;
+            const colsMoved = Math.round(diffX / colWidth);
+            const rowsMoved = Math.round(diffY / rowHeight);
+            let newX = startGridX + colsMoved;
+            let newY = startGridY + rowsMoved;
+
+            if(newX < 1) newX = 1;
+            if(newX + blockData.w > 13) newX = 13 - blockData.w;
+            if(newY < 1) newY = 1;
+
+            element.style.gridColumnStart = newX;
+            element.style.gridRowStart = newY;
         };
 
         const onUp = (upEvent) => {
             element.classList.remove('interacting');
-            window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp);
+            window.removeEventListener('mousemove', onMove);
+            window.removeEventListener('mouseup', onUp);
+            
             const finalStyle = window.getComputedStyle(element);
             const potentialX = parseInt(finalStyle.gridColumnStart);
             const potentialY = parseInt(finalStyle.gridRowStart);
-            if(checkOverlap(pageName, blockData.id, potentialX, potentialY, blockData.w, blockData.h)) {
-                element.style.gridColumnStart = startGridX; element.style.gridRowStart = startGridY;
-                alert("Cannot place element here: Space occupied.");
+            
+            // Check Collision for SWAP Logic
+            const overlappedIdx = findOverlappingBlock(pageName, blockData.id, potentialX, potentialY, blockData.w, blockData.h);
+            
+            if (overlappedIdx !== -1) {
+                // Perform Swap
+                state.pagePlans[pageName].grid[overlappedIdx].x = originalGridX;
+                state.pagePlans[pageName].grid[overlappedIdx].y = originalGridY;
+                
+                state.pagePlans[pageName].grid[index].x = potentialX;
+                state.pagePlans[pageName].grid[index].y = potentialY;
             } else {
-                state.pagePlans[pageName].grid[index].x = potentialX; state.pagePlans[pageName].grid[index].y = potentialY;
+                state.pagePlans[pageName].grid[index].x = potentialX;
+                state.pagePlans[pageName].grid[index].y = potentialY;
             }
             saveState();
+            refreshPageBuilderUI(pageName, pageIndex);
         };
-        window.addEventListener('mousemove', onMove); window.addEventListener('mouseup', onUp);
+
+        window.addEventListener('mousemove', onMove);
+        window.addEventListener('mouseup', onUp);
     });
 
     const resizeHandle = element.querySelector('.grid-resize-handle');
     resizeHandle.addEventListener('mousedown', (e) => {
-        e.stopPropagation(); e.preventDefault();
+        e.stopPropagation();
+        e.preventDefault();
         const rect = container.getBoundingClientRect();
-        const colWidth = rect.width / 12; const rowHeight = 60;
-        startX = e.clientX; startY = e.clientY;
+        const colWidth = rect.width / 12;
+        const rowHeight = 60;
+        
+        startX = e.clientX;
+        startY = e.clientY;
         const blockData = state.pagePlans[pageName].grid[index];
-        const startW = blockData.w; const startH = blockData.h;
+        const startW = blockData.w;
+        const startH = blockData.h;
 
         const onResize = (moveEvent) => {
-            const diffX = moveEvent.clientX - startX; const diffY = moveEvent.clientY - startY;
-            let newW = startW + Math.round(diffX / colWidth); let newH = startH + Math.round(diffY / rowHeight);
-            if(newW < 2) newW = 2; if(newW + blockData.x > 13) newW = 13 - blockData.x; if(newH < 1) newH = 1;
-            element.style.gridColumnEnd = `span ${newW}`; element.style.gridRowEnd = `span ${newH}`;
+            const diffX = moveEvent.clientX - startX;
+            const diffY = moveEvent.clientY - startY;
+            let newW = startW + Math.round(diffX / colWidth);
+            let newH = startH + Math.round(diffY / rowHeight);
+
+            if(newW < 2) newW = 2; if(newW + blockData.x > 13) newW = 13 - blockData.x;
+            if(newH < 1) newH = 1;
+
+            element.style.gridColumnEnd = `span ${newW}`;
+            element.style.gridRowEnd = `span ${newH}`;
         };
 
         const onEndResize = () => {
-             state.pagePlans[pageName].grid[index].w = parseInt(element.style.gridColumnEnd.replace('span ',''));
-             state.pagePlans[pageName].grid[index].h = parseInt(element.style.gridRowEnd.replace('span ',''));
+             const spanW = parseInt(element.style.gridColumnEnd.replace('span ',''));
+             const spanH = parseInt(element.style.gridRowEnd.replace('span ',''));
+             
+             state.pagePlans[pageName].grid[index].w = spanW;
+             state.pagePlans[pageName].grid[index].h = spanH;
              saveState();
-             window.removeEventListener('mousemove', onResize); window.removeEventListener('mouseup', onEndResize);
+             refreshPageBuilderUI(pageName, pageIndex);
+             window.removeEventListener('mousemove', onResize);
+             window.removeEventListener('mouseup', onEndResize);
         };
-        window.addEventListener('mousemove', onResize); window.addEventListener('mouseup', onEndResize);
+
+        window.addEventListener('mousemove', onResize);
+        window.addEventListener('mouseup', onEndResize);
     });
 }
 
 function openBlockLibrary(pageName, gridId) {
     const pageIndex = gridId.split('-')[2];
-    const existing = document.querySelector('.block-library-overlay');
+    const existing = document.getElementById('lib-modal');
     if(existing) existing.remove();
+
     const overlay = document.createElement('div');
+    overlay.id = 'lib-modal';
     overlay.className = 'block-library-overlay';
+    
     const items = BLOCK_LIBRARY.map(name => {
         const info = BLOCK_TYPES[name];
         return `<div class="library-option" onclick="addBlock('${pageName}', '${name}', '${pageIndex}')">
             <span class="library-icon">${info.icon}</span><span>${name}</span>
         </div>`;
     }).join('');
+
     overlay.innerHTML = `<div class="block-library-modal"><h3>Add Element</h3><div class="library-grid">${items}</div><button class="btn-close-modal" onclick="this.closest('.block-library-overlay').remove()">Cancel</button></div>`;
     document.body.appendChild(overlay);
 }
@@ -654,8 +845,14 @@ function openBlockLibrary(pageName, gridId) {
 function addBlock(pageName, blockName, pageIndex) {
     const grid = state.pagePlans[pageName].grid;
     const maxY = grid.length > 0 ? Math.max(...grid.map(b => b.y + b.h)) : 1;
-    grid.push({ id: `block-${Date.now()}`, name: blockName, x: 1, y: maxY, w: 12, h: 2 });
-    document.querySelector('.block-library-overlay').remove();
+    
+    grid.push({
+        id: `block-${Date.now()}`,
+        name: blockName,
+        x: 1, y: maxY, w: 12, h: 2
+    });
+    
+    document.getElementById('lib-modal').remove();
     refreshPageBuilderUI(pageName, pageIndex);
     saveState();
 }
@@ -665,6 +862,44 @@ function removeBlock(pageName, id) {
     const idx = state.pages.indexOf(pageName);
     refreshPageBuilderUI(pageName, idx);
     saveState();
+}
+
+// --- BASIC PLAN LOGIC (Restored) ---
+function renderBasicPlan(container) {
+  state.pages.forEach((page, index) => {
+    if(!state.pagePlans[page]) state.pagePlans[page] = {};
+    const noteVal = state.pagePlans[page].notes || '';
+    const fileListId = `file-list-${index}`;
+    
+    const html = `
+      <div class="plan-card collapsed" draggable="true" data-page-name="${page}">
+        <div class="plan-card-header" onclick="togglePlanCard(this)">
+            <div class="plan-card-title-group">
+                <span class="plan-card-chevron">▼</span>
+                <span>${index + 1}. ${page}</span>
+            </div>
+            <div class="drag-handle">☰</div>
+        </div>
+        <div class="plan-card-body">
+          <label>Page Goals & Content Notes</label>
+          <textarea rows="5" oninput="savePageNote('${page}', this.value)" placeholder="What should be on this page?">${noteVal}</textarea>
+          
+          <div style="margin-top:20px;">
+              <label>Page Assets</label>
+              <div class="file-upload-wrapper">
+                 <label for="file-input-${index}" class="custom-file-upload">
+                   <span>📂 Upload Assets</span>
+                 </label>
+                 <input id="file-input-${index}" type="file" multiple onchange="handlePageFileUpload('${page}', this, '${fileListId}')" />
+              </div>
+              <div id="${fileListId}" class="mini-file-list"></div>
+          </div>
+        </div>
+      </div>
+    `;
+    container.insertAdjacentHTML('beforeend', html);
+    setTimeout(() => renderPageFileList(page, fileListId), 50);
+  });
 }
 
 function handlePageFileUpload(pageName, input, listId) {
@@ -680,7 +915,10 @@ function renderPageFileList(pageName, listId) {
   if (!container) return;
   container.innerHTML = '';
   const files = pageAttachments[pageName] || [];
-  if (files.length === 0) { container.innerHTML = '<div style="font-size:0.75rem; color:var(--text-muted); text-align:center;">No files attached</div>'; return; }
+  if (files.length === 0) {
+    container.innerHTML = '<div style="font-size:0.75rem; color:var(--text-muted); text-align:center;">No files attached</div>';
+    return;
+  }
   files.forEach((file, i) => {
     const div = document.createElement('div');
     div.className = 'page-file-item';
@@ -688,14 +926,32 @@ function renderPageFileList(pageName, listId) {
     const delBtn = document.createElement('span');
     delBtn.innerHTML = '&times;';
     delBtn.className = 'delete-file-btn';
-    delBtn.onclick = () => { pageAttachments[pageName].splice(i, 1); renderPageFileList(pageName, listId); };
-    div.appendChild(delBtn); container.appendChild(div);
+    delBtn.onclick = () => {
+        pageAttachments[pageName].splice(i, 1);
+        renderPageFileList(pageName, listId);
+    };
+    div.appendChild(delBtn);
+    container.appendChild(div);
   });
 }
 
-function togglePlanCard(header) { header.closest('.plan-card').classList.toggle('collapsed'); }
-function savePageNote(pageName, text) { state.pagePlans[pageName].notes = text; saveState(); }
-function toggleBrandKit(element) { state.brandKit = !state.brandKit; calculateTotal(); updateBrandKitDisplay(); saveState(); }
+function togglePlanCard(header) {
+  const card = header.closest('.plan-card');
+  card.classList.toggle('collapsed');
+}
+
+function savePageNote(pageName, text) {
+  if(!state.pagePlans[pageName]) state.pagePlans[pageName] = {};
+  state.pagePlans[pageName].notes = text;
+  saveState();
+}
+
+function toggleBrandKit(element) {
+  state.brandKit = !state.brandKit;
+  document.querySelectorAll('.brand-kit-ref').forEach(el => { el.classList.toggle('selected', state.brandKit); });
+  calculateTotal(); updateBrandKitDisplay(); saveState();
+}
+
 function updateBrandKitDisplay() {
   document.querySelectorAll('.brand-kit-ref').forEach(bar => {
     const finalPriceEl = bar.querySelector('.bk-final-price');
@@ -706,40 +962,45 @@ function updateBrandKitDisplay() {
     bar.classList.toggle('selected', !!state.brandKit);
   });
 }
-function toggleWidget() { document.getElementById('floating-widget').classList.toggle('collapsed'); }
-function togglePackageDetails(buttonEl) { buttonEl.closest('.package-card').classList.toggle('expanded'); }
+
+function toggleWidget() {
+  const widget = document.getElementById('floating-widget');
+  if (widget) widget.classList.toggle('collapsed');
+}
+
+function togglePackageDetails(buttonEl) {
+  const card = buttonEl.closest('.package-card');
+  if (card) {
+    const expanded = card.classList.toggle('expanded');
+    buttonEl.textContent = expanded ? 'Close Details' : 'View Details';
+  }
+}
+
 function initCollapsibles() {
-  document.querySelectorAll('[data-collapsible]').forEach(section => {
+  const sections = document.querySelectorAll('[data-collapsible]');
+  sections.forEach(section => {
     const header = section.querySelector('[data-collapsible-header]');
     if (!header || header.hasAttribute('data-has-listener')) return;
     header.setAttribute('data-has-listener', 'true');
-    header.addEventListener('click', (e) => { e.preventDefault(); section.classList.toggle('collapsed'); });
+    header.addEventListener('click', (e) => {
+      e.preventDefault();
+      section.classList.toggle('collapsed');
+    });
   });
 }
 
-// --- FINALIZATION ---
-function handleFinalize(event) {
-    event.preventDefault();
-    const summary = {
-        client: localStorage.getItem('clientName'),
-        business: localStorage.getItem('businessName'),
-        email: localStorage.getItem('clientEmail'),
-        investment: document.getElementById('final-invoice-total').textContent,
-        package: state.package,
-        structure: state.pagePlans,
-        notes: state.advancedNotes
-    };
-    console.log("FINAL SUMMARY:", summary);
-    alert(`Finalization Complete! An email summary has been sent to ${summary.email}.`);
-}
-
-window.renderFinalInvoice = function() {
-    const list = document.getElementById('final-invoice-items');
-    if(!list || !state.package) return;
-    let html = `<div class="line-item"><span>${state.package.name} Package</span><span>$${state.package.price.toLocaleString()}</span></div>`;
-    if(state.brandKit) html += `<div class="line-item"><span>Brand Kit</span><span>Included</span></div>`;
-    if(state.customBranding.active) html += `<div class="line-item"><span>${state.customBranding.name}</span><span>$${state.customBranding.price}</span></div>`;
-    list.innerHTML = html;
+function injectDownloadButton() {
+  const existingBtn = document.getElementById('globalDownloadBtn');
+  if(existingBtn) existingBtn.remove();
+  const navContainer = document.querySelector('.step-nav-buttons');
+  if(navContainer) {
+    const btn = document.createElement('button');
+    btn.id = 'globalDownloadBtn';
+    btn.className = 'btn-download-all';
+    btn.textContent = 'Download Project Outline';
+    btn.onclick = downloadProjectOutline;
+    navContainer.insertBefore(btn, navContainer.lastElementChild);
+  }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -753,3 +1014,80 @@ document.addEventListener('DOMContentLoaded', () => {
   calculateTotal();
   updateBrandKitDisplay();
 });
+
+// --- CSS STYLES FOR GRID SYSTEM ---
+const style = document.createElement('style');
+style.innerHTML = `
+  /* Autocomplete */
+  .autocomplete-list { position: absolute; top: 100%; left: 0; right: 0; background: #0f1322; border: 1px solid var(--border-light); max-height: 200px; overflow-y: auto; list-style: none; padding: 0; z-index:1000; }
+  .autocomplete-list li { padding: 10px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .autocomplete-list li:hover { background: var(--surface-hover); color: var(--accent-blue); }
+
+  /* Grid Canvas */
+  .grid-canvas {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    grid-auto-rows: 50px;
+    gap: 10px;
+    background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 100% 50px, 8.33% 100%;
+    background-color: rgba(0,0,0,0.1); 
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    padding: 10px;
+    min-height: 300px;
+    position: relative;
+    user-select: none;
+  }
+  
+  .grid-item {
+    background: var(--surface-base);
+    border: 1px solid var(--border-light);
+    border-radius: 4px;
+    position: relative;
+    overflow: hidden;
+    touch-action: none; 
+    transition: box-shadow 0.2s, opacity 0.2s;
+  }
+  
+  .grid-item.interacting {
+    z-index: 100;
+    box-shadow: 0 0 15px rgba(44,166,224,0.5);
+    border-color: var(--accent-blue);
+    opacity: 0.9;
+  }
+
+  .grid-item-content {
+    width: 100%; height: 100%;
+    display: flex; align-items: center; padding: 0 10px;
+  }
+
+  .grid-drag-handle { cursor: grab; margin-right: 8px; color: var(--text-muted); padding: 10px 5px; }
+  .grid-label { flex-grow: 1; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none;}
+  .grid-remove { cursor: pointer; color: #ff6b6b; padding: 5px; z-index: 10; }
+  
+  .grid-resize-handle {
+    position: absolute; bottom: 0; right: 0;
+    width: 15px; height: 15px;
+    background: linear-gradient(135deg, transparent 50%, var(--text-muted) 50%);
+    cursor: se-resize;
+    z-index: 5;
+  }
+
+  /* Layout Selector */
+  .layout-selector-wrapper { margin-left: auto; padding-left: 10px; }
+  .layout-select {
+    background: #050508; color: #fff; border: 1px solid var(--border-light);
+    padding: 5px 10px; border-radius: 4px; font-size: 0.8rem; max-width: 150px;
+  }
+
+  /* Modal */
+  .block-library-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; display: flex; justify-content: center; align-items: center; }
+  .block-library-modal { background: #0f1322; padding: 30px; border-radius: 12px; width: 90%; max-width: 600px; border: 1px solid var(--accent-blue); }
+  .library-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0; max-height: 400px; overflow-y: auto; }
+  .library-option { padding: 15px; background: var(--surface-base); border: 1px solid var(--border-light); border-radius: 6px; cursor: pointer; text-align: center; }
+  .library-option:hover { background: var(--accent-blue); color: white; }
+  .btn-close-modal { background: transparent; border: 1px solid var(--border-light); color: var(--text-muted); padding: 8px 16px; cursor: pointer; float: right; border-radius: 4px; }
+`;
+document.head.appendChild(style);
