@@ -3,7 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Finalize - Gabriela Fiona</title>
+  <title>Finalize Project - Gabriela Fiona</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body class="step4">
@@ -15,7 +18,10 @@
     </div>
     <div class="fw-content">
       <div id="fw-items"></div>
-      <div class="fw-total"><span>Total</span><span id="fw-full-total">$0</span></div>
+      <div class="fw-total">
+        <span>Total</span>
+        <span id="fw-full-total">$0</span>
+      </div>
       <div class="fw-deposit">50% Deposit: <span id="fw-deposit">$0</span></div>
     </div>
   </div>
@@ -32,49 +38,49 @@
   </div>
 
   <div class="container">
-    <div style="text-align: center; margin-bottom: 40px;">
+    <div style="text-align: center; margin-bottom: 50px;">
         <h1>Finalize & Kickoff</h1>
-        <p>Review your project summary and investment details below.</p>
+        <p>Review your project summary and secure your spot on the calendar.</p>
     </div>
 
     <div class="invoice-box">
       <h3 style="margin-bottom: 20px; color: var(--accent-blue);">Project Blueprint</h3>
-      <div id="final-items-list">
-          </div>
+      
+      <div id="final-invoice-items"></div>
+
       <div class="line-item total-row">
         <span>Total Investment</span>
         <span id="final-invoice-total">$0</span>
       </div>
-      <div class="line-item" style="border:none;">
-        <span style="color: var(--accent-blue); font-weight: 700;">50% DEPOSIT DUE</span>
-        <span id="final-invoice-deposit">$0</span>
+      <div class="line-item" style="border:none; padding-top:5px;">
+        <span class="deposit-highlight">50% Deposit Due Now</span>
+        <span id="final-invoice-deposit" style="font-weight:700; color:var(--accent-blue); font-size:1.2rem;">$0</span>
       </div>
     </div>
 
-    <div class="billing-section" style="margin-top:40px;">
-        <label>Billing Information (Auto-populated)</label>
-        <input type="text" id="billingName" placeholder="Client Name" />
+    <div class="billing-card" style="margin-top:40px;">
+        <label>Billing Information</label>
+        <p style="font-size:0.8rem; margin-bottom:10px;">Auto-filled from Step 1</p>
+        <input type="text" id="billingName" placeholder="Client Name or Business Entity" />
     </div>
 
     <div class="step-nav-buttons">
-       <button class="btn btn-secondary" onclick="window.location.href='step3.html'">&larr; Back</button>
+       <button class="btn btn-secondary" onclick="window.location.href='step3.html'">&larr; Back to Plan</button>
        <button class="btn btn-primary" onclick="handleFinalize(event)">Pay Deposit & Start Project &rarr;</button>
     </div>
   </div>
 
   <script src="script.js"></script>
   <script>
-      // Populate itemized receipt on load
-      document.addEventListener('DOMContentLoaded', () => {
-          const list = document.getElementById('final-items-list');
-          const state = JSON.parse(localStorage.getItem('onboardingState') || '{}');
-          if(state.package) {
-              list.innerHTML += `<div class="line-item"><span>${state.package.name} Package</span><span>$${state.package.price.toLocaleString()}</span></div>`;
-          }
-          if(state.brandKit) {
-              list.innerHTML += `<div class="line-item"><span>Brand Identity Kit</span><span>Included</span></div>`;
-          }
-      });
+    document.addEventListener('DOMContentLoaded', () => {
+        // Requirement 8: Auto-fill billing name
+        const name = localStorage.getItem('businessName') || localStorage.getItem('clientName');
+        if(name) document.getElementById('billingName').value = name;
+        
+        // Populate the specific invoice list for Step 4
+        if(window.renderFinalInvoice) window.renderFinalInvoice();
+        if(window.calculateTotal) window.calculateTotal();
+    });
   </script>
 </body>
 </html>
